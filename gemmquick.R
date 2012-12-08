@@ -6,6 +6,7 @@
 #TODO b <- as.numeric(y!=0) for dichotomization may be much faster
 # all crossval runs
 # search all possible models in analytic space
+# pearson's r generation and output may need better integration
 
 
 dichotomizeData <- function(x) {
@@ -181,9 +182,12 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.beta.vectors,
   return(y)
 }
 
-gemmFit <- function(n, betas, predictors, criterion, fit.criterion = "ken",
-                    model.selection = "bc1", p) {
-  if (sum(betas) == 0) {tau <- 0; k <- 0}
+gemmFit <- function(n, betas, predictors, criterion, p) {
+  if (sum(betas) == 0) {
+    tau <- 0
+    k <- 0
+    r <- 0
+  }
   if (sum(betas != 0)) {
     u.predictors <- rep(0, times = n)
     for (i in 1:n) {
@@ -199,18 +203,21 @@ gemmFit <- function(n, betas, predictors, criterion, fit.criterion = "ken",
       }
     }
     tau <- cor(criterion, u.predictors, method = "kendall")
+    r <- cor(criterion, u.predictors)
   }
   knp <- sin(pi/2*tau*((n-p-1)/n))
-  y <- n * log(1 - knp ^ 2) + k * log(n)
+  bic <- n * log(1 - knp ^ 2) + k * log(n)
+  y <- list(bic = bic, r = r)
   return(y)
 }
 
-gemmCross <- function(n, k, criterion, u.predictors, fit.criterion = "ken",
-                      model.selection = "bc1", p) {
+gemmCross <- function(n, k, criterion, u.predictors, p) {
   if (sum(u.predictors == 0)) {tau <- 0}
   if (sum(u.predictors != 0)) {tau <- cor(criterion, u.predictors, method = "kendall")}
+  if (sum(u.predictors != 0)) {r <- cor(criterion, u.predictors)}
   knp <- sin(pi/2*tau*((n-p-1)/n))
-  y <- n * log(1 - knp ^ 2) + k * log(n)
+  bic <- n * log(1 - knp ^ 2) + k * log(n)
+  y <- list(bic = bic, r = r)
   return(y)
 }
 
@@ -265,16 +272,19 @@ giveDeciles <- function(x, y) {
   return(y)
 }
 
-gemmModel <- function(input.data, output, n.beta, model.selection = "ken",
-                      fit.criterion = "bc1", p.est, restrict.parameters, scale,
-                      dichotomize, n.data.gen, n.reps) {
+gemmModel <- function(input.data, output, n.beta, p.est, restrict.parameters,
+                      scale, dichotomize, n.data.gen, n.reps) {
   # currently working for n.data.gen < 9
   var.name <- names(input.data[-1])
   crit.name <- names(input.data[1])
   n.beta.vectors <- round(n.beta/4)
   n.super.elites <- round(n.beta.vectors/4)
   fit.out <- matrix(rep(0, times = n.data.gen * (dim(input.data)[2])), nrow = n.data.gen)
-  gemm.cross.out <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
+  fit.out.r <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
+  if (p.est < 1) {
+    gemm.cross.out <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
+    gemm.cross.out.r <- gemm.cross.out
+  }
   for (datagen in 1:n.data.gen) {
     data <- input.data
     data <- normalizeData(data, scale)
@@ -292,6 +302,9 @@ gemmModel <- function(input.data, output, n.beta, model.selection = "ken",
     n <- size[1]
     p <- size[2] - 1
     lin.mod <- lm(data[,1] ~ data[,2:(p + 1)])
+    if(sum(is.na(lin.mod))) {
+      error("lm() generates NA")
+    }
     metric.beta <- lin.mod$coef[2:(p + 1)]
     names(metric.beta) <- names(data[2:length(data)])
     p.vals <- summary(lin.mod)[[4]][-1,4]
@@ -301,20 +314,22 @@ gemmModel <- function(input.data, output, n.beta, model.selection = "ken",
       betas <- geneticAlgorithm(metric.beta, n.beta, n.beta.vectors,
                                 n.super.elites, p, datagen, 0, 0)
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
+      fit.stats.r <- fit.stats
       for (i in 1:dim(betas)[1]) {
-        gemm.fit.out <- gemmFit(n, betas[i,], data[,-1], data[,1],
-                                fit.criterion, model.selection, p)
-        fit.stats[i,] <- gemm.fit.out
+        gemm.fit.out <- gemmFit(n, betas[i,], data[,-1], data[,1], p)
+        fit.stats[i,] <- gemm.fit.out$bic
+        fit.stats.r[i,] <- gemm.fit.out$r
       }
       model.stats <- cbind(fit.stats, betas)
       model.stats <- rbind(rep(0, times = length(model.stats[1,])), model.stats)
       model.stats <- model.stats[order(model.stats[,1]),]
+      fit.stats.r <- fit.stats.r[order(model.stats[,1])]
       bestmodels <- model.stats[1:n.beta.vectors,]
       top.betas <- bestmodels[1,-1]
       save(bestmodels, file = "bestmodels.Rdata")
-      # may need more here
     }
     fit.out[datagen,] <- bestmodels[1,]
+    fit.out.r[datagen,] <- fit.stats.r[1]
     if (p.est < 1) {
       cross.val.u.predictors <- rep(0, times = dim(cross.val)[1])
       for (i in 1:length(cross.val.u.predictors)) {
@@ -323,21 +338,25 @@ gemmModel <- function(input.data, output, n.beta, model.selection = "ken",
     }
     k <- sum(ifelse(top.betas == 0, 0, 1))
     if (p.est < 1) {
-      gemm.cross.out[datagen,] <- gemmCross(dim(cross.val)[1], k, cross.val[,1],
-                                            cross.val.u.predictors, fit.criterion, model.selection, (p - 1))
+      temp.out <- gemmCross(dim(cross.val)[1], k, cross.val[,1],
+                                            cross.val.u.predictors, (p - 1))
+      gemm.cross.out[datagen,] <- temp.out$bic
+      gemm.cross.out.r[datagen,] <- temp.out$r
     }
   }
   sim.results <- list(parameters = c(n.beta.vectors, reps, p.est),
-                      test.num = c(fit.criterion, model.selection, scale),
+                      test.num = scale,
                       date = date(),
                       weights = fit.out[,-1],
-                      bic = fit.out[,1],
+                      est.bic = fit.out[,1],
+                      est.r = c(fit.out.r),
                       metric.betas = metric.beta,
                       p.vals = p.vals,
                       crit.name = crit.name,
                       pred.name = var.name)
   if (p.est < 1) {
-    sim.results$cross.val <- c(gemm.cross.out)
+    sim.results$cross.val.bic <- c(gemm.cross.out)
+    sim.results$cross.val.r <- c(gemm.cross.out.r)
   }
   save(sim.results, file = output)
   return(sim.results)
