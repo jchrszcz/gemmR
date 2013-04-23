@@ -1,10 +1,18 @@
 ##### TODO #####
-# - formula input
-# - interactions
-# - negative weights
-# - GA optimization
-# - gemmFit optimization
-# - S4 class definitions
+# * negative weights
+# * convergence
+# * GA optimization
+# * gemmFit optimization
+# * S3/4 class definitions
+# ** function input
+# *** interactions
+# ** print
+# ** summary
+# ** predict?
+##### Ideas #####
+# * force some chains to start without seeding LS estimates to check for
+#     robustness to initial conditions?
+################################################################################
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
   bestmodels) {
@@ -140,7 +148,7 @@ gemmFit <- function(n, betas, data, p) {
     r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
   }
 # this might cause problems, reverses the scale for any negative correlations
-# and recalculates fit.
+# and recalculates fit. Might be able to just multiply by -1?
   if (r < 0) {
     betas <- betas * -1
     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
@@ -251,36 +259,12 @@ gemmModel <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     sim.results$cross.val.r <- c(gemm.cross.out.r)
   }
   save(sim.results, file = paste(output, ".Rdata"))
+  class(sim.results) <- "gemm"
   return(sim.results)
 }
 
-##### Junk code #####
+##### Package functions #####
 
-# gemmFit <- function(n, betas, predictors, criterion, p) {
-#   if (sum(betas) == 0) {
-#     tau <- 0
-#     k <- 0
-#     r <- 0
-#   }
-#   if (sum(betas != 0)) {
-#     u.predictors <- rep(0, times = n)
-#     for (i in 1:n) {
-#       u.predictors[i] <- sum(betas * predictors[i,])
-#     }
-#     k <- sum(betas != 0)
-#     if (!is.na(cor(criterion, u.predictors))) {
-#       if (cor(criterion, u.predictors) < 0) {
-#         betas <- betas * -1
-#       for (i in 1:n) {
-#           u.predictors[i] <- sum(betas * predictors[i,])
-#         }
-#       }
-#     }
-#     tau <- cor(criterion, u.predictors, method = "kendall")
-#     r <- cor(criterion, u.predictors)
-#   }
-#   knp <- sin(pi/2*tau*((n-p-1)/n))
-#   bic <- n * log(1 - knp ^ 2) + k * log(n)
-#   y <- list(bic = bic, r = r)
-#   return(y)
-# }
+
+
+
