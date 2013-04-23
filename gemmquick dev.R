@@ -3,16 +3,19 @@
 # * convergence
 # * GA optimization
 # * gemmFit optimization
-# * S3/4 class definitions
-# ** function input
-# *** interactions
-# ** print
+# * S4 class definitions?
 # ** summary
 # ** predict?
+# * correct penalty term for interactions
+# * categorical predictors (probably involves using factor properly)
 ##### Ideas #####
 # * force some chains to start without seeding LS estimates to check for
 #     robustness to initial conditions?
 ################################################################################
+
+##### Dependencies #####
+
+##### GeMM Functions #####
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
   bestmodels) {
@@ -68,7 +71,8 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
       }
     }
   }
-# Reps > 1 do not use OLS estimates to seed the model, but do use the top 25% (jcz - I think) from previous generation.
+# Reps > 1 do not use OLS estimates to seed the model, but do use the top 25%
+# (jcz - I think) from previous generation.
   if (reps > 1) {
     size <- dim(bestmodels)
     elites <- bestmodels
@@ -162,8 +166,8 @@ gemmFit <- function(n, betas, data, p) {
   return(y)
 }
 
-gemmModel <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
-  n.data.gen = 1, n.reps = 10) {
+gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
+  n.data.gen = 1, n.reps = 10, save.results = FALSE, k.pen = NA) {
 ################################################################################
 # Function controls the GeMM process. Takes data and, over successive          #
 # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
@@ -183,10 +187,10 @@ gemmModel <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
 #   n.data.gen - Number of times the entire GeMM process will be repeated,     #
 #                due for removal.                                              #
 #   n.reps     - Number of replications, default is 10.                        #
+#   k.pen      - additional penalty to BIC for including, NA by default.       #
 ################################################################################
   bestmodels <- c()
-  var.name <- names(input.data[-1])
-  crit.name <- names(input.data[1])
+  var.name <- colnames(input.data[,-1])
   n.super.elites <- round(n.beta/16)
   fit.out <- matrix(rep(0, times = n.data.gen * (dim(input.data)[2])),
     nrow = n.data.gen)
@@ -245,27 +249,59 @@ gemmModel <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       gemm.cross.out.r[datagen,] <- temp.out$r
     }
   }
-  sim.results <- list(parameters = c(n.beta, reps, p.est),
-                      date = date(),
-                      call = ,
-                      coefficients = as.matrix(fit.out[,-1]),
+  sim.results <- list(date = date(),
+                      call = match.call(),
+                      coefficients = matrix(fit.out[,-1], ncol = p),
                       est.bic = fit.out[,1],
                       est.r = c(fit.out.r),
                       metric.betas = metric.beta,
                       p.vals = p.vals,
-                      crit.name = crit.name,
-                      pred.name = var.name)
+                      var.name = var.name)
+  colnames(sim.results$coefficients) <- sim.results$var.name
   if (p.est < 1) {
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
   }
-  save(sim.results, file = paste(output, ".Rdata"))
-  class(sim.results) <- "gemm"
+  if (save.results) {
+    save(sim.results, file = paste(output, ".Rdata"))
+  }
   return(sim.results)
 }
+################################################################################
 
 ##### Package functions #####
+gemm <- function(x, ...) UseMethod("gemm")
 
+gemm.default <- function(x, k.pen = NA, ...) {
+  est <- gemmEst(input.data = x, k.pen, ...)
+  class(est) <- "gemm"
+  est
+}
 
+print.gemm <- function(x, ...) {
+  cat("Call:\n")
+  print(x$call)
+  cat("\nCoefficients:\n")
+  print(x$coefficients)
+  cat("\nBIC:\n")
+  print(x$est.bic)
+}
 
-
+gemm.formula <- function(formula, data=list(), ...) {
+  mf <- model.frame(formula=formula, data=data)
+  # removes the intercept column (intercept isn't meaningful)
+  if (attributes(attributes(mf)$terms)$intercept == 1) {
+    attributes(attributes(mf)$terms)$intercept <- 0
+  }
+  # retains factor matrix if any interactions are in the model, (necessary for
+  #   correctly penalizing BIC)
+  if (sum(attributes(attributes(mf)$terms)$order) >= 1) {
+    k.pen <- attributes(attributes(mf)$terms)$factor[-1,]
+  }
+  x <- model.matrix(attr(mf, "terms"), data=mf)
+  y <- model.response(mf)
+  est <- gemm.default(cbind(y, x), k.pen, ...)
+  est$call <- match.call()
+  est$formula <- formula
+  est
+}
