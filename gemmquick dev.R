@@ -1,5 +1,6 @@
 ##### TODO #####
-# * convergence
+# * convergence (sortof done with n.data.gen, need to include some kind of
+#     output for the summary function)
 # * GA optimization
 # * gemmFit optimization
 # * S4 class definitions?
@@ -9,11 +10,10 @@
 ##### Ideas #####
 # * force some chains to start without seeding LS estimates to check for
 #     robustness to initial conditions?
+# * record top betas for each rep, makes examining chains easier, (MDS to graph)
 ################################################################################
 
 ##### Dependencies #####
-
-source("correction_factor.R")
 
 ##### GeMM Functions #####
 
@@ -172,7 +172,7 @@ gemmFit <- function(n, betas, data, p, k.cor) {
 }
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
-  n.data.gen = 1, n.reps = 10, save.results = FALSE, k.pen = k.pen) {
+  n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen) {
 ################################################################################
 # Function controls the GeMM process. Takes data and, over successive          #
 # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
