@@ -27,7 +27,7 @@
 ##### GeMM Functions #####
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-  bestmodels, seed.metric = TRUE) {
+  bestmodels, seed.metric) {
 ################################################################################
 # This functions generates candidate beta weights for each predictor in the    #
 # model.                                                                       #
@@ -184,7 +184,7 @@ gemmFit <- function(n, betas, data, p, k.cor) {
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
-  seed.metric = FALSE) {
+  seed.metric = TRUE) {
 ################################################################################
 # Function controls the GeMM process. Takes data and, over successive          #
 # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
@@ -242,7 +242,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     for (reps in 1:n.reps) {
 # beta generation here
       betas <- geneticAlgorithm(metric.beta, n.beta, n.super.elites, p, reps,
-        bestmodels)
+        bestmodels, seed.metric)
       betas <- as.matrix(betas)
 # calculate penalized k for interactions
       k.cor <- rep(1, times = nrow(betas))
