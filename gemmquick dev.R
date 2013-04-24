@@ -7,17 +7,19 @@
 #
 ##### TODO #####
 # * convergence (sortof done with n.data.gen, need to include some kind of
-#     output for the summary function)
+#     output for the summary function) *Jeff*
+# * error messages
 # * GA optimization
 # * gemmFit optimization
-# * S4 class definitions?
-# ** summary
-# ** predict?
-# * categorical predictors (probably involves using factor properly)
+# * summary
+# * predict?
+# * categorical predictors (probably involves using factor properly) **Joe**
 ##### Ideas #####
 # * force some chains to start without seeding LS estimates to check for
 #     robustness to initial conditions?
 # * record top betas for each rep, makes examining chains easier, (MDS to graph)
+# * exploratory vs. confirmatory modes (change p/k for gemmFit accordingly)
+# * posterior predictive checks
 ################################################################################
 
 ##### Dependencies #####
@@ -25,7 +27,7 @@
 ##### GeMM Functions #####
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-  bestmodels) {
+  bestmodels, seed.metric = FALSE) {
 ################################################################################
 # This functions generates candidate beta weights for each predictor in the    #
 # model.                                                                       #
@@ -41,8 +43,7 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
 ################################################################################
 # ls would control whether to seed the betas with OLS estimates. Currently this
 # happens by default and cannot be changed outside of the function.
-  ls <- 1
-  if (ls != 1) {metric.beta <- rnorm(p)}
+  if (seed.metric != TRUE) {metric.beta <- runif(p)}
 # this controls the first generation of beta generation.
   if (reps == 1) {
     betas <- matrix(rep(0, times = n.beta * p), ncol = p)
@@ -147,8 +148,9 @@ gemmFit <- function(n, betas, data, p, k.cor) {
 #           are different predictors.                                          #
 #   data  - original predictors and outcome used to calculate fit.             #
 #   p     - number of predictors.                                              #
+#                                                                              #
+#  NOTE: k or p for tau transformation needs to be solved.                     #
 ################################################################################
-  
 # null models are common, these lines return 0 for both fit metrics when all
 # betas are 0.
   if (sum(betas == 0) == p) {
@@ -165,21 +167,22 @@ gemmFit <- function(n, betas, data, p, k.cor) {
   }
 # this might cause problems, reverses the scale for any negative correlations
 # and recalculates fit. Might be able to just multiply by -1?
-  if (r < 0) {
+  if (tau < 0) {
     betas <- betas * -1
     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
       method = "kendall")
     r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
   }
   k <- sum(betas != 0)
-  knp <- sin(pi/2*tau*((n-p-1)/n))
+  knp <- sin(pi/2*tau*((n-k-1)/n))
   bic <- n * log(1 - knp ^ 2) + k * log(n)
   y <- list(bic = bic, r = r)
   return(y)
 }
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
-  n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen) {
+  n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
+  seed.metric = FALSE) {
 ################################################################################
 # Function controls the GeMM process. Takes data and, over successive          #
 # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
@@ -238,8 +241,11 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
         bestmodels)
       betas <- as.matrix(betas)
 # calculate penalized k for interactions
-      k.cor <- kCorFact(k.pen, betas)
-      k.cor <- matrix(k.cor, ncol = 1)
+      k.cor <- rep(1, times = nrow(betas))
+      if (!is.null(dim(k.pen))) {
+        k.cor <- kCorFact(k.pen, betas)
+        k.cor <- matrix(k.cor, ncol = 1)
+      }
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
       fit.stats.r <- fit.stats
 # this loop calculates fit. Could be optimized.
