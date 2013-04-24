@@ -21,6 +21,7 @@
 # * record top betas for each rep, makes examining chains easier, (MDS to graph)
 # * exploratory vs. confirmatory modes (change p/k for gemmFit accordingly)
 # * posterior predictive checks
+# * should we add an ordinal effect size and output R^2?
 ################################################################################
 
 ##### Dependencies #####
