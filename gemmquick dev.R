@@ -14,6 +14,7 @@
 # * summary
 # * predict?
 # * categorical predictors (probably involves using factor properly) **Joe**
+# * only calculate pearson's R on last run
 ##### Ideas #####
 # * force some chains to start without seeding LS estimates to check for
 #     robustness to initial conditions?
@@ -141,7 +142,7 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
   return(y)
 }
 
-gemmFit <- function(n, betas, data, p, k.cor) {
+gemmFit <- function(n, betas, data, p, k.cor, pearson) {
 ################################################################################
 # Function generates model estimates based on sets of weights and predictors,  #
 # calculates Kendall's tau between dependent variable and model predictions.   #
@@ -165,7 +166,9 @@ gemmFit <- function(n, betas, data, p, k.cor) {
   if (sum(betas == 0) != p) {
     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
       method = "kendall")
-    r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
+    if (pearson) {
+      r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
+    }
   }
 # this might cause problems, reverses the scale for any negative correlations
 # and recalculates fit. Might be able to just multiply by -1?
@@ -173,18 +176,23 @@ gemmFit <- function(n, betas, data, p, k.cor) {
     betas <- betas * -1
     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
       method = "kendall")
-    r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
+    if (pearson) {
+      r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
+    }
   }
   k <- sum(betas != 0)
   knp <- sin(pi/2*tau*((n-k-1)/n))
   bic <- n * log(1 - knp ^ 2) + k * log(n)
-  y <- list(bic = bic, r = r)
+  y <- list(bic = bic)
+  if (pearson) {
+    y$r <- r
+  }
   return(y)
 }
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
-  seed.metric = TRUE) {
+  seed.metric = TRUE, check.convergence = FALSE) {
 ################################################################################
 # Function controls the GeMM process. Takes data and, over successive          #
 # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
@@ -214,11 +222,19 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   fit.out <- matrix(rep(0, times = n.data.gen * (dim(input.data)[2])),
     nrow = n.data.gen)
   fit.out.r <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
+  if (check.convergence) {
+    converge.bic <- matrix(rep(0, times = (n.reps * n.data.gen)),
+      ncol = n.data.gen)
+    converge.beta <- matrix(rep(0,
+      times = (n.reps * n.data.gen * (dim(input.data)[2] - 1))),
+      ncol = (dim(input.data)[2] - 1))
+  }
   if (p.est < 1) {
     gemm.cross.out <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
     gemm.cross.out.r <- gemm.cross.out
   }
   for (datagen in 1:n.data.gen) {
+    get.r <- FALSE
     data <- input.data
     size <- dim(data)
     est.ss <- floor(p.est * size[1])
@@ -240,6 +256,9 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     names(p.vals) <- names(data[2:length(data)])
     ps <- ifelse(summary(lin.mod)[[4]][-1,4] < .05, 1, 0)
     for (reps in 1:n.reps) {
+      if (reps == n.reps) {
+        get.r <- TRUE
+      }
 # beta generation here
       betas <- geneticAlgorithm(metric.beta, n.beta, n.super.elites, p, reps,
         bestmodels, seed.metric)
@@ -251,23 +270,31 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
         k.cor <- matrix(k.cor, ncol = 1)
       }
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
-      fit.stats.r <- fit.stats
+      if (get.r) {
+        fit.stats.r <- fit.stats
+      }
 # this loop calculates fit. Could be optimized.
       for (i in 1:dim(betas)[1]) {
-        gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i])
+        gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i], pearson = get.r)
         fit.stats[i,] <- gemm.fit.out$bic
-        fit.stats.r[i,] <- gemm.fit.out$r
+        if (get.r) {
+          fit.stats.r[i,] <- gemm.fit.out$r
+        }
       }
       model.stats <- cbind(fit.stats, betas)
       model.stats <- rbind(rep(0, times = length(model.stats[1,])), model.stats)
       model.stats <- model.stats[order(model.stats[,1]),]
-      fit.stats.r <- fit.stats.r[order(model.stats[,1])]
+      if (get.r) {
+        fit.stats.r <- fit.stats.r[order(model.stats[,1])]
+      }
       bestmodels <- model.stats[1:(4*n.super.elites),]
-      top.betas <- bestmodels[1,-1]
+      if (check.convergence) {
+        converge.bic[reps, datagen] <- bestmodels[1,1]
+        converge.beta[(reps + reps * (datagen - 1)),] <- bestmodels[1,-1]
+      }
     }
     fit.out[datagen,] <- bestmodels[1,]
     fit.out.r[datagen,] <- fit.stats.r[1]
-    k <- sum(top.betas != 0)
     if (p.est < 1) {
       temp.out <- gemmFit(n, betas[i,], cross.val, p)
       gemm.cross.out[datagen,] <- temp.out$bic
@@ -286,6 +313,10 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   if (p.est < 1) {
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
+  }
+  if (check.convergence) {
+    sim.results$converge.bic <- converge.bic
+    sim.results$converge.beta <- converge.beta
   }
   if (save.results) {
     save(sim.results, file = paste(output, ".Rdata"))
@@ -341,4 +372,8 @@ gemm.formula <- function(formula, data=list(), ...) {
   est$call <- match.call()
   est$formula <- formula
   est
+}
+
+plot.gemm <- function(x, ...) {
+  
 }
