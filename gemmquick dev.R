@@ -130,10 +130,10 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
     betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
   }
 # turn half of all candidate betas negative
-  temp.rand <- rbinom(prod(dim(betas)), 1, .5)
-  temp.rand[temp.rand == 0] <- -1
-  temp.rand <- matrix(temp.rand, ncol = ncol(betas))
-  betas <- betas * temp.rand
+#   temp.rand <- rbinom(prod(dim(betas)), 1, .5)
+#   temp.rand[temp.rand == 0] <- -1
+#   temp.rand <- matrix(temp.rand, ncol = ncol(betas))
+#   betas <- betas * temp.rand
   y <- betas[1:n.beta,]
   return(y)
 }
@@ -165,12 +165,12 @@ gemmFit <- function(n, betas, data, p, k.cor) {
   }
 # this might cause problems, reverses the scale for any negative correlations
 # and recalculates fit. Might be able to just multiply by -1?
-#   if (r < 0) {
-#     betas <- betas * -1
-#     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-#       method = "kendall")
-#     r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
-#   }
+  if (r < 0) {
+    betas <- betas * -1
+    tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
+      method = "kendall")
+    r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
+  }
   k <- sum(betas != 0)
   knp <- sin(pi/2*tau*((n-p-1)/n))
   bic <- n * log(1 - knp ^ 2) + k * log(n)
