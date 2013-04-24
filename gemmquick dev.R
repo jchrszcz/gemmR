@@ -1,3 +1,10 @@
+##### gemmR #####
+#
+# Authors: Jeff Chrabaszcz & Joe Tidwell
+#
+# An R implementation of the General Monotone Model, (Dougherty & Thomas, 2012),
+# with some improvements.
+#
 ##### TODO #####
 # * convergence (sortof done with n.data.gen, need to include some kind of
 #     output for the summary function)
@@ -292,7 +299,7 @@ kCorFact <- function(k.pen, beta.vecs) {
 ##### Package functions #####
 gemm <- function(x, ...) UseMethod("gemm")
 
-gemm.default <- function(x, ...) {
+gemm.default <- function(x, k.pen = k.pen, ...) {
   est <- gemmEst(input.data = x, k.pen = k.pen, ...)
   class(est) <- "gemm"
   est
@@ -320,7 +327,7 @@ gemm.formula <- function(formula, data=list(), ...) {
   }
   x <- model.matrix(attr(mf, "terms"), data=mf)
   y <- model.response(mf)
-  est <- gemm.default(cbind(y, x), k.pen, ...)
+  est <- gemm.default(cbind(y, x), k.pen = k.pen, ...)
   est$call <- match.call()
   est$formula <- formula
   est
