@@ -15,6 +15,8 @@
 
 ##### Dependencies #####
 
+source("correction_factor.R")
+
 ##### GeMM Functions #####
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
@@ -126,7 +128,7 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
   return(y)
 }
 
-gemmFit <- function(n, betas, data, p) {
+gemmFit <- function(n, betas, data, p, k.cor) {
 ################################################################################
 # Function generates model estimates based on sets of weights and predictors,  #
 # calculates Kendall's tau between dependent variable and model predictions.   #
@@ -153,12 +155,12 @@ gemmFit <- function(n, betas, data, p) {
   }
 # this might cause problems, reverses the scale for any negative correlations
 # and recalculates fit. Might be able to just multiply by -1?
-  if (r < 0) {
-    betas <- betas * -1
-    tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-      method = "kendall")
-    r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
-  }
+#   if (r < 0) {
+#     betas <- betas * -1
+#     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
+#       method = "kendall")
+#     r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
+#   }
   k <- sum(betas != 0)
   knp <- sin(pi/2*tau*((n-p-1)/n))
   bic <- n * log(1 - knp ^ 2) + k * log(n)
@@ -167,7 +169,7 @@ gemmFit <- function(n, betas, data, p) {
 }
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
-  n.data.gen = 1, n.reps = 10, save.results = FALSE, k.pen = NA) {
+  n.data.gen = 1, n.reps = 10, save.results = FALSE, k.pen = k.pen) {
 ################################################################################
 # Function controls the GeMM process. Takes data and, over successive          #
 # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
@@ -225,11 +227,14 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       betas <- geneticAlgorithm(metric.beta, n.beta, n.super.elites, p, reps,
         bestmodels)
       betas <- as.matrix(betas)
+# calculate penalized k for interactions
+      k.cor <- kCorFact(k.pen, betas)
+      k.cor <- matrix(k.cor, ncol = 1)
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
       fit.stats.r <- fit.stats
 # this loop calculates fit. Could be optimized.
       for (i in 1:dim(betas)[1]) {
-        gemm.fit.out <- gemmFit(n, betas[i,], data, p)
+        gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i])
         fit.stats[i,] <- gemm.fit.out$bic
         fit.stats.r[i,] <- gemm.fit.out$r
       }
@@ -267,13 +272,25 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   }
   return(sim.results)
 }
+
+kCorFact <- function(k.pen, beta.vecs) {
+################################################################################
+# Computes the correctd k for interaction terms. Returns a vector.             #
+#   k.pen     - factor matrix from model.frame called in gemm.formula.         #
+#   beta.vecs - matrix of beta vectors produced by geneticAlgorithm.           #
+################################################################################
+  k <- dim(k.pen)[2]
+  factors <- log2(k+1)
+  levels <- rbind(k.pen, diag(k)[(factors+1):k,])
+  return(apply(beta.vecs,1, function(x) sum(levels%*%x!=0)))
+}
 ################################################################################
 
 ##### Package functions #####
 gemm <- function(x, ...) UseMethod("gemm")
 
-gemm.default <- function(x, k.pen = NA, ...) {
-  est <- gemmEst(input.data = x, k.pen, ...)
+gemm.default <- function(x, ...) {
+  est <- gemmEst(input.data = x, k.pen = k.pen, ...)
   class(est) <- "gemm"
   est
 }
