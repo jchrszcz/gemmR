@@ -15,6 +15,10 @@ b <- seq(1,10)
 c <- seq(1,10)
 y <- seq(1,10)
 
+# Create sample output that you would normally get from gemmR for factors of model
+mod <- y~a*b*c
+mf <- model.frame(mod)
+levels <- attributes(attributes(mf)$terms)$factor[-1,]
 
 # Run the function
 kCorFact(levels,vecs)
