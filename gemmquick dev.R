@@ -1,12 +1,10 @@
 ##### TODO #####
-# * negative weights
 # * convergence
 # * GA optimization
 # * gemmFit optimization
 # * S4 class definitions?
 # ** summary
 # ** predict?
-# * correct penalty term for interactions
 # * categorical predictors (probably involves using factor properly)
 ##### Ideas #####
 # * force some chains to start without seeding LS estimates to check for
@@ -124,6 +122,11 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
     super.elites <- super.elites[,-1]
     betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
   }
+# turn half of all candidate betas negative
+  temp.rand <- rbinom(prod(dim(betas)), 1, .5)
+  temp.rand[temp.rand == 0] <- -1
+  temp.rand <- matrix(temp.rand, ncol = ncol(betas))
+  betas <- betas * temp.rand
   y <- betas[1:n.beta,]
   return(y)
 }
