@@ -27,7 +27,7 @@
 ##### GeMM Functions #####
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-  bestmodels, seed.metric = FALSE) {
+  bestmodels, seed.metric = TRUE) {
 ################################################################################
 # This functions generates candidate beta weights for each predictor in the    #
 # model.                                                                       #
@@ -40,6 +40,8 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
 #   reps           - number of replications. If >1, best beta vectors from     #
 #                    previous replication are included.                        #
 #   bestmodels     - best betas from previous replication.                     #
+#   seed.metric    - control whether lm() estimated betas seed GA. Default is  #
+#                    TRUE                                                      #
 ################################################################################
 # ls would control whether to seed the betas with OLS estimates. Currently this
 # happens by default and cannot be changed outside of the function.
@@ -189,20 +191,22 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
 # calculates ordinal model fit using these betas, and produces an output that  #
 # reports weights and fit statistics for best models at each generation,       #
 # (optionally, for cross-validation as well).                                  #
-#   input.data - must be data frame, first column is treated as dependent      #
-#                variable.                                                     #
-#   output     - string argument for use in naming file output. gemmModel      #
-#                writes a .RData file in the current working directory each    #
-#                time the function is called.                                  #
-#   n.beta     - Number of beta vectors to generate per replication. Default   #
-#                is 2000.                                                      #
-#   p.est      - Percept of data used to estimate the model. Default is 1,     #
-#                values less than 1 will cause gemmModel to produce            #
-#                cross-validation estimates.                                   #
-#   n.data.gen - Number of times the entire GeMM process will be repeated,     #
-#                due for removal.                                              #
-#   n.reps     - Number of replications, default is 10.                        #
-#   k.pen      - additional penalty to BIC for including, NA by default.       #
+#   input.data  - must be data frame, first column is treated as dependent     #
+#                 variable.                                                    #
+#   output      - string argument for use in naming file output. gemmModel     #
+#                 writes a .RData file in the current working directory each   #
+#                 time the function is called.                                 #
+#   n.beta      - Number of beta vectors to generate per replication. Default  #
+#                 is 2000.                                                     #
+#   p.est       - Percept of data used to estimate the model. Default is 1,    #
+#                 values less than 1 will cause gemmModel to produce           #
+#                 cross-validation estimates.                                  #
+#   n.data.gen  - Number of times the entire GeMM process will be repeated,    #
+#                 due for removal.                                             #
+#   n.reps      - Number of replications, default is 10.                       #
+#   k.pen       - additional penalty to BIC for including, NA by default.      # 
+#   seed.metric - control whether lm() estimated betas seed GA. Default is     #
+#                 TRUE                                                         #
 ################################################################################
   bestmodels <- c()
   var.name <- colnames(input.data[,-1])
