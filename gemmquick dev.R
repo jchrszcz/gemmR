@@ -5,6 +5,19 @@
 # An R implementation of the General Monotone Model, (Dougherty & Thomas, 2012),
 # with some improvements.
 #
+# Please cite:
+#
+# @article{dougherty2012robust,
+#   title={Robust decision making in a nonlinear world},
+#   author={Dougherty, Michael R and Thomas, Rick P},
+#   journal={Psychological Review},
+#   volume={119},
+#   number={2},
+#   pages={321--344},
+#   year={2012},
+#   publisher={American Psychological Association},
+# }
+#
 ##### TODO #####
 # * convergence (sortof done with n.data.gen, need to include some kind of
 #     output for the summary function) *Jeff*
