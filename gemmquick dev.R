@@ -388,6 +388,6 @@ gemm.formula <- function(formula, data=list(), ...) {
   est
 }
 
-plot.gemm <- function(x, ...) {
-  
-}
+# plot.gemm <- function(x, ...) {
+#   
+# }
