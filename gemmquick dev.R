@@ -14,7 +14,7 @@
 # * summary
 # * predict?
 # * categorical predictors (probably involves using factor properly) **Joe**
-# * only calculate pearson's R on last run
+# * output tau
 ##### Ideas #####
 # * force some chains to start without seeding LS estimates to check for
 #     robustness to initial conditions?
@@ -187,6 +187,7 @@ gemmFit <- function(n, betas, data, p, k.cor, pearson) {
   y <- list(bic = bic)
   if (pearson) {
     y$r <- r
+    y$tau <- tau
   }
   return(y)
 }
@@ -223,6 +224,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   fit.out <- matrix(rep(0, times = n.data.gen * (dim(input.data)[2])),
     nrow = n.data.gen)
   fit.out.r <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
+  fit.out.tau <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
   if (check.convergence) {
     converge.bic <- matrix(rep(0, times = (n.reps * n.data.gen)),
       ncol = n.data.gen)
@@ -233,6 +235,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   if (p.est < 1) {
     gemm.cross.out <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
     gemm.cross.out.r <- gemm.cross.out
+    gemm.cross.out.tau <- gemm.cross.out
   }
   for (datagen in 1:n.data.gen) {
     get.r <- FALSE
@@ -273,6 +276,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
       if (get.r) {
         fit.stats.r <- fit.stats
+        fit.stats.tau <- fit.stats
       }
 # this loop calculates fit. Could be optimized.
       for (i in 1:dim(betas)[1]) {
@@ -280,6 +284,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
         fit.stats[i,] <- gemm.fit.out$bic
         if (get.r) {
           fit.stats.r[i,] <- gemm.fit.out$r
+          fit.stats.tau[i,] <- gemm.fit.out$tau
         }
       }
       model.stats <- cbind(fit.stats, betas)
@@ -287,6 +292,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       model.stats <- model.stats[order(model.stats[,1]),]
       if (get.r) {
         fit.stats.r <- fit.stats.r[order(model.stats[,1])]
+        fit.stats.tau <- fit.stats.tau[order(model.stats[,1])]
       }
       bestmodels <- model.stats[1:(4*n.super.elites),]
       if (check.convergence) {
@@ -296,10 +302,12 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     }
     fit.out[datagen,] <- bestmodels[1,]
     fit.out.r[datagen,] <- fit.stats.r[1]
+    fit.out.tau[datagen,] <- fit.stats.tau[1]
     if (p.est < 1) {
-      temp.out <- gemmFit(n, betas[i,], cross.val, p)
+      temp.out <- gemmFit(n, betas[i,], cross.val, p, pearson = get.r)
       gemm.cross.out[datagen,] <- temp.out$bic
       gemm.cross.out.r[datagen,] <- temp.out$r
+      gemm.cross.out.tau[datagen,] <- temp.out$tau
     }
   }
   sim.results <- list(date = date(),
@@ -307,6 +315,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
                       coefficients = matrix(fit.out[,-1], ncol = p),
                       est.bic = fit.out[,1],
                       est.r = c(fit.out.r),
+                      est.tau = c(fit.out.tau),
                       metric.betas = metric.beta,
                       p.vals = p.vals,
                       var.name = var.name)
@@ -314,6 +323,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   if (p.est < 1) {
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
+    sim.results.cross.val.tau <- c(gemm.cross.out.tau)
   }
   if (check.convergence) {
     sim.results$converge.bic <- converge.bic
