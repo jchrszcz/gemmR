@@ -14,9 +14,8 @@
 # * summary
 # * predict?
 # * categorical predictors (probably involves using factor properly) **Joe**
-# * output tau
 ##### Bugs #####
-# * var.name not appearing in output for singple predictor cases.
+#
 ##### Ideas #####
 # * force some chains to start without seeding LS estimates to check for
 #     robustness to initial conditions?
@@ -314,15 +313,13 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   }
   sim.results <- list(date = date(),
                       call = match.call(),
-                      coefficients = matrix(fit.out[,-1], ncol = p),
+                      coefficients = matrix(fit.out[,-1], ncol = p,
+                        dimnames = list(c(), c(colnames(input.data))[-1])),
                       est.bic = fit.out[,1],
                       est.r = c(fit.out.r),
                       est.tau = c(fit.out.tau),
                       metric.betas = metric.beta,
-                      p.vals = p.vals,
-    # problem with var.name output at the moment
-                      var.name = var.name)
-  colnames(sim.results$coefficients) <- sim.results$var.name
+                      p.vals = p.vals)
   if (p.est < 1) {
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
@@ -388,6 +385,6 @@ gemm.formula <- function(formula, data=list(), ...) {
   est
 }
 
-# plot.gemm <- function(x, ...) {
-#   
-# }
+plot.gemm <- function(x, ...) {
+  
+}
