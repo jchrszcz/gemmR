@@ -319,8 +319,9 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   }
   coefficients <- matrix(fit.out[,-1], ncol = p,
     dimnames = list(c(), c(colnames(input.data))[-1]))
-  fitted.values <- coefficients[as.numeric((fit.out[,1] == 
-      min(fit.out[,1]))[1])] * input.data[,-1]
+  # this might not be the best way to calculate fitted.values
+  fitted.values <- input.data[,-1] %*% matrix(coefficients[fit.out[,1] ==
+      min(fit.out[,1])[1]], ncol = 1)
   sim.results <- list(date = date(),
                       call = match.call(),
                       coefficients = coefficients,
