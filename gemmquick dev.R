@@ -19,8 +19,7 @@
 # }
 #
 ##### TODO #####
-# * convergence (sortof done with n.data.gen, need to include some kind of
-#     output for the summary function) *Jeff*
+# * better plot function (ask argument)
 # * error messages
 # * GA optimization
 # * gemmFit optimization
@@ -30,12 +29,7 @@
 ##### Bugs #####
 #
 ##### Ideas #####
-# * force some chains to start without seeding LS estimates to check for
-#     robustness to initial conditions?
-# * record top betas for each rep, makes examining chains easier, (MDS to graph)
-# * exploratory vs. confirmatory modes (change p/k for gemmFit accordingly)
 # * posterior predictive checks
-# * should we add an ordinal effect size and output R^2?
 ################################################################################
 
 ##### Dependencies #####
@@ -195,9 +189,8 @@ gemmFit <- function(n, betas, data, p, k.cor, pearson) {
       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
     }
   }
-  k <- sum(betas != 0)
-  knp <- sin(pi/2*tau*((n-k-1)/n))
-  bic <- n * log(1 - knp ^ 2) + k * log(n)
+  knp <- sin(pi/2*tau*((n-p-1)/n))
+  bic <- n * log(1 - knp ^ 2) + k.cor * log(n)
   y <- list(bic = bic)
   if (pearson) {
     y$r <- r
@@ -324,15 +317,23 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       gemm.cross.out.tau[datagen,] <- temp.out$tau
     }
   }
+  coefficients <- matrix(fit.out[,-1], ncol = p,
+    dimnames = list(c(), c(colnames(input.data))[-1]))
+  fitted.values <- coefficients[as.numeric((fit.out[,1] == 
+      min(fit.out[,1]))[1])] * input.data[,-1]
   sim.results <- list(date = date(),
                       call = match.call(),
-                      coefficients = matrix(fit.out[,-1], ncol = p,
-                        dimnames = list(c(), c(colnames(input.data))[-1])),
+                      coefficients = coefficients,
+                      fitted.values = fitted.values,
+                      residuals = unlist(input.data[1] - fitted.values),
+                      rank.residuals = rank(input.data[1] -
+                          rank(fitted.values)),
                       est.bic = fit.out[,1],
                       est.r = c(fit.out.r),
                       est.tau = c(fit.out.tau),
                       metric.betas = metric.beta,
-                      p.vals = p.vals)
+                      p.vals = p.vals,
+                      model = data.frame(input.data))
   if (p.est < 1) {
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
@@ -341,6 +342,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   if (check.convergence) {
     sim.results$converge.bic <- converge.bic
     sim.results$converge.beta <- converge.beta
+    attr(sim.results, "converge.check") <- TRUE
   }
   if (save.results) {
     save(sim.results, file = paste(output, ".Rdata"))
@@ -399,5 +401,29 @@ gemm.formula <- function(formula, data=list(), ...) {
 }
 
 plot.gemm <- function(x, ...) {
-  
+  par(mfrow = c(1,2))
+  if (!is.null(attr(x, "converge.check"))) {
+    par(mfrow = c(1,3))
+    convergencePlot(x$converge.bic)
+  }
+  plot(rank(fitted.values(x)), rank(x$model[1]))
+  plot(fitted.values(x), unlist(x$model[1]))
+}
+
+convergencePlot <- function(beta, ...) {
+  chains <- ncol(beta)
+  max.rep <- nrow(beta)
+  xrange <- c(1, max.rep) 
+  yrange <- c(min(beta), max(beta))
+  plot(xrange, yrange, type="n", xlab = "rep #", ylab= "BIC")
+  colors <- rainbow(chains) 
+  linetype <- c(1:chains) 
+  plotchar <- seq(1:chains)
+  for (i in 1:chains) {
+    lines(1:max.rep, beta[,i], type="b", lwd=1.5,
+      lty=linetype[i], col=colors[i], pch=plotchar[i]) 
+  }  
+  title("Convergence of BICs")
+  legend(xrange[1], yrange[2], 1:chains, cex=0.8, col=colors, pch=plotchar,
+    lty=linetype, title="Chains")
 }
