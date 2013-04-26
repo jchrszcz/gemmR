@@ -19,7 +19,7 @@
 # }
 #
 ##### TODO #####
-# * better plot function (ask argument)
+# * better plot function (ask argument), figure out tie structure handling
 # * error messages
 # * GA optimization
 # * gemmFit optimization
@@ -319,15 +319,15 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   }
   coefficients <- matrix(fit.out[,-1], ncol = p,
     dimnames = list(c(), c(colnames(input.data))[-1]))
-  # this might not be the best way to calculate fitted.values
-  fitted.values <- input.data[,-1] %*% matrix(coefficients[fit.out[,1] ==
-      min(fit.out[,1])[1]], ncol = 1)
+  # bug for 1-predictor model
+  fitted.values <- input.data[,-1] %*% matrix(coefficients[as.numeric(fit.out[,1] ==
+      min(fit.out[,1]))[1],], ncol = 1)
   sim.results <- list(date = date(),
                       call = match.call(),
                       coefficients = coefficients,
                       fitted.values = fitted.values,
-                      residuals = unlist(input.data[1] - fitted.values),
-                      rank.residuals = rank(input.data[1] -
+                      residuals = unlist(input.data[,1] - fitted.values),
+                      rank.residuals = (rank(input.data[,1]) -
                           rank(fitted.values)),
                       est.bic = fit.out[,1],
                       est.r = c(fit.out.r),
@@ -407,9 +407,14 @@ plot.gemm <- function(x, ...) {
     par(mfrow = c(2,2))
     convergencePlot(x$converge.bic)
   }
-  plot(rank(fitted.values(x)), rank(x$model[1]))
-  plot(fitted.values(x), unlist(x$model[1]))
-  plot(test$rank.residuals)
+  plot(rank(fitted.values(x)), rank(x$model[1]),
+    main = "Ordinal model predictions", xlab = "Rank predictions",
+    ylab = "Rank criterion")
+  plot(fitted.values(x), unlist(x$model[1]), main = "Metric model predictions",
+    xlab = "Predictions", ylab = "Criterion")
+  plot(order(x$model[1]), x$rank.residuals[order(x$model[1])],
+    main = "Rank disparity by criterion rank",
+    xlab = "Ordered criterion", ylab = "Rank disparity")
 }
 
 convergencePlot <- function(beta, ...) {
