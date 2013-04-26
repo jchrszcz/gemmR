@@ -401,13 +401,14 @@ gemm.formula <- function(formula, data=list(), ...) {
 }
 
 plot.gemm <- function(x, ...) {
-  par(mfrow = c(1,2))
+  par(mfrow = c(1,3))
   if (!is.null(attr(x, "converge.check"))) {
-    par(mfrow = c(1,3))
+    par(mfrow = c(2,2))
     convergencePlot(x$converge.bic)
   }
   plot(rank(fitted.values(x)), rank(x$model[1]))
   plot(fitted.values(x), unlist(x$model[1]))
+  plot(test$rank.residuals)
 }
 
 convergencePlot <- function(beta, ...) {
