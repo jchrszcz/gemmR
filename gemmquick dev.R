@@ -29,26 +29,31 @@
 ##### GeMM Functions #####
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-  bestmodels, seed.metric) {
-################################################################################
-# This functions generates candidate beta weights for each predictor in the    #
-# model.                                                                       #
-#   metric.beta    - starting beta weights, generally from lm()                #
-#   n.beta         - the number of candidate betas for each n.rep. This is     #
-#                    controlled by gemmModel()                                 #
-#   n.super.elites - argument used to index a certain portion of the beta for  #
-#                    different randomization.                                  #
-#   p              - number of predictors                                      #
-#   reps           - number of replications. If >1, best beta vectors from     #
-#                    previous replication are included.                        #
-#   bestmodels     - best betas from previous replication.                     #
-#   seed.metric    - control whether lm() estimated betas seed GA. Default is  #
-#                    TRUE                                                      #
-################################################################################
-# ls would control whether to seed the betas with OLS estimates. Currently this
-# happens by default and cannot be changed outside of the function.
+                             bestmodels, seed.metric) {
+  ################################################################################
+  # This functions generates candidate beta weights for each predictor in the    #
+  # model.                                                                       #
+  #   metric.beta    - starting beta weights, generally from lm()                #
+  #   n.beta         - the number of candidate betas for each n.rep. This is     #
+  #                    controlled by gemmModel()                                 #
+  #   n.super.elites - argument used to index a certain portion of the beta for  #
+  #                    different randomization.                                  #
+  #   p              - number of predictors                                      #
+  #   reps           - number of replications. If >1, best beta vectors from     #
+  #                    previous replication are included.                        #
+  #   bestmodels     - best betas from previous replication.                     #
+  #   seed.metric    - control whether lm() estimated betas seed GA. Default is  #
+  #                    TRUE                                                      #
+  ################################################################################
+  
+  #  cat("-----metric.beta-----\n")
+  #  print(metric.beta)
+  #  cat("\n")
+  
+  # ls would control whether to seed the betas with OLS estimates. Currently this
+  # happens by default and cannot be changed outside of the function.
   if (seed.metric != TRUE) {metric.beta <- runif(p)}
-# this controls the first generation of beta generation.
+  # this controls the first generation of beta generation.
   if (reps == 1) {
     betas <- matrix(rep(0, times = n.beta * p), ncol = p)
     scaling <- sqrt(.1)
@@ -74,17 +79,22 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
         betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.5)
       }
     }
+    
+    #    cat("-----betas-----\n")
+    #    print(summary(betas))
+    #    cat("\n")
+    
     for (i in 1:n.beta) {
       if (sum(betas[i,]) == 0) {
         betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
         temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
         betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
-          1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
+                                       1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
       }
     }
   }
-# Reps > 1 do not use OLS estimates to seed the model, but do use the top 25%
-# (jcz - I think) from previous generation.
+  # Reps > 1 do not use OLS estimates to seed the model, but do use the top 25%
+  # (jcz - I think) from previous generation.
   if (reps > 1) {
     size <- dim(bestmodels)
     elites <- bestmodels
@@ -114,9 +124,9 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
         }
         if (k < p) {
           new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,1:k],
-            temp.betas.b[parent.2, ((k+1):p)]))
+                                     temp.betas.b[parent.2, ((k+1):p)]))
           new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,1:k],
-            temp.betas.a[parent.2, ((k+1):p)]))
+                                     temp.betas.a[parent.2, ((k+1):p)]))
         }
       }
       if (temp.rand[i] >= .85) {
@@ -129,54 +139,54 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
     for (i in 1:p) {
       new.X1[,i] <- ifelse(temp.rand[,i] < .01, temp.rand[,(i + p)], new.X1[,i])
       new.X2[,i] <- ifelse(temp.rand.2[,i] < .01,
-        temp.rand.2[,(i + p)], new.X2[,i])
+                           temp.rand.2[,(i + p)], new.X2[,i])
     }
     super.elites <- super.elites[,-1]
     betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
   }
-# turn half of all candidate betas negative
-#   temp.rand <- rbinom(prod(dim(betas)), 1, .5)
-#   temp.rand[temp.rand == 0] <- -1
-#   temp.rand <- matrix(temp.rand, ncol = ncol(betas))
-#   betas <- betas * temp.rand
+  # turn half of all candidate betas negative
+  #   temp.rand <- rbinom(prod(dim(betas)), 1, .5)
+  #   temp.rand[temp.rand == 0] <- -1
+  #   temp.rand <- matrix(temp.rand, ncol = ncol(betas))
+  #   betas <- betas * temp.rand
   y <- betas[1:n.beta,]
   return(y)
 }
 
 gemmFit <- function(n, betas, data, p, k.cor, pearson) {
-################################################################################
-# Function generates model estimates based on sets of weights and predictors,  #
-# calculates Kendall's tau between dependent variable and model predictions.   #
-#   n     - number of betas for which fit statistics will be calculated.       #
-#   betas - matrix of betas, rows are different collections of betas, columns  #
-#           are different predictors.                                          #
-#   data  - original predictors and outcome used to calculate fit.             #
-#   p     - number of predictors.                                              #
-#                                                                              #
-#  NOTE: k or p for tau transformation needs to be solved.                     #
-################################################################################
-# null models are common, these lines return 0 for both fit metrics when all
-# betas are 0.
+  ################################################################################
+  # Function generates model estimates based on sets of weights and predictors,  #
+  # calculates Kendall's tau between dependent variable and model predictions.   #
+  #   n     - number of betas for which fit statistics will be calculated.       #
+  #   betas - matrix of betas, rows are different collections of betas, columns  #
+  #           are different predictors.                                          #
+  #   data  - original predictors and outcome used to calculate fit.             #
+  #   p     - number of predictors.                                              #
+  #                                                                              #
+  #  NOTE: k or p for tau transformation needs to be solved.                     #
+  ################################################################################
+  # null models are common, these lines return 0 for both fit metrics when all
+  # betas are 0.
   if (sum(betas == 0) == p) {
     tau <- 0
     r <- 0
   }
-# non-null models trigger these lines of code, which produce the summed products
-# of weights and predictors, return the correlation coefficient between those
-# predictions and the predicted variable.
+  # non-null models trigger these lines of code, which produce the summed products
+  # of weights and predictors, return the correlation coefficient between those
+  # predictions and the predicted variable.
   if (sum(betas == 0) != p) {
     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-      method = "kendall")
+               method = "kendall")
     if (pearson) {
       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
     }
   }
-# this might cause problems, reverses the scale for any negative correlations
-# and recalculates fit. Might be able to just multiply by -1?
+  # this might cause problems, reverses the scale for any negative correlations
+  # and recalculates fit. Might be able to just multiply by -1?
   if (tau < 0) {
     betas <- betas * -1
     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-      method = "kendall")
+               method = "kendall")
     if (pearson) {
       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
     }
@@ -193,44 +203,53 @@ gemmFit <- function(n, betas, data, p, k.cor, pearson) {
 }
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
-  n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
-  seed.metric = TRUE, check.convergence = FALSE) {
-################################################################################
-# Function controls the GeMM process. Takes data and, over successive          #
-# replications, uses geneticAlgorithm to generate candidate beta vectors,      #
-# calculates ordinal model fit using these betas, and produces an output that  #
-# reports weights and fit statistics for best models at each generation,       #
-# (optionally, for cross-validation as well).                                  #
-#   input.data  - must be data frame, first column is treated as dependent     #
-#                 variable.                                                    #
-#   output      - string argument for use in naming file output. gemmModel     #
-#                 writes a .RData file in the current working directory each   #
-#                 time the function is called.                                 #
-#   n.beta      - Number of beta vectors to generate per replication. Default  #
-#                 is 2000.                                                     #
-#   p.est       - Percept of data used to estimate the model. Default is 1,    #
-#                 values less than 1 will cause gemmModel to produce           #
-#                 cross-validation estimates.                                  #
-#   n.data.gen  - Number of times the entire GeMM process will be repeated,    #
-#                 due for removal.                                             #
-#   n.reps      - Number of replications, default is 10.                       #
-#   k.pen       - additional penalty to BIC for including, NA by default.      # 
-#   seed.metric - control whether lm() estimated betas seed GA. Default is     #
-#                 TRUE                                                         #
-################################################################################
+                    n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
+                    seed.metric = TRUE, check.convergence = FALSE) {
+  ################################################################################
+  # Function controls the GeMM process. Takes data and, over successive          #
+  # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
+  # calculates ordinal model fit using these betas, and produces an output that  #
+  # reports weights and fit statistics for best models at each generation,       #
+  # (optionally, for cross-validation as well).                                  #
+  #   input.data  - must be data frame, first column is treated as dependent     #
+  #                 variable.                                                    #
+  #   output      - string argument for use in naming file output. gemmModel     #
+  #                 writes a .RData file in the current working directory each   #
+  #                 time the function is called.                                 #
+  #   n.beta      - Number of beta vectors to generate per replication. Default  #
+  #                 is 2000.                                                     #
+  #   p.est       - Percept of data used to estimate the model. Default is 1,    #
+  #                 values less than 1 will cause gemmModel to produce           #
+  #                 cross-validation estimates.                                  #
+  #   n.data.gen  - Number of times the entire GeMM process will be repeated,    #
+  #                 due for removal.                                             #
+  #   n.reps      - Number of replications, default is 10.                       #
+  #   k.pen       - additional penalty to BIC for including, NA by default.      # 
+  #   seed.metric - control whether lm() estimated betas seed GA. Default is     #
+  #                 TRUE                                                         #
+  ################################################################################
+  
+  #input.data <- cbind(y,x)
+  
+  #  cat("-----gemmEst-----\n")                  
+  
+  
   bestmodels <- c()
   var.name <- colnames(input.data[,-1])
+  
+  #  cat("-----variables-----\n",var.name,"\n")
+  
   n.super.elites <- round(n.beta/16)
   fit.out <- matrix(rep(0, times = n.data.gen * (dim(input.data)[2])),
-    nrow = n.data.gen)
+                    nrow = n.data.gen)
   fit.out.r <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
   fit.out.tau <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
   if (check.convergence) {
     converge.bic <- matrix(rep(0, times = (n.reps * n.data.gen)),
-      ncol = n.data.gen)
+                           ncol = n.data.gen)
     converge.beta <- matrix(rep(0,
-      times = (n.reps * n.data.gen * (dim(input.data)[2] - 1))),
-      ncol = (dim(input.data)[2] - 1))
+                                times = (n.reps * n.data.gen * (dim(input.data)[2] - 1))),
+                            ncol = (dim(input.data)[2] - 1))
   }
   if (p.est < 1) {
     gemm.cross.out <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
@@ -263,22 +282,32 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       if (reps == n.reps) {
         get.r <- TRUE
       }
-# beta generation here
+      # beta generation here
       betas <- geneticAlgorithm(metric.beta, n.beta, n.super.elites, p, reps,
-        bestmodels, seed.metric)
+                                bestmodels, seed.metric)
       betas <- as.matrix(betas)
-# calculate penalized k for interactions
+      
+      #     cat("-----Calculate kCorFact----\n")
+      
+      # calculate penalized k for interactions
       k.cor <- rep(1, times = nrow(betas))
+      
       if (!is.null(dim(k.pen))) {
         k.cor <- kCorFact(k.pen, betas)
         k.cor <- matrix(k.cor, ncol = 1)
-      }
+      } 
+      
+      
+      
+      #k.cor<-3
+      
+      
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
       if (get.r) {
         fit.stats.r <- fit.stats
         fit.stats.tau <- fit.stats
       }
-# this loop calculates fit. Could be optimized.
+      # this loop calculates fit. Could be optimized.
       for (i in 1:dim(betas)[1]) {
         gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i], pearson = get.r)
         fit.stats[i,] <- gemm.fit.out$bic
@@ -336,15 +365,14 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
 }
 
 kCorFact <- function(k.pen, beta.vecs) {
-################################################################################
-# Computes the correctd k for interaction terms. Returns a vector.             #
-#   k.pen     - factor matrix from model.frame called in gemm.formula.         #
-#   beta.vecs - matrix of beta vectors produced by geneticAlgorithm.           #
-################################################################################
-  k <- dim(k.pen)[2]
-  factors <- log2(k+1)
-  levels <- rbind(k.pen, diag(k)[(factors+1):k,])
-  return(apply(beta.vecs,1, function(x) sum(levels%*%x!=0)))
+  ################################################################################
+  # Computes the correctd k for interaction terms. Returns a vector.             #
+  #   k.pen     - factor matrix from model.frame called in gemm.formula.         #
+  #   beta.vecs - matrix of beta vectors produced by geneticAlgorithm.           #
+  ################################################################################
+  
+  return(apply(beta.vecs,1, function(x) sum(as.matrix(k.pen)%*%x!=0)))
+  
 }
 ################################################################################
 
@@ -366,19 +394,59 @@ print.gemm <- function(x, ...) {
   print(x$est.bic)
 }
 
+formula <- mod
+data <- data.frame(model.matrix(formula))
+
 gemm.formula <- function(formula, data=list(), ...) {
+  
   mf <- model.frame(formula=formula, data=data)
-  # removes the intercept column (intercept isn't meaningful)
-  if (attributes(attributes(mf)$terms)$intercept == 1) {
-    attributes(attributes(mf)$terms)$intercept <- 0
-  }
-  # retains factor matrix if any interactions are in the model, (necessary for
-  #   correctly penalizing BIC)
-  if (sum(attributes(attributes(mf)$terms)$order) >= 1) {
-    k.pen <- attributes(attributes(mf)$terms)$factor[-1,]
-  }
-  x <- model.matrix(attr(mf, "terms"), data=mf)
+  
+  x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
   y <- model.response(mf)
+  
+  #main effect variables
+  me <- attributes(attributes(mf)$terms)$term.labels[attributes(attributes(mf)$terms)$order==1]
+  mm <- model.matrix(attr(mf, "terms"), data=mf)
+  
+  #full combination of variables/factors
+  count <- 0
+  for (var in me) {
+    if(is.factor(mf[,var])) {
+      count <- count + length(levels(mf[,var]))-1
+    } else {
+      count = count +1
+    }
+  }
+  
+  #identity matrix for all combinations
+  lst <- list(NULL)
+  for(i in 1:count) {
+    lst[[i]] <- c(0,1)  
+  }
+  lst <- t(expand.grid(lst))[,-1]
+  lst <- lst[,order(colSums(lst))]
+  rownames(lst) <- attributes(mm)$dimnames[[2]][-1][!grepl(":",attributes(mm)$dimnames[[2]][-1])]
+  lst <- data.frame(lst)
+  lst$assign <- attributes(mm)$assign[-1][1:count]
+  
+  #remove columns with within factor comparisons
+  tmp <- rep(TRUE, times=dim(lst)[2])
+  for (i in 1 : max(lst$assign)) {
+    tmp2 <- colSums(lst[lst$assign==i,])<2
+    tmp <- ifelse(tmp==tmp2 & tmp2==TRUE,TRUE,FALSE)
+  }
+  lst <- lst[,order(colSums(lst))]
+  k.pen <- lst[,tmp==TRUE]
+  tmp <- diag(dim(k.pen)[2])[(dim(k.pen)[1]+1):dim(k.pen)[2],]
+  
+  # stupid R kludge
+  if(!is.null(dim(tmp))) {
+    colnames(tmp) <- colnames(k.pen)
+  }
+  
+  k.pen <- rbind(k.pen, tmp)
+  
+  
   est <- gemm.default(cbind(y, x), k.pen = k.pen, ...)
   est$call <- match.call()
   est$formula <- formula
