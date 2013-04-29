@@ -229,9 +229,9 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   #                 TRUE                                                         #
   ################################################################################
   
-  #input.data <- cbind(y,x)
+  input.data <- cbind(y,x)
   
-  #  cat("-----gemmEst-----\n")                  
+  cat("-----gemmEst-----\n")                  
   
   
   bestmodels <- c()
@@ -394,8 +394,19 @@ print.gemm <- function(x, ...) {
   print(x$est.bic)
 }
 
-formula <- mod
-data <- data.frame(model.matrix(formula))
+
+# a <- rnorm(100)
+# b <- rnorm(100)
+# y <- a + b + a*b + rnorm(100)
+# mod <- y~a+b
+# formula <- mod
+# data <- data.frame(model.matrix(formula))
+
+# weight <- ChickWeight$weight
+# time <- ChickWeight$Time
+# diet <- ChickWeight$Diet
+# formula <- weight~time*diet
+# data <- data.frame(model.matrix(formula))
 
 gemm.formula <- function(formula, data=list(), ...) {
   
@@ -407,6 +418,26 @@ gemm.formula <- function(formula, data=list(), ...) {
   #main effect variables
   me <- attributes(attributes(mf)$terms)$term.labels[attributes(attributes(mf)$terms)$order==1]
   mm <- model.matrix(attr(mf, "terms"), data=mf)
+  
+  fmla <- as.formula(paste("y ~ ", paste(me, collapse= "*")))
+  
+  #names ... jazus mary and joseph...
+  names <- data.frame(var=names(mf)[-1])
+  names$cnt.betas <- apply(names,1,function(x) ifelse(is.factor(mf[,x]),length(levels(mf[,x]))-1,1))
+  vars <- apply(names,1,function(x) if(x[2]==1) {x[1]} else {paste(x[1],1:x[2],sep="")} )
+  vars <- lapply(vars,function(x)c("",x))
+  mat <- t(unique(expand.grid(vars)))
+  names <- apply(mat,2,function(x) paste(x, collapse=':'))
+  names <- sub('::', ':', names)  
+  names <- sub(':$', '', names)
+  names <- sub('^:', '', names)[-1]
+    
+    
+  #names.betas.all <- attr(terms(fmla),"term.labels")
+  names.betas.all <- names
+  names.betas.in.model <- attr(terms(mf),"term.labels")
+  
+  #betas.in.model <- attributes(attributes(mf)$terms)$term.labels
   
   #full combination of variables/factors
   count <- 0
@@ -424,8 +455,19 @@ gemm.formula <- function(formula, data=list(), ...) {
     lst[[i]] <- c(0,1)  
   }
   lst <- t(expand.grid(lst))[,-1]
-  lst <- lst[,order(colSums(lst))]
-  rownames(lst) <- attributes(mm)$dimnames[[2]][-1][!grepl(":",attributes(mm)$dimnames[[2]][-1])]
+
+  #lst <- lst[,order(colSums(lst))]
+  
+  
+  
+  
+  
+#  lst <- lst[,names.betas.all%in%names.betas.in.model]
+  
+  #rownames(lst) <- names.betas.all
+  #rownames(lst) <- attributes(mm)$dimnames[[2]][-1][!grepl(":",attributes(mm)$dimnames[[2]][-1])]
+  
+  
   lst <- data.frame(lst)
   lst$assign <- attributes(mm)$assign[-1][1:count]
   
@@ -435,17 +477,93 @@ gemm.formula <- function(formula, data=list(), ...) {
     tmp2 <- colSums(lst[lst$assign==i,])<2
     tmp <- ifelse(tmp==tmp2 & tmp2==TRUE,TRUE,FALSE)
   }
-  lst <- lst[,order(colSums(lst))]
+  #lst <- lst[,order(colSums(lst))]
   k.pen <- lst[,tmp==TRUE]
-  tmp <- diag(dim(k.pen)[2])[(dim(k.pen)[1]+1):dim(k.pen)[2],]
   
-  # stupid R kludge
-  if(!is.null(dim(tmp))) {
-    colnames(tmp) <- colnames(k.pen)
+  
+  colnames(k.pen) <- names.betas.all
+  
+  
+  #k.pen
+  #names.betas.in.model
+
+  # Select Main Effects
+  
+  grep.str <- ""
+  for (tmp in me) {
+    grep.str <- paste(grep.str,"^",tmp,"([0-9]|)$|",sep="")  
+  }
+  grep.str <- substr(grep.str, 1, nchar(grep.str)-1)
+  keep <- grepl(grep.str,  names.betas.all)
+  
+  # Select interactions 
+  interactions <- names.betas.in.model[grepl(":",names.betas.in.model)]
+  search.terms <- strsplit(interactions,":")
+  
+  #t(sapply(search.terms[[1]], grepl, names, ignore.case=TRUE))
+  keep <-  rbind(keep,laply(search.terms, function(x) !!((aaply(t(sapply(x, grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))))
+  keep <- ifelse(aaply(keep,2,sum)>0,T,F)
+  
+  
+  #tmp[[1]] = rbind(tmp[[1]],tmp[[1]])
+  #keep <- lapply(search.terms, function(x) !(aaply(t(sapply(x, grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
+  
+  k.pen <- k.pen[,keep]
+  k.pen <- k.pen[,order(colSums(k.pen))]
+  
+  #!(aaply(t(sapply(search.terms[[1]], grepl, names, ignore.case=TRUE)),2,prod))
+  
+  
+  #  !(aaply(t(sapply(search.terms[[1]], grepl, names, ignore.case=TRUE)),2,prod))
+  
+  
+  
+#  aaply(t(sapply(c("time","diet"), grepl, names, ignore.case=TRUE)),2,prod)
+  
+#  k.pen[,bleh]
+#  k.pen[,colnames(k.pen)%in%names.betas.in.model]
+  
+  
+  
+#  k.pen[,colnames(k.pen)%in%names.betas.in.model]
+  
+  
+  
+  
+  
+  #blah
+  #term1 <- "time:diet2:c2"
+  #term2 <- "die2:time:c3"
+  #terms <- c(term1,term2)
+  
+  #names
+  #bleh <- !(aaply(t(sapply(c("diet","time"), grepl, names, ignore.case=TRUE)),2,prod))
+  #bleh <- !(aaply(bleh,2,prod))
+  #names[bleh]
+  
+  
+  
+  
+  #grepl("*time.*diet",term1)
+  #grepl("*time.*diet",term2)
+  
+  #halb
+  
+  #names.betas.in.model%in%colnames(k.pen)
+  
+  if(dim(k.pen)[1]!=dim(k.pen)[2]) {
+    tmp <- diag(dim(k.pen)[2])[(dim(k.pen)[1]+1):dim(k.pen)[2],]
+    
+    # stupid R kludge
+    if(!is.null(dim(tmp))) {
+      colnames(tmp) <- colnames(k.pen)
+    }
+    
+    k.pen <- rbind(k.pen, tmp)
+    
   }
   
-  k.pen <- rbind(k.pen, tmp)
-  
+    
   
   est <- gemm.default(cbind(y, x), k.pen = k.pen, ...)
   est$call <- match.call()

@@ -370,22 +370,9 @@ kCorFact <- function(k.pen, beta.vecs) {
 #   k.pen     - factor matrix from model.frame called in gemm.formula.         #
 #   beta.vecs - matrix of beta vectors produced by geneticAlgorithm.           #
 ################################################################################
-  #k <- dim(k.pen)[2]
-  #factors <- log2(k+1)  
-  #levels <- rbind(k.pen, diag(k)[(factors+1):k,])
-#levels <- k.pen
-#write.csv(beta.vecs,"blah")
-#beta.vecs <- read.csv("blah")
-
-#summary(k.pen)
-#summary(beta.vecs)
-#vec <- beta.vecs[1,]
-
-
-#as.matrix(vec)[-1]%*%as.matrix(k.pen)
 
 return(apply(beta.vecs,1, function(x) sum(as.matrix(k.pen)%*%x!=0)))
-#return(apply(beta.vecs,1, function(x) sum(levels%*%x!=0)))
+
 }
 ################################################################################
 
