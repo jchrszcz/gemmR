@@ -5,31 +5,23 @@
 # An R implementation of the General Monotone Model, (Dougherty & Thomas, 2012),
 # with some improvements.
 #
-# Please cite:
-#
-# @article{dougherty2012robust,
-#   title={Robust decision making in a nonlinear world},
-#   author={Dougherty, Michael R and Thomas, Rick P},
-#   journal={Psychological Review},
-#   volume={119},
-#   number={2},
-#   pages={321--344},
-#   year={2012},
-#   publisher={American Psychological Association},
-# }
-#
 ##### TODO #####
-# * better plot function (ask argument), figure out tie structure handling
+# * convergence (sortof done with n.data.gen, need to include some kind of
+#     output for the summary function) *Jeff*
 # * error messages
 # * GA optimization
 # * gemmFit optimization
 # * summary
 # * predict?
-# * one-predictor models (gemm.formula)
-##### Bugs #####
-#
+# * categorical predictors (probably involves using factor properly) **Joe**
+# * output tau
 ##### Ideas #####
+# * force some chains to start without seeding LS estimates to check for
+#     robustness to initial conditions?
+# * record top betas for each rep, makes examining chains easier, (MDS to graph)
+# * exploratory vs. confirmatory modes (change p/k for gemmFit accordingly)
 # * posterior predictive checks
+# * should we add an ordinal effect size and output R^2?
 ################################################################################
 
 ##### Dependencies #####
@@ -37,7 +29,7 @@
 ##### GeMM Functions #####
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-  bestmodels, seed.metric) {
+                             bestmodels, seed.metric) {
   ################################################################################
   # This functions generates candidate beta weights for each predictor in the    #
   # model.                                                                       #
@@ -53,6 +45,11 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
   #   seed.metric    - control whether lm() estimated betas seed GA. Default is  #
   #                    TRUE                                                      #
   ################################################################################
+  
+  #  cat("-----metric.beta-----\n")
+  #  print(metric.beta)
+  #  cat("\n")
+  
   # ls would control whether to seed the betas with OLS estimates. Currently this
   # happens by default and cannot be changed outside of the function.
   if (seed.metric != TRUE) {metric.beta <- runif(p)}
@@ -78,16 +75,21 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
       }
       if (i >= 6000) {
         betas[i,] <- ifelse(temp.rand < .25, 1, ifelse(temp.rand > .75, -1,
-          temp.rand))
+                                                       temp.rand))
         betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.5)
       }
     }
+    
+    #    cat("-----betas-----\n")
+    #    print(summary(betas))
+    #    cat("\n")
+    
     for (i in 1:n.beta) {
       if (sum(betas[i,]) == 0) {
         betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
         temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
         betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
-          1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
+                                       1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
       }
     }
   }
@@ -122,9 +124,9 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
         }
         if (k < p) {
           new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,1:k],
-            temp.betas.b[parent.2, ((k+1):p)]))
+                                     temp.betas.b[parent.2, ((k+1):p)]))
           new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,1:k],
-            temp.betas.a[parent.2, ((k+1):p)]))
+                                     temp.betas.a[parent.2, ((k+1):p)]))
         }
       }
       if (temp.rand[i] >= .85) {
@@ -137,7 +139,7 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
     for (i in 1:p) {
       new.X1[,i] <- ifelse(temp.rand[,i] < .01, temp.rand[,(i + p)], new.X1[,i])
       new.X2[,i] <- ifelse(temp.rand.2[,i] < .01,
-        temp.rand.2[,(i + p)], new.X2[,i])
+                           temp.rand.2[,(i + p)], new.X2[,i])
     }
     super.elites <- super.elites[,-1]
     betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
@@ -174,7 +176,7 @@ gemmFit <- function(n, betas, data, p, k.cor, pearson) {
   # predictions and the predicted variable.
   if (sum(betas == 0) != p) {
     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-      method = "kendall")
+               method = "kendall")
     if (pearson) {
       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
     }
@@ -184,13 +186,14 @@ gemmFit <- function(n, betas, data, p, k.cor, pearson) {
   if (tau < 0) {
     betas <- betas * -1
     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-      method = "kendall")
+               method = "kendall")
     if (pearson) {
       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
     }
   }
-  knp <- sin(pi/2*tau*((n-p-1)/n))
-  bic <- n * log(1 - knp ^ 2) + k.cor * log(n)
+  k <- sum(betas != 0)
+  knp <- sin(pi/2*tau*((n-k-1)/n))
+  bic <- n * log(1 - knp ^ 2) + k * log(n)
   y <- list(bic = bic)
   if (pearson) {
     y$r <- r
@@ -200,8 +203,8 @@ gemmFit <- function(n, betas, data, p, k.cor, pearson) {
 }
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
-  n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
-  seed.metric = TRUE, check.convergence = FALSE) {
+                    n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
+                    seed.metric = TRUE, check.convergence = FALSE) {
   ################################################################################
   # Function controls the GeMM process. Takes data and, over successive          #
   # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
@@ -225,19 +228,28 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   #   seed.metric - control whether lm() estimated betas seed GA. Default is     #
   #                 TRUE                                                         #
   ################################################################################
+  
+  #input.data <- cbind(y,x)
+  
+  #cat("-----gemmEst-----\n")                  
+  
+  
   bestmodels <- c()
   var.name <- colnames(input.data[,-1])
+  
+  #  cat("-----variables-----\n",var.name,"\n")
+  
   n.super.elites <- round(n.beta/16)
   fit.out <- matrix(rep(0, times = n.data.gen * (dim(input.data)[2])),
-    nrow = n.data.gen)
+                    nrow = n.data.gen)
   fit.out.r <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
   fit.out.tau <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
   if (check.convergence) {
     converge.bic <- matrix(rep(0, times = (n.reps * n.data.gen)),
-      ncol = n.data.gen)
+                           ncol = n.data.gen)
     converge.beta <- matrix(rep(0,
-      times = (n.reps * n.data.gen * (dim(input.data)[2] - 1))),
-      ncol = (dim(input.data)[2] - 1))
+                                times = (n.reps * n.data.gen * (dim(input.data)[2] - 1))),
+                            ncol = (dim(input.data)[2] - 1))
   }
   if (p.est < 1) {
     gemm.cross.out <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
@@ -272,14 +284,24 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       }
       # beta generation here
       betas <- geneticAlgorithm(metric.beta, n.beta, n.super.elites, p, reps,
-        bestmodels, seed.metric)
+                                bestmodels, seed.metric)
       betas <- as.matrix(betas)
+      
+      #     cat("-----Calculate kCorFact----\n")
+      
       # calculate penalized k for interactions
       k.cor <- rep(1, times = nrow(betas))
+      
       if (!is.null(dim(k.pen))) {
         k.cor <- kCorFact(k.pen, betas)
         k.cor <- matrix(k.cor, ncol = 1)
-      }
+      } 
+      
+      
+      
+      #k.cor<-3
+      
+      
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
       if (get.r) {
         fit.stats.r <- fit.stats
@@ -287,8 +309,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       }
       # this loop calculates fit. Could be optimized.
       for (i in 1:dim(betas)[1]) {
-        gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i],
-          pearson = get.r)
+        gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i], pearson = get.r)
         fit.stats[i,] <- gemm.fit.out$bic
         if (get.r) {
           fit.stats.r[i,] <- gemm.fit.out$r
@@ -318,24 +339,16 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       gemm.cross.out.tau[datagen,] <- temp.out$tau
     }
   }
-  coefficients <- matrix(fit.out[,-1], ncol = p,
-    dimnames = list(c(), c(colnames(input.data))[-1]))
-  # bug for 1-predictor model
-  fitted.values <- input.data[,-1] %*% matrix(coefficients[fit.out[,1] ==
-      min(fit.out[,1])[1],], ncol = 1)
   sim.results <- list(date = date(),
-    call = match.call(),
-    coefficients = coefficients,
-    fitted.values = fitted.values,
-    residuals = unlist(input.data[,1] - fitted.values),
-    rank.residuals = (rank(input.data[,1]) -
-        rank(fitted.values)),
-    est.bic = fit.out[,1],
-    est.r = c(fit.out.r),
-    est.tau = c(fit.out.tau),
-    metric.betas = metric.beta,
-    p.vals = p.vals,
-    model = data.frame(input.data))
+                      call = match.call(),
+                      coefficients = matrix(fit.out[,-1], ncol = p),
+                      est.bic = fit.out[,1],
+                      est.r = c(fit.out.r),
+                      est.tau = c(fit.out.tau),
+                      metric.betas = metric.beta,
+                      p.vals = p.vals,
+                      var.name = var.name)
+  colnames(sim.results$coefficients) <- sim.results$var.name
   if (p.est < 1) {
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
@@ -344,7 +357,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   if (check.convergence) {
     sim.results$converge.bic <- converge.bic
     sim.results$converge.beta <- converge.beta
-    attr(sim.results, "converge.check") <- TRUE
   }
   if (save.results) {
     save(sim.results, file = paste(output, ".Rdata"))
@@ -352,15 +364,17 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   return(sim.results)
 }
 
+
 kCorFact <- function(k.pen, beta.vecs) {
   ################################################################################
   # Computes the correctd k for interaction terms. Returns a vector.             #
   #   k.pen     - factor matrix from model.frame called in gemm.formula.         #
   #   beta.vecs - matrix of beta vectors produced by geneticAlgorithm.           #
   ################################################################################
+  
   return(apply(beta.vecs,1, function(x) sum(as.matrix(k.pen)%*%x!=0)))
+  
 }
-
 ################################################################################
 
 ##### Package functions #####
@@ -382,112 +396,120 @@ print.gemm <- function(x, ...) {
 }
 
 gemm.formula <- function(formula, data=list(), ...) {
-  mf <- model.frame(formula=formula, data=data)
   
+  mf <- model.frame(formula=formula, data=data)
   x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
   y <- model.response(mf)
   #main effect variables
-  me <- attributes(attributes(mf)$terms)$term.labels[
-    attributes(attributes(mf)$terms)$order==1]
+  me <- attributes(attributes(mf)$terms)$term.labels[attributes(attributes(mf)$terms)$order==1]
   mm <- model.matrix(attr(mf, "terms"), data=mf)
   fmla <- as.formula(paste("y ~ ", paste(me, collapse= "*")))
-  
+
   #names 
   names <- data.frame(var=names(mf)[-1])
-  names$cnt.betas <- apply(names,1,function(x) ifelse(is.factor(mf[,x]),
-    length(levels(mf[,x]))-1,1))
-  vars <- apply(names,1,function(x) if(x[2]==1) {x[1]} else {paste(x[1],
-    1:x[2],sep="")} )
-  vars <- lapply(vars,function(x)c("",x))
-  mat <- t(unique(expand.grid(vars)))
+  names$cnt.betas <- apply(names,1,function(x) ifelse(is.factor(mf[,x]),length(levels(mf[,x]))-1,1))
+  vars <- apply(names,1,function(x) if(x[2]==1) {x[1]} else {paste(x[1],1:x[2],sep="")} )
   
-  names <- apply(mat,2,function(x) paste(x, collapse=':'))
+  if(dim(names)[1]==1) {
+    names = as.vector(vars)
+  } else {
   
-  while (length(grep("::",names))>0) {  
-    names <- sub("::",':',names)
+    vars <- lapply(vars,function(x)c("",x))
+    mat <- t(unique(expand.grid(vars)))
+    
+    names <- apply(mat,2,function(x) paste(x, collapse=':'))
+  
+    while (length(grep("::",names))>0) {  
+          names <- sub("::",':',names)
+    }
+    names <- sub(':$', '', names)
+    names <- sub('^:', '', names)[-1]
+    
   }
-  names <- sub(':$', '', names)
-  names <- sub('^:', '', names)[-1]
-  
-  
   #names.betas.all <- attr(terms(fmla),"term.labels")
   names.betas.all <- names
   names.betas.in.model <- attr(terms(mf),"term.labels")
   
-  #full combination of variables/factors
-  count <- 0
-  for (var in me) {
-    if(is.factor(mf[,var])) {
-      count <- count + length(levels(mf[,var]))-1
-    } else {
-      count = count +1
-    }
-  }
-  
-  lst <- list(NULL)
-  for (i in 1:count) {
-    lst[[i]] <- c(0,1)
-  }
-  
-  lst <- t(expand.grid(lst))[,-1]
-  
-  lst <- data.frame(lst)
-  lst$assign <- attributes(mm)$assign[-1][1:count]
-  
-  #remove columns with within factor comparisons
-  tmp <- rep(TRUE, times=dim(lst)[2])
-  for (i in 1 : max(lst$assign)) {
-    tmp2 <- colSums(lst[lst$assign==i,])<2
-    tmp <- ifelse(tmp==tmp2 & tmp2==TRUE,TRUE,FALSE)
-  }
-  k.pen <- lst[,tmp==TRUE]
-  
-  colnames(k.pen) <- names.betas.all
-  
-  # Select Main Effects
-  grep.str <- ""
-  for (tmp in me) {
-    grep.str <- paste(grep.str,"^",tmp,"([0-9]|)$|",sep="")  
-  }
-  grep.str <- substr(grep.str, 1, nchar(grep.str)-1)
-  keep.main <- grepl(grep.str,  names.betas.all)
-  keep <- matrix(keep.main,ncol=length(keep.main))
-  
-  # Select interactions 
-  interactions <- names.betas.in.model[grepl(":",names.betas.in.model)]
-  search.terms <- strsplit(interactions,":")
-  
-  if (length(search.terms)>0) {
-    keep.tmp <- matrix(ncol=dim(k.pen)[2],nrow=length(search.terms))
-    keep.tmp[1,] <- F
+  #skip if only 1 predictor
+  if(length(names.betas.all)>1) {
     
-    for (i in 1:length(search.terms)) {
-      tmp1 <- !!((aaply(t(sapply(search.terms[[i]], grepl, colnames(k.pen),
-        ignore.case=TRUE)),2,prod)))
-      tmp2 <- laply(strsplit(colnames(k.pen),":"),
-        function(x) length(x) == length(search.terms[[i]]))
-      keep.tmp[i,] <- tmp1*tmp2
-    }
-    keep <- rbind(keep.main,keep.tmp)
-  }
-  
-  keep <- ifelse(apply(keep,2,sum)>0,T,F)
-  
-  k.pen <- k.pen[,keep]
-  k.pen <- k.pen[,order(colSums(k.pen))]
-  
-  if(dim(k.pen)[1]!=dim(k.pen)[2]) {
-    tmp <- diag(dim(k.pen)[2])[(dim(k.pen)[1]+1):dim(k.pen)[2],]
-    
-    # stupid R kludge
-    if(!is.null(dim(tmp))) {
-      colnames(tmp) <- colnames(k.pen)
+    #full combination of variables/factors
+    count <- 0
+    for (var in me) {
+      if(is.factor(mf[,var])) {
+        count <- count + length(levels(mf[,var]))-1
+      } else {
+        count = count +1
+      }
     }
     
-    k.pen <- rbind(k.pen, tmp)
+    #identity matrix for all combinations
+    lst <- list(NULL)
+    for(i in 1:count) {
+      lst[[i]] <- c(0,1)  
+    }
+    lst <- t(expand.grid(lst))[,-1]
     
-  }
+    lst <- data.frame(lst)
+    lst$assign <- attributes(mm)$assign[-1][1:count]
+    
+    #remove columns with within factor comparisons
+    tmp <- rep(TRUE, times=dim(lst)[2])
+    
+    for (i in 1 : max(lst$assign)) {
+      tmp2 <- colSums(lst[lst$assign==i,])<2
+      tmp <- ifelse(tmp==tmp2 & tmp2==TRUE,TRUE,FALSE)
+    }
+    k.pen <- lst[,tmp==TRUE]
   
+    colnames(k.pen) <- names.betas.all
+    
+    # Select Main Effects
+    grep.str <- ""
+    for (tmp in me) {
+      grep.str <- paste(grep.str,"^",tmp,"([0-9]|)$|",sep="")  
+    }
+    grep.str <- substr(grep.str, 1, nchar(grep.str)-1)
+    keep.main <- grepl(grep.str,  names.betas.all)
+    keep <- matrix(keep.main,ncol=length(keep.main))
+      
+    # Select interactions 
+    interactions <- names.betas.in.model[grepl(":",names.betas.in.model)]
+    search.terms <- strsplit(interactions,":")
+    
+    if (length(search.terms)>0) {
+      keep.tmp <- matrix(ncol=dim(k.pen)[2],nrow=length(search.terms))
+      keep.tmp[1,] <- F
+          
+      for (i in 1:length(search.terms)) {
+        tmp1 <- !!((apply(t(sapply(search.terms[[i]], grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
+        tmp2 <- unlist(lapply(strsplit(colnames(k.pen),":"),function(x) length(x) == length(search.terms[[i]])))
+        keep.tmp[i,] <- tmp1*tmp2
+      }
+      keep <- rbind(keep.main,keep.tmp)
+    }
+      
+    keep <- ifelse(apply(keep,2,sum)>0,T,F)
+    
+    k.pen <- k.pen[,keep]
+    k.pen <- k.pen[,order(colSums(k.pen))]
+    
+    if(dim(k.pen)[1]!=dim(k.pen)[2]) {
+      tmp <- diag(dim(k.pen)[2])[(dim(k.pen)[1]+1):dim(k.pen)[2],]
+      
+      # stupid R kludge
+      if(!is.null(dim(tmp))) {
+        colnames(tmp) <- colnames(k.pen)
+      }
+      
+      k.pen <- rbind(k.pen, tmp)
+      
+    }
+  } else {
+      k.pen <- matrix(1,ncol=1)
+      colnames(k.pen) <- names
+  }
+    
   est <- gemm.default(cbind(y, x), k.pen = k.pen, ...)
   est$call <- match.call()
   est$formula <- formula
@@ -495,35 +517,5 @@ gemm.formula <- function(formula, data=list(), ...) {
 }
 
 plot.gemm <- function(x, ...) {
-  par(mfrow = c(1,3))
-  if (!is.null(attr(x, "converge.check"))) {
-    par(mfrow = c(2,2))
-    convergencePlot(x$converge.bic)
-  }
-  plot(rank(fitted.values(x)), rank(x$model[1]),
-    main = "Ordinal model predictions", xlab = "Rank predictions",
-    ylab = "Rank criterion")
-  plot(fitted.values(x), unlist(x$model[1]), main = "Metric model predictions",
-    xlab = "Predictions", ylab = "Criterion")
-  plot(order(x$model[1]), x$rank.residuals[order(x$model[1])],
-    main = "Rank disparity by criterion rank",
-    xlab = "Ordered criterion", ylab = "Rank disparity")
-}
-
-convergencePlot <- function(beta, ...) {
-  chains <- ncol(beta)
-  max.rep <- nrow(beta)
-  xrange <- c(1, max.rep) 
-  yrange <- c(min(beta), max(beta))
-  plot(xrange, yrange, type="n", xlab = "rep #", ylab= "BIC")
-  colors <- rainbow(chains) 
-  linetype <- c(1:chains) 
-  plotchar <- seq(1:chains)
-  for (i in 1:chains) {
-    lines(1:max.rep, beta[,i], type="b", lwd=1.5,
-      lty=linetype[i], col=colors[i], pch=plotchar[i]) 
-  }  
-  title("Convergence of BICs")
-  legend(xrange[1], yrange[2], 1:chains, cex=0.8, col=colors, pch=plotchar,
-    lty=linetype, title="Chains")
+  
 }
