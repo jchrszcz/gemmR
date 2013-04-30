@@ -195,6 +195,39 @@ gemmFit <- function(n, betas, data, p, k.cor, pearson) {
 }
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
+<<<<<<< HEAD
+                    n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
+                    seed.metric = TRUE, check.convergence = FALSE) {
+  ################################################################################
+  # Function controls the GeMM process. Takes data and, over successive          #
+  # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
+  # calculates ordinal model fit using these betas, and produces an output that  #
+  # reports weights and fit statistics for best models at each generation,       #
+  # (optionally, for cross-validation as well).                                  #
+  #   input.data  - must be data frame, first column is treated as dependent     #
+  #                 variable.                                                    #
+  #   output      - string argument for use in naming file output. gemmModel     #
+  #                 writes a .RData file in the current working directory each   #
+  #                 time the function is called.                                 #
+  #   n.beta      - Number of beta vectors to generate per replication. Default  #
+  #                 is 2000.                                                     #
+  #   p.est       - Percept of data used to estimate the model. Default is 1,    #
+  #                 values less than 1 will cause gemmModel to produce           #
+  #                 cross-validation estimates.                                  #
+  #   n.data.gen  - Number of times the entire GeMM process will be repeated,    #
+  #                 due for removal.                                             #
+  #   n.reps      - Number of replications, default is 10.                       #
+  #   k.pen       - additional penalty to BIC for including, NA by default.      # 
+  #   seed.metric - control whether lm() estimated betas seed GA. Default is     #
+  #                 TRUE                                                         #
+  ################################################################################
+  
+  #input.data <- cbind(y,x)
+  
+  #cat("-----gemmEst-----\n")                  
+  
+  
+=======
   n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
   seed.metric = TRUE, check.convergence = FALSE) {
 ################################################################################
@@ -220,6 +253,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
 #   seed.metric - control whether lm() estimated betas seed GA. Default is     #
 #                 TRUE                                                         #
 ################################################################################
+>>>>>>> master
   bestmodels <- c()
   var.name <- colnames(input.data[,-1])
   n.super.elites <- round(n.beta/16)
@@ -371,17 +405,116 @@ print.gemm <- function(x, ...) {
 
 gemm.formula <- function(formula, data=list(), ...) {
   mf <- model.frame(formula=formula, data=data)
+<<<<<<< HEAD
+  x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
+  y <- model.response(mf)
+  #main effect variables
+  me <- attributes(attributes(mf)$terms)$term.labels[attributes(attributes(mf)$terms)$order==1]
+  mm <- model.matrix(attr(mf, "terms"), data=mf)
+  fmla <- as.formula(paste("y ~ ", paste(me, collapse= "*")))
+
+  #names 
+  names <- data.frame(var=names(mf)[-1])
+  names$cnt.betas <- apply(names,1,function(x) ifelse(is.factor(mf[,x]),length(levels(mf[,x]))-1,1))
+  vars <- apply(names,1,function(x) if(x[2]==1) {x[1]} else {paste(x[1],1:x[2],sep="")} )
+  vars <- lapply(vars,function(x)c("",x))
+  mat <- t(unique(expand.grid(vars)))
+  
+  names <- apply(mat,2,function(x) paste(x, collapse=':'))
+
+  while (length(grep("::",names))>0) {  
+        names <- sub("::",':',names)
+  }
+  names <- sub(':$', '', names)
+  names <- sub('^:', '', names)[-1]
+    
+  
+  #names.betas.all <- attr(terms(fmla),"term.labels")
+  names.betas.all <- names
+  names.betas.in.model <- attr(terms(mf),"term.labels")
+  
+  #full combination of variables/factors
+  count <- 0
+  for (var in me) {
+    if(is.factor(mf[,var])) {
+      count <- count + length(levels(mf[,var]))-1
+    } else {
+      count = count +1
+    }
+=======
   # removes the intercept column (intercept isn't meaningful)
   if (attributes(attributes(mf)$terms)$intercept == 1) {
     attributes(attributes(mf)$terms)$intercept <- 0
+>>>>>>> master
   }
   # retains factor matrix if any interactions are in the model, (necessary for
   #   correctly penalizing BIC)
   if (sum(attributes(attributes(mf)$terms)$order) >= 1) {
     k.pen <- attributes(attributes(mf)$terms)$factor[-1,]
   }
+<<<<<<< HEAD
+  lst <- t(expand.grid(lst))[,-1]
+  
+  lst <- data.frame(lst)
+  lst$assign <- attributes(mm)$assign[-1][1:count]
+  
+  #remove columns with within factor comparisons
+  tmp <- rep(TRUE, times=dim(lst)[2])
+  for (i in 1 : max(lst$assign)) {
+    tmp2 <- colSums(lst[lst$assign==i,])<2
+    tmp <- ifelse(tmp==tmp2 & tmp2==TRUE,TRUE,FALSE)
+  }
+  k.pen <- lst[,tmp==TRUE]
+
+  colnames(k.pen) <- names.betas.all
+  
+  # Select Main Effects
+  grep.str <- ""
+  for (tmp in me) {
+    grep.str <- paste(grep.str,"^",tmp,"([0-9]|)$|",sep="")  
+  }
+  grep.str <- substr(grep.str, 1, nchar(grep.str)-1)
+  keep.main <- grepl(grep.str,  names.betas.all)
+  keep <- matrix(keep.main,ncol=length(keep.main))
+    
+  # Select interactions 
+  interactions <- names.betas.in.model[grepl(":",names.betas.in.model)]
+  search.terms <- strsplit(interactions,":")
+  
+  if (length(search.terms)>0) {
+    keep.tmp <- matrix(ncol=dim(k.pen)[2],nrow=length(search.terms))
+    keep.tmp[1,] <- F
+        
+    for (i in 1:length(search.terms)) {
+      tmp1 <- !!((aaply(t(sapply(search.terms[[i]], grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
+      tmp2 <- laply(strsplit(colnames(k.pen),":"),function(x) length(x) == length(search.terms[[i]]))
+      keep.tmp[i,] <- tmp1*tmp2
+    }
+    keep <- rbind(keep.main,keep.tmp)
+  }
+  
+  keep <- ifelse(apply(keep,2,sum)>0,T,F)
+  
+  k.pen <- k.pen[,keep]
+  k.pen <- k.pen[,order(colSums(k.pen))]
+  
+  if(dim(k.pen)[1]!=dim(k.pen)[2]) {
+    tmp <- diag(dim(k.pen)[2])[(dim(k.pen)[1]+1):dim(k.pen)[2],]
+    
+    # stupid R kludge
+    if(!is.null(dim(tmp))) {
+      colnames(tmp) <- colnames(k.pen)
+    }
+    
+    k.pen <- rbind(k.pen, tmp)
+    
+  }
+  
+    
+=======
   x <- model.matrix(attr(mf, "terms"), data=mf)
   y <- model.response(mf)
+>>>>>>> master
   est <- gemm.default(cbind(y, x), k.pen = k.pen, ...)
   est$call <- match.call()
   est$formula <- formula
