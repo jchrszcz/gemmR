@@ -229,9 +229,9 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   #                 TRUE                                                         #
   ################################################################################
   
-  input.data <- cbind(y,x)
+  #input.data <- cbind(y,x)
   
-  cat("-----gemmEst-----\n")                  
+  #cat("-----gemmEst-----\n")                  
   
   
   bestmodels <- c()
@@ -395,12 +395,13 @@ print.gemm <- function(x, ...) {
 }
 
 
-# a <- rnorm(100)
-# b <- rnorm(100)
-# y <- a + b + a*b + rnorm(100)
-# mod <- y~a+b
-# formula <- mod
-# data <- data.frame(model.matrix(formula))
+#   a <- rnorm(100)
+#   b <- factor(sample(c(1,2),100,replace=T,c(1/2,1/2)))
+#   c <- factor(sample(c(1,2,3),100,replace=T,c(1/3,1/3,1/3)))
+#   y <- a
+#   mod <- y~a*b*c*d*e
+#   formula <- mod
+#   data <- data.frame(model.matrix(formula))
 
 # weight <- ChickWeight$weight
 # time <- ChickWeight$Time
@@ -427,12 +428,16 @@ gemm.formula <- function(formula, data=list(), ...) {
   vars <- apply(names,1,function(x) if(x[2]==1) {x[1]} else {paste(x[1],1:x[2],sep="")} )
   vars <- lapply(vars,function(x)c("",x))
   mat <- t(unique(expand.grid(vars)))
+  
   names <- apply(mat,2,function(x) paste(x, collapse=':'))
-  names <- sub('::', ':', names)  
+
+  while (length(grep("::",names))>0) {  
+        names <- sub("::",':',names)
+  }
   names <- sub(':$', '', names)
   names <- sub('^:', '', names)[-1]
     
-    
+  
   #names.betas.all <- attr(terms(fmla),"term.labels")
   names.betas.all <- names
   names.betas.in.model <- attr(terms(mf),"term.labels")
@@ -494,22 +499,47 @@ gemm.formula <- function(formula, data=list(), ...) {
     grep.str <- paste(grep.str,"^",tmp,"([0-9]|)$|",sep="")  
   }
   grep.str <- substr(grep.str, 1, nchar(grep.str)-1)
-  keep <- grepl(grep.str,  names.betas.all)
+  keep.main <- grepl(grep.str,  names.betas.all)
+  keep <- matrix(keep.main,ncol=length(keep.main))
+    
   
   # Select interactions 
   interactions <- names.betas.in.model[grepl(":",names.betas.in.model)]
   search.terms <- strsplit(interactions,":")
   
-  #t(sapply(search.terms[[1]], grepl, names, ignore.case=TRUE))
-  keep <-  rbind(keep,laply(search.terms, function(x) !!((aaply(t(sapply(x, grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))))
-  keep <- ifelse(aaply(keep,2,sum)>0,T,F)
+  if (length(search.terms)>0) {
+    keep.tmp <- matrix(ncol=dim(k.pen)[2],nrow=length(search.terms))
+    keep.tmp[1,] <- F
+        
+    for (i in 1:length(search.terms)) {
+      tmp1 <- !!((aaply(t(sapply(search.terms[[i]], grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
+      tmp2 <- laply(strsplit(colnames(k.pen),":"),function(x) length(x) == length(search.terms[[i]]))
+      #tmp2 <- !((aaply(t(sapply(c(me[!me%in%search.terms[[1]]],":"), grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
+      
+      keep.tmp[i,] <- tmp1*tmp2
+      #keep.tmp[i,] <- !!((aaply(t(sapply(search.terms[[i]], grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
+    }
+    keep <- rbind(keep.main,keep.tmp)
+  }
+
+  
+  #!!((aaply(t(sapply("c", grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
+  
+  # all interactions with both terms  
+  #  keep.int <-  rbind(keep.main,laply(search.terms, function(x) !!((aaply(t(sapply(x, grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))))
+  #keep.int <-  laply(search.terms, function(x) !!((aaply(t(sapply(x, grepl, colnames(k.pen), ignore.case=TRUE)),2,prod))))
+  
+  
+  
+  keep <- ifelse(apply(keep,2,sum)>0,T,F)
   
   
   #tmp[[1]] = rbind(tmp[[1]],tmp[[1]])
   #keep <- lapply(search.terms, function(x) !(aaply(t(sapply(x, grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
-  
+  #cat("-----k.pen-----\n")  
   k.pen <- k.pen[,keep]
   k.pen <- k.pen[,order(colSums(k.pen))]
+  
   
   #!(aaply(t(sapply(search.terms[[1]], grepl, names, ignore.case=TRUE)),2,prod))
   
@@ -564,7 +594,6 @@ gemm.formula <- function(formula, data=list(), ...) {
   }
   
     
-  
   est <- gemm.default(cbind(y, x), k.pen = k.pen, ...)
   est$call <- match.call()
   est$formula <- formula

@@ -3,8 +3,24 @@
 a <- rnorm(100)
 b <- rnorm(100)
 c <- rnorm(100)
+d <- factor(sample(c(1,2),100,replace=T,c(1/2,1/2)))
+e <- factor(sample(c(1,2,3),100,replace=T,c(1/3,1/3,1/3)))
 y <- a + b + a*b + rnorm(100)
-mod <- y~a+b
+mod <- y~a*d
+summary(lm(mod))
+?sample
+
+a <- rnorm(100)
+b <- factor(sample(c(1,2),100,replace=T,c(1/2,1/2)))
+c <- factor(sample(c(1,2,3),100,replace=T,c(1/3,1/3,1/3)))
+d <- rnorm(100)
+e <- rnorm(100)
+y <- a
+mod <- y~a*d+c
+formula <- mod
+data <- data.frame(model.matrix(formula))
+source('~/Dropbox/org/projects/Jeff/gemmR/gemmquick dev.R', echo=FALSE)
+gemm(y~a*b*c*d*e, n.beta=200, n.data.gen=1)
 
 
 source('~/Dropbox/org/projects/Jeff/gemmR/gemmquick joe.R', echo=FALSE)
@@ -12,8 +28,11 @@ gemm(mod)
 
 
 source('~/Dropbox/org/projects/Jeff/gemmR/gemmquick dev.R', echo=FALSE)
-gemm(mod, n.beta=200, n.data.gen=1)
-gemm(weight~Time*Diet, data=ChickWeight,n.beta=200, n.data.gen=1)
+debug(gemmEst)
+gemm(y~a*b, n.beta=200, n.data.gen=1)
+undebug(gemmEst)
+
+gemm(weight~Time+Diet, data=ChickWeight,n.beta=200, n.data.gen=1)
 
 debug(gemm.formula)
 gemm(weight~Time + Diet, data=ChickWeight,n.beta=200, n.data.gen=1)
