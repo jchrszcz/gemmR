@@ -24,7 +24,6 @@
 # * gemmFit optimization                                                   *Joe*
 # * summary                                                               *Jeff*
 # * predict                                                               *Jeff*
-# * one-predictor models (gemm.formula)                                    *Joe*
 ##### Bugs #####################################################################
 # * name for single continuous predictor is always "x"
 ##### Ideas ####################################################################
