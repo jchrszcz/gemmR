@@ -1,0 +1,134 @@
+##### New Genetic Algorithm #####
+
+require(Rcpp)
+
+cppFunction('
+  NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
+    double nsuperelites, double p, double reps,
+    NumericMatrix bestmodels, bool seedmetric) {
+    
+    if (!seedmetric) {
+      metricbeta = runif(p);
+    }
+    if (reps == 1) {
+      NumericMatrix betas(nbeta, p);
+      double scaling = sqrt(.1);
+      beta(0,_) = mectricbeta;
+      for (int i = 1, i < n.beta, i++) {
+        
+
+
+
+
+      }
+      for (int i = 0, i < nbeta, i++) {
+
+      }
+    }
+    if (reps > 1) {
+
+    }
+  }
+')
+
+
+
+geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
+                             bestmodels, seed.metric) {
+  if (seed.metric != TRUE) {metric.beta <- runif(p)}
+  if (reps == 1) {
+    betas <- matrix(rep(0, times = n.beta * p), ncol = p)
+    scaling <- sqrt(.1)
+    betas[1,] <- metric.beta
+    for (i in 2:n.beta) {
+      temp.rand <- runif(p)
+      temp.norm <- rnorm(p)
+      if (i >= 2 & i < 1000) {
+        betas[i,] <- ifelse(temp.rand < .5, 1, 0)
+        betas[i,] <- betas[i,] * metric.beta
+      }
+      if (i >= 1000 & i < 3000) {
+        betas[i,] <- ifelse(temp.rand < .5, 1, betas)
+        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.1)
+      }
+      if (i >= 3000 & i < 6000) {
+        betas[i,] <- ifelse(temp.rand < .5, 1, betas)
+        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.01)
+      }
+      if (i >= 6000) {
+        betas[i,] <- ifelse(temp.rand < .25, 1, ifelse(temp.rand > .75, -1,
+                                                       temp.rand))
+        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.5)
+      }
+    }    
+    for (i in 1:n.beta) {
+      if (sum(betas[i,]) == 0) {
+        betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
+        temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
+        betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
+                                       1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
+      }
+    }
+  }
+  if (reps > 1) {
+    size <- dim(bestmodels)
+    elites <- bestmodels
+    sorted.elites <- elites[order(elites[,1]),]
+    super.elites <- sorted.elites[1:n.super.elites,]
+    temp.betas.a <- as.matrix(sorted.elites[,2:size[2]])
+    temp.betas.b <- as.matrix(sorted.elites[,2:size[2]])
+    parent.1 <- round(1 + (size[1] - 1) * runif(1))
+    parent.2 <- 0
+    while (parent.1 == parent.2 | parent.2 == 0) {
+      parent.2 <- round(1 + (size[1] - 1) * runif(1))
+    }
+    temp.rand <- runif(n.beta/2)
+    new.X1 <- matrix(rep(0, times = (n.beta/2 * p)), ncol = p)
+    new.X2 <- new.X1
+    for (i in 1:(n.beta/2)) {
+      parent.1 <- round(1 + (size[1] - 1) * runif(1))
+      parent.2 <- 0
+      while (parent.1 == parent.2 | parent.2 == 0) {
+        parent.2 <- round(1 + (size[1] - 1) * runif(1))
+      }
+      if (temp.rand[i] < .85) {
+        k <- round(1 + ((size[2] - 1) * runif(1)))
+        if (k == p) {
+          new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,]))
+          new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,]))
+        }
+        if (k < p) {
+          new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,1:k],
+                                     temp.betas.b[parent.2, ((k+1):p)]))
+          new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,1:k],
+                                     temp.betas.a[parent.2, ((k+1):p)]))
+        }
+      }
+      if (temp.rand[i] >= .85) {
+        new.X1[i,] <- as.numeric(temp.betas.a[parent.1,])
+        new.X2[i,] <- as.numeric(temp.betas.b[parent.2,])
+      }
+    }
+    temp.rand <- matrix(runif(n.beta*p), ncol = (p*2))
+    temp.rand.2 <- matrix(runif(n.beta*p), ncol = (p*2))
+    for (i in 1:p) {
+      new.X1[,i] <- ifelse(temp.rand[,i] < .01, temp.rand[,(i + p)], new.X1[,i])
+      new.X2[,i] <- ifelse(temp.rand.2[,i] < .01,
+                           temp.rand.2[,(i + p)], new.X2[,i])
+    }
+    super.elites <- super.elites[,-1]
+    betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
+  }
+  y <- betas[1:n.beta,]
+  return(y)
+}
+
+#### Test functions
+
+cppFunction('
+  NumericMatrix randTest(NumericMatrix x) {
+    NumericMatrix a(4, 4);
+    a(_,2) = x;
+    return a;
+  }
+')
