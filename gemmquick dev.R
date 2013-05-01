@@ -349,16 +349,24 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       gemm.cross.out.tau[datagen,] <- temp.out$tau
     }
   }
+  coefficients <- matrix(fit.out[,-1], ncol = p,
+    dimnames = list(c(), c(colnames(input.data))[-1]))
+  # bug for 1-predictor model
+  fitted.values <- matrix(input.data[,-1], ncol = p) %*%
+    as.matrix(coefficients[fit.out[,1] == min(fit.out[,1]),])[1,]
   sim.results <- list(date = date(),
-                      call = match.call(),
-                      coefficients = matrix(fit.out[,-1], ncol = p),
-                      est.bic = fit.out[,1],
-                      est.r = c(fit.out.r),
-                      est.tau = c(fit.out.tau),
-                      metric.betas = metric.beta,
-                      p.vals = p.vals,
-                      var.name = var.name)
-  colnames(sim.results$coefficients) <- sim.results$var.name
+    call = match.call(),
+    coefficients = coefficients,
+    fitted.values = fitted.values,
+    residuals = unlist(input.data[,1] - fitted.values),
+    rank.residuals = (rank(input.data[,1]) -
+        rank(fitted.values)),
+    est.bic = fit.out[,1],
+    est.r = c(fit.out.r),
+    est.tau = c(fit.out.tau),
+    metric.betas = metric.beta,
+    p.vals = p.vals,
+    model = data.frame(input.data))
   if (p.est < 1) {
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
@@ -367,6 +375,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   if (check.convergence) {
     sim.results$converge.bic <- converge.bic
     sim.results$converge.beta <- converge.beta
+    attr(sim.results, "converge.check") <- TRUE
   }
   if (save.results) {
     save(sim.results, file = paste(output, ".Rdata"))
