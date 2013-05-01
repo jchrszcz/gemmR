@@ -1,27 +1,37 @@
-##### gemmR #####
+##### gemmR ####################################################################
 #
 # Authors: Jeff Chrabaszcz & Joe Tidwell
 #
 # An R implementation of the General Monotone Model, (Dougherty & Thomas, 2012),
 # with some improvements.
 #
-##### TODO #####
-# * convergence (sortof done with n.data.gen, need to include some kind of
-#     output for the summary function) *Jeff*
-# * error messages
-# * GA optimization
-# * gemmFit optimization
-# * summary
-# * predict?
-# * categorical predictors (probably involves using factor properly) **Joe**
-# * output tau
-##### Ideas #####
-# * force some chains to start without seeding LS estimates to check for
-#     robustness to initial conditions?
-# * record top betas for each rep, makes examining chains easier, (MDS to graph)
-# * exploratory vs. confirmatory modes (change p/k for gemmFit accordingly)
-# * posterior predictive checks
-# * should we add an ordinal effect size and output R^2?
+# Please cite:
+# @article{dougherty2012robust,
+#   title={Robust decision making in a nonlinear world},
+#   author={Dougherty, Michael R and Thomas, Rick P},
+#   journal={Psychological Review},
+#   volume={119},
+#   number={2},
+#   pages={321--344},
+#   year={2012},
+#   publisher={American Psychological Association},
+# }
+##### TODO #####################################################################
+# * PACKAGE BY 14 NOVEMBER 2013                                           *----*
+# * better plot function (ask argument)                                   *Jeff*
+# * error messages?                                                       *----*
+# * GA optimization                                                        *Joe*
+# * gemmFit optimization                                                   *Joe*
+# * summary                                                               *Jeff*
+# * predict                                                               *Jeff*
+# * one-predictor models (gemm.formula)                                    *Joe*
+##### Bugs #####################################################################
+#
+##### Ideas ####################################################################
+# * posterior predictive checks                                           *----*
+# * OMR weights                                                           *Jeff*
+# * converging GA                                                         *Jeff*
+# * region of equivalence                                                 *Jeff*
 ################################################################################
 
 ##### Dependencies #####
@@ -517,5 +527,35 @@ gemm.formula <- function(formula, data=list(), ...) {
 }
 
 plot.gemm <- function(x, ...) {
-  
+  par(mfrow = c(1,3))
+  if (!is.null(attr(x, "converge.check"))) {
+    par(mfrow = c(2,2))
+    convergencePlot(x$converge.bic)
+  }
+  plot(rank(fitted.values(x)), rank(x$model[1]),
+    main = "Ordinal model predictions", xlab = "Rank predictions",
+    ylab = "Rank criterion")
+  plot(fitted.values(x), unlist(x$model[1]), main = "Metric model predictions",
+    xlab = "Predictions", ylab = "Criterion")
+  plot(order(x$model[1]), x$rank.residuals[order(x$model[1])],
+    main = "Rank disparity by criterion rank",
+    xlab = "Ordered criterion", ylab = "Rank disparity")
+}
+
+convergencePlot <- function(beta, ...) {
+  chains <- ncol(beta)
+  max.rep <- nrow(beta)
+  xrange <- c(1, max.rep) 
+  yrange <- c(min(beta), max(beta))
+  plot(xrange, yrange, type="n", xlab = "rep #", ylab= "BIC")
+  colors <- rainbow(chains) 
+  linetype <- c(1:chains) 
+  plotchar <- seq(1:chains)
+  for (i in 1:chains) {
+    lines(1:max.rep, beta[,i], type="b", lwd=1.5,
+      lty=linetype[i], col=colors[i], pch=plotchar[i]) 
+  }  
+  title("Convergence of BICs")
+  legend(xrange[1], yrange[2], 1:chains, cex=0.8, col=colors, pch=plotchar,
+    lty=linetype, title="Chains")
 }
