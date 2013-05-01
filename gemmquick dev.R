@@ -34,7 +34,7 @@
 ################################################################################
 
 ##### Dependencies #####
-
+require(Rcpp)
 ##### GeMM Functions #####
 
 geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
@@ -282,7 +282,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     if(sum(is.na(lin.mod))) {
       error("lm() generates NA")
     }
-    metric.beta <- lin.mod$coef[2:(p + 1)]
+    metric.beta <- matrix(lin.mod$coef[2:(p + 1)], ncol = p)
     names(metric.beta) <- names(data[2:length(data)])
     p.vals <- summary(lin.mod)[[4]][-1,4]
     names(p.vals) <- names(data[2:length(data)])

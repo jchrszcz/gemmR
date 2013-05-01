@@ -2,34 +2,44 @@
 
 require(Rcpp)
 
-cppFunction('
-  NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
-    double nsuperelites, double p, double reps,
-    NumericMatrix bestmodels, bool seedmetric) {
-    
-    if (!seedmetric) {
-      metricbeta = runif(p);
-    }
-    if (reps == 1) {
-      NumericMatrix betas(nbeta, p);
-      double scaling = sqrt(.1);
-      beta(0,_) = mectricbeta;
-      for (int i = 1, i < n.beta, i++) {
-        
-
-
-
-
-      }
-      for (int i = 0, i < nbeta, i++) {
-
-      }
-    }
-    if (reps > 1) {
-
-    }
+## REMEMBER WE'RE FILLING BY COLUMNS ##
+##### Begin Rcpp #####
+// [[Rcpp::export]]
+NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
+  double nsuperelites, double p, double reps,
+  NumericMatrix bestmodels, bool seedmetric) {
+  
+  if (!seedmetric) {
+    metricbeta = runif(p);
   }
-')
+  if (reps == 1) {
+    NumericMatrix betas(p, nbeta);
+    double scaling = sqrt(.1);
+    betas(_,0) = mectricbeta;
+    for (int i = 1, i < n.beta, i++) {
+      temprand = runif(p);
+    	tempnorm = rnorm(p);
+    	if (i > 0 && i < 999) {
+    	  betas(_,i) = ifelse(temprand < .5, 1, 0);
+    		betas(_,i) = betas(_,i) * metricbeta;
+    	}
+      if (i >= 999 && i < 2999) {
+      	betas(_,i) = ifelse(temprand < .5, 1, 0);
+      	betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.1);
+      }
+    	
+
+
+
+    }
+    for (int i = 0, i < nbeta, i++) {
+    }
+  if (reps > 1) {
+  }
+
+  }
+}
+##### End Rcpp #####
 
 
 
@@ -126,9 +136,13 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
 #### Test functions
 
 cppFunction('
-  NumericMatrix randTest(NumericMatrix x) {
-    NumericMatrix a(4, 4);
-    a(_,2) = x;
-    return a;
+  NumericMatrix randTest() {
+    NumericMatrix x(5,5);
+    NumericVector temprand = runif(5);
+    NumericVector tempnorm = rnorm(5);
+    for (int i = 1; i < 5; i++) {
+      x(_,i) = ifelse(temprand < .5, tempnorm, i);
+    }
+    return x;
   }
 ')
