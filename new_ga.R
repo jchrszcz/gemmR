@@ -3,6 +3,7 @@
 require(Rcpp)
 
 ## REMEMBER WE'RE FILLING BY COLUMNS ##
+# need to transpose bestmodels on R side
 ##### Begin Rcpp #####
 // [[Rcpp::export]]
 NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
@@ -18,95 +19,43 @@ NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
     betas(_,0) = mectricbeta;
     for (int i = 1; i < n.beta; i++) {
       temprand = runif(p);
-    	tempnorm = rnorm(p);
-    	if (i > 0 && i < 999) {
-    	  betas(_,i) = ifelse(temprand < .5, 1, 0);
-    		betas(_,i) = betas(_,i) * metricbeta
-    	}
+      tempnorm = rnorm(p);
+      if (i > 0 && i < 999) {
+        betas(_,i) = ifelse(temprand < .5, 1, 0);
+        betas(_,i) = betas(_,i) * metricbeta
+      }
       if (i >= 999 && i < 2999) {
-      	betas(_,i) = ifelse(temprand < .5, 1, 0);
-      	betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.1);
+        betas(_,i) = ifelse(temprand < .5, 1, 0);
+        betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.1);
       }
-    	if (i >= 2999 && i < 5999) {
-    		betas(_,i) = ifelse(temprand < .5, 1, 0)
-    		betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.01)
-    	}
+    if (i >= 2999 && i < 5999) {
+        betas(_,i) = ifelse(temprand < .5, 1, 0);
+        betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.01);
+      }
       if (i >= 5999) {
-      	betas(_,i) = ifelse(temprand < .25, 1, ifelse(temprand > .75, -1,
-      		temprand))
-      	betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.05)
+        betas(_,i) = ifelse(temprand < .25, 1, ifelse(temprand > .75, -1,
+          temprand));
+        betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.05);
       }
     }
-  	
-  	for (int i = 0; i < nbeta; i++) {
-  	  if (sum(betas(_,i)) == 0) {
-  	  	
-  	  	
-  	  }
-  	}
-    	
-
-    	
-    	
-    	for (i in 1:n.beta) {
-    		if (sum(betas[i,]) == 0) {
-    			betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
-    			temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
-    			betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
-    				1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
-    		}
-    	}
-
-    
-    for (int i = 0, i < nbeta, i++) {
+    for (int i = 0; i < nbeta; i++) {
+      if (sum(betas(_,i)) == 0) {
+        betas(_,i) = rnorm(p);
+        temprand = runif(p);
+        betas(_,i) = ifelse(temprand > .5, betas(_,i) * scaling, betas(_,i) * scaling * -1);
+        
+      }
     }
-  if (reps > 1) {
   }
-
+  if (reps > 1) {
+    int x;
+    x = bestmodels.ncol();
+    
+  
   }
 }
-##### End Rcpp #####
 
-
-
-geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-                             bestmodels, seed.metric) {
-  if (seed.metric != TRUE) {metric.beta <- runif(p)}
-  if (reps == 1) {
-    betas <- matrix(rep(0, times = n.beta * p), ncol = p)
-    scaling <- sqrt(.1)
-    betas[1,] <- metric.beta
-    for (i in 2:n.beta) {
-      temp.rand <- runif(p)
-      temp.norm <- rnorm(p)
-      if (i >= 2 & i < 1000) {
-        betas[i,] <- ifelse(temp.rand < .5, 1, 0)
-        betas[i,] <- betas[i,] * metric.beta
-      }
-      if (i >= 1000 & i < 3000) {
-        betas[i,] <- ifelse(temp.rand < .5, 1, betas)
-        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.1)
-      }
-      if (i >= 3000 & i < 6000) {
-        betas[i,] <- ifelse(temp.rand < .5, 1, betas)
-        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.01)
-      }
-      if (i >= 6000) {
-        betas[i,] <- ifelse(temp.rand < .25, 1, ifelse(temp.rand > .75, -1,
-                                                       temp.rand))
-        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.5)
-      }
-    }    
-    for (i in 1:n.beta) {
-      if (sum(betas[i,]) == 0) {
-        betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
-        temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
-        betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
-                                       1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
-      }
-    }
-  }
-  if (reps > 1) {
+if (reps > 1) {
     size <- dim(bestmodels)
     elites <- bestmodels
     sorted.elites <- elites[order(elites[,1]),]
@@ -159,16 +108,17 @@ geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
   return(y)
 }
 
+##### End Rcpp #####
+  
 #### Test functions
 
 cppFunction('
-  NumericMatrix randTest() {
-    NumericMatrix x(5,5);
-    NumericVector temprand = runif(5);
-    NumericVector tempnorm = rnorm(5);
-    for (int i = 1; i < 5; i++) {
-      x(_,i) = ifelse(temprand < .5, tempnorm, i);
-    }
+  int randTest() {
+    NumericMatrix temprand(5,5);
+    int x;
+    int y;
+    x = temprand.nrow();
+    y = temprand.ncol();
     return x;
   }
 ')
