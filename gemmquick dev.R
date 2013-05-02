@@ -200,9 +200,9 @@ gemmFit <- function(n, betas, data, p, k.cor, pearson) {
       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
     }
   }
-  k <- sum(betas != 0)
-  knp <- sin(pi/2*tau*((n-k-1)/n))
-  bic <- n * log(1 - knp ^ 2) + k * log(n)
+  #k <- sum(betas != 0)
+  knp <- sin(pi/2*tau*((n-k.cor-1)/n))
+  bic <- n * log(1 - knp ^ 2) + k.cor * log(n)
   y <- list(bic = bic)
   if (pearson) {
     y$r <- r
