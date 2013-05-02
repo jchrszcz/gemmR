@@ -16,22 +16,48 @@ NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
     NumericMatrix betas(p, nbeta);
     double scaling = sqrt(.1);
     betas(_,0) = mectricbeta;
-    for (int i = 1, i < n.beta, i++) {
+    for (int i = 1; i < n.beta; i++) {
       temprand = runif(p);
     	tempnorm = rnorm(p);
     	if (i > 0 && i < 999) {
     	  betas(_,i) = ifelse(temprand < .5, 1, 0);
-    		betas(_,i) = betas(_,i) * metricbeta;
+    		betas(_,i) = betas(_,i) * metricbeta
     	}
       if (i >= 999 && i < 2999) {
       	betas(_,i) = ifelse(temprand < .5, 1, 0);
       	betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.1);
       }
+    	if (i >= 2999 && i < 5999) {
+    		betas(_,i) = ifelse(temprand < .5, 1, 0)
+    		betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.01)
+    	}
+      if (i >= 5999) {
+      	betas(_,i) = ifelse(temprand < .25, 1, ifelse(temprand > .75, -1,
+      		temprand))
+      	betas(_,i) = betas(_,i) * metricbeta + tempnorm * sqrt(.05)
+      }
+    }
+  	
+  	for (int i = 0; i < nbeta; i++) {
+  	  if (sum(betas(_,i)) == 0) {
+  	  	
+  	  	
+  	  }
+  	}
     	
 
+    	
+    	
+    	for (i in 1:n.beta) {
+    		if (sum(betas[i,]) == 0) {
+    			betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
+    			temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
+    			betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
+    				1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
+    		}
+    	}
 
-
-    }
+    
     for (int i = 0, i < nbeta, i++) {
     }
   if (reps > 1) {
