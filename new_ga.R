@@ -50,18 +50,23 @@ NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
   if (reps > 1) {
     int x;
     x = bestmodels.ncol();
-    
+    NumericMatrix superelites(p, nsuperelites);
+    superelites = bestmodels(_,nsuperelites);
+  	NumericMatrix betasa(p, x);
+  	NumericMatrix betasb(p, x);
+  	betasa = bestmodels(range(1,(p-1)),_);
+  	
   
   }
 }
 
-if (reps > 1) {
-    size <- dim(bestmodels)
-    elites <- bestmodels
-    sorted.elites <- elites[order(elites[,1]),]
-    super.elites <- sorted.elites[1:n.super.elites,]
-    temp.betas.a <- as.matrix(sorted.elites[,2:size[2]])
-    temp.betas.b <- as.matrix(sorted.elites[,2:size[2]])
+#if (reps > 1) {
+#    size <- dim(bestmodels)
+#    elites <- bestmodels
+#    sorted.elites <- elites[order(elites[,1]),]
+#    super.elites <- sorted.elites[1:n.super.elites,]
+#    temp.betas.a <- as.matrix(sorted.elites[,2:size[2]])
+#    temp.betas.b <- as.matrix(sorted.elites[,2:size[2]])
     parent.1 <- round(1 + (size[1] - 1) * runif(1))
     parent.2 <- 0
     while (parent.1 == parent.2 | parent.2 == 0) {
@@ -113,12 +118,12 @@ if (reps > 1) {
 #### Test functions
 
 cppFunction('
-  int randTest() {
+  NumericMatrix randTest() {
     NumericMatrix temprand(5,5);
-    int x;
-    int y;
-    x = temprand.nrow();
-    y = temprand.ncol();
-    return x;
+    NumericMatrix x(5,3);
+    for (int i = 0; i < 3; i++) {
+      temprand(_,i) = rnorm(5);
+    }
+    return temprand;
   }
 ')
