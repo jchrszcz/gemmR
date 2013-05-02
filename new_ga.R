@@ -52,10 +52,10 @@ NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
     x = bestmodels.ncol();
     NumericMatrix superelites(p, nsuperelites);
     superelites = bestmodels(_,nsuperelites);
-  	NumericMatrix betasa(p, x);
-  	NumericMatrix betasb(p, x);
-  	betasa = bestmodels(range(1,(p-1)),_);
-  	
+    NumericMatrix betasa(p, x);
+    NumericMatrix betasb(p, x);
+    betasa = bestmodels(Range(1,p-1),_);
+    
   
   }
 }
@@ -119,11 +119,12 @@ NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
 
 cppFunction('
   NumericMatrix randTest() {
-    NumericMatrix temprand(5,5);
-    NumericMatrix x(5,3);
+    NumericMatrix temprand(5,3);
+    NumericMatrix x(5,2);
     for (int i = 0; i < 3; i++) {
       temprand(_,i) = rnorm(5);
     }
-    return temprand;
+    x = temprand(_,Range(1,3-1));
+    return x;
   }
 ')
