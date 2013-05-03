@@ -43,7 +43,6 @@ NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
         betas(_,i) = rnorm(p);
         temprand = runif(p);
         betas(_,i) = ifelse(temprand > .5, betas(_,i) * scaling, betas(_,i) * scaling * -1);
-        
       }
     }
   }
@@ -55,6 +54,8 @@ NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
     NumericMatrix betasa(p, x);
     NumericMatrix betasb(p, x);
     betasa = bestmodels(Range(1,p-1),_);
+    betasb = bestmodels(Range(1,p-1),_);
+    
     
   
   }
@@ -118,13 +119,9 @@ NumericVector genAlg(NumericMatrix metricbeta, double nbeta,
 #### Test functions
 
 cppFunction('
-  NumericMatrix randTest() {
-    NumericMatrix temprand(5,3);
-    NumericMatrix x(5,2);
-    for (int i = 0; i < 3; i++) {
-      temprand(_,i) = rnorm(5);
-    }
-    x = temprand(_,Range(1,3-1));
+  NumericVector randTest() {
+    NumericVector x(1);
+    x = floor(runif(1, 1, 4) + .5);
     return x;
   }
 ')
