@@ -1,5 +1,5 @@
 #include <Rcpp.h>
-unsing namespace Rcpp;
+using namespace Rcpp;
 
 // [[Rcpp::export]]
 NumericVector genAlg(NumericMatrix metricbeta, int nbeta,
@@ -56,7 +56,7 @@ NumericVector genAlg(NumericMatrix metricbeta, int nbeta,
     int parent2;
     int tempsize = floor(nbeta/2 + .5) - floor(nsuperelites/2 + .5);
     NumericVector temprand = runif(tempsize);
-    NumericVector k = runif(tempsize);
+    NumericVector k = floor(runif(tempsize,1,5) + .5);
     NumericMatrix newx1(p,tempsize);
     NumericMatrix newx2(p,tempsize);
     for (int i = 0; i < tempsize; i++) {
@@ -69,19 +69,18 @@ NumericVector genAlg(NumericMatrix metricbeta, int nbeta,
           newX2(_,i) = betasb(_,parent1);
         }
         if (k < p) {
-          newX1 = ;
-          newX2 = ;
-//          new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,1:k], temp.betas.b[parent.2, ((k+1):p)]))
-//         new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,1:k], temp.betas.a[parent.2, ((k+1):p)]))
+          newX1(Range(0,(k-1)),i) = betasa(Range(0,(k-1)),parent1);
+          newX1(Range(k,(p-1)),i) = betasb(Range(k,(p-1)),parent2);
+          newX2(Range(0,(k-1)),i) = betasb(Range(0,(k-1)),parent1);
+          newX2(Range(k,(p-1)),i) = betasa(Range(k,(p-1)),parent2);
         }
       }
       if (temprand(i) >= .85) {
-        newX1 = ;
-        newX2 = ;
-//        new.X1[i,] <- as.numeric(temp.betas.a[parent.1,])
-//        new.X2[i,] <- as.numeric(temp.betas.b[parent.2,])
+        newX1 = betasa(_,parent1);
+        newX2 = betasb(_,parent1);
       }
-      
+    }
+    
 /*
       temp.rand <- matrix(runif(n.beta*p), ncol = (p*2))
     temp.rand.2 <- matrix(runif(n.beta*p), ncol = (p*2))
@@ -92,9 +91,7 @@ NumericVector genAlg(NumericMatrix metricbeta, int nbeta,
     }
     super.elites <- super.elites[,-1]
     betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
-*/
-      
-    }
+*/    
   }
   return y;
 }
@@ -156,9 +153,10 @@ NumericVector genAlg(NumericMatrix metricbeta, int nbeta,
 #### Test functions
 
 cppFunction('
-  NumericVector randTest() {
-    NumericVector x(1);
-    x = floor(runif(1, 1, 4) + .5);
+  NumericMatrix randTest() {
+    NumericMatrix x(5);
+    NumericVector a = rnorm(3);
+    x(Range(0,2),1) = a;
     return x;
   }
 ')
