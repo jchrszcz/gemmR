@@ -1,6 +1,6 @@
 ##### New Genetic Algorithm #####
 
-require(Rcp)
+require(Rcpp)
 
 ## REMEMBER WE'RE FILLING BY COLUMNS ##
 # need to transpose bestmodels on R side
