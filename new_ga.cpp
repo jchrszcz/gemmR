@@ -5,7 +5,6 @@ using namespace Rcpp;
 NumericMatrix genAlg(NumericVector metricbeta, int nbeta,
   int nsuperelites, int p, int reps,
   NumericMatrix bestmodels, bool seedmetric) {
-  
   if (!seedmetric) {
     metricbeta = runif(p);
   }
@@ -52,7 +51,7 @@ NumericMatrix genAlg(NumericVector metricbeta, int nbeta,
     NumericMatrix betasa = bestmodels(Range(1,p-1),_);
     NumericMatrix betasb = bestmodels(Range(1,p-1),_);
     NumericVector parent1(1);
-    NumericVector parent2;
+    NumericVector parent2(1);
     int tempsize = floor(nbeta/2 + .5) - floor(nsuperelites/2 + .5);
     NumericVector temprand = runif(tempsize);
     NumericVector k = floor(runif(tempsize,1,5) + .5);
@@ -60,29 +59,29 @@ NumericMatrix genAlg(NumericVector metricbeta, int nbeta,
     NumericMatrix newx2(p,tempsize);
     for (int i = 0; i < tempsize; i++) {
       parent1 = floor(nsuperelites * runif(1) + .5);
-      do { (parent2(1) == floor(nsuperelites * runif(1) + .5));
-        } while (parent1(1) == parent2(1));
+      do { (parent2 = floor(nsuperelites * runif(1) + .5));
+        } while (parent1(0) == parent2(0));
       if (temprand(i) < .85) {
         if (k(i) == p) {
-          newx1(_,i) = betasa(_,parent1(1));
-          newx2(_,i) = betasb(_,parent1(1));
+          newx1(_,i) = betasa(_,parent1(0));
+          newx2(_,i) = betasb(_,parent1(0));
         }
         if (k(i) < p) {
           for (int j = 0; j < p; j++) {
             if (j < k(i)) {
-              newx1(j,i) = betasa(j,parent1(1));
-              newx2(j,i) = betasb(j,parent1(1));
+              newx1(j,i) = betasa(j,parent1(0));
+              newx2(j,i) = betasb(j,parent1(0));
             }
             if (j >= k(i)) {
-              newx1(j,i) = betasa(j,parent2(1));
-              newx2(j,i) = betasb(j,parent2(1));            
+              newx1(j,i) = betasa(j,parent2(0));
+              newx2(j,i) = betasb(j,parent2(0));            
             }
           }
         }
       }
       if (temprand(i) >= .85) {
-        newx1(_,i) = betasa(_,parent1(1));
-        newx2(_,i) = betasb(_,parent1(1));
+        newx1(_,i) = betasa(_,parent1(0));
+        newx2(_,i) = betasb(_,parent1(0));
       }
     }
     superelites = superelites(Range(1,(p-1)),_);
