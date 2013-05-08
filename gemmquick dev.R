@@ -114,17 +114,8 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   #   seed.metric - control whether lm() estimated betas seed GA. Default is     #
   #                 TRUE                                                         #
   ################################################################################
-  
-  #input.data <- cbind(y,x)
-  
-  #cat("-----gemmEst-----\n")                  
-  
-  
   bestmodels <- matrix(rep(0, times = (ncol(input.data) - 1)))
   var.name <- colnames(input.data[,-1])
-  
-  #  cat("-----variables-----\n",var.name,"\n")
-  
   n.super.elites <- round(n.beta/16)
   fit.out <- matrix(rep(0, times = n.data.gen * (dim(input.data)[2])),
                     nrow = n.data.gen)
@@ -134,7 +125,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     converge.bic <- matrix(rep(0, times = (n.reps * n.data.gen)),
                            ncol = n.data.gen)
     converge.beta <- matrix(rep(0,
-                                times = (n.reps * n.data.gen * (dim(input.data)[2] - 1))),
+                      times = (n.reps * n.data.gen * (dim(input.data)[2] - 1))),
                             ncol = (dim(input.data)[2] - 1))
   }
   if (p.est < 1) {
@@ -172,9 +163,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       betas <- genAlg(metricbeta, n.beta, n.super.elites, p, reps,
                  t(bestmodels), seed.metric)
       betas <- t(as.matrix(betas))
-      
-      #     cat("-----Calculate kCorFact----\n")
-      
       # calculate penalized k for interactions
       k.cor <- rep(1, times = nrow(betas))
       
@@ -182,12 +170,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
         k.cor <- kCorFact(k.pen, betas)
         k.cor <- matrix(k.cor, ncol = 1)
       } 
-      
-      
-      
-      #k.cor<-3
-      
-      
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
       if (get.r) {
         fit.stats.r <- fit.stats
@@ -258,7 +240,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   }
   return(sim.results)
 }
-
 
 kCorFact <- function(k.pen, beta.vecs) {
   ################################################################################
@@ -337,7 +318,6 @@ gemm.formula <- function(formula, data=list(), ...) {
         count = count +1
       }
     }
-    
     #identity matrix for all combinations
     lst <- list(NULL)
     for(i in 1:count) {
@@ -374,37 +354,31 @@ gemm.formula <- function(formula, data=list(), ...) {
     
     if (length(search.terms)>0) {
       keep.tmp <- matrix(ncol=dim(k.pen)[2],nrow=length(search.terms))
-      keep.tmp[1,] <- F
-          
+      keep.tmp[1,] <- F   
       for (i in 1:length(search.terms)) {
-        tmp1 <- !!((apply(t(sapply(search.terms[[i]], grepl, colnames(k.pen), ignore.case=TRUE)),2,prod)))
-        tmp2 <- unlist(lapply(strsplit(colnames(k.pen),":"),function(x) length(x) == length(search.terms[[i]])))
+        tmp1 <- !!((apply(t(sapply(search.terms[[i]], grepl, colnames(k.pen),
+          ignore.case=TRUE)),2,prod)))
+        tmp2 <- unlist(lapply(strsplit(colnames(k.pen),":"),
+          function(x) length(x) == length(search.terms[[i]])))
         keep.tmp[i,] <- tmp1*tmp2
       }
       keep <- rbind(keep.main,keep.tmp)
     }
-      
     keep <- ifelse(apply(keep,2,sum)>0,T,F)
-    
     k.pen <- k.pen[,keep]
     k.pen <- k.pen[,order(colSums(k.pen))]
-    
     if(dim(k.pen)[1]!=dim(k.pen)[2]) {
       tmp <- diag(dim(k.pen)[2])[(dim(k.pen)[1]+1):dim(k.pen)[2],]
-      
       # stupid R kludge
       if(!is.null(dim(tmp))) {
         colnames(tmp) <- colnames(k.pen)
       }
-      
       k.pen <- rbind(k.pen, tmp)
-      
     }
   } else {
       k.pen <- matrix(1,ncol=1)
       colnames(k.pen) <- names
   }
-    
   est <- gemm.default(cbind(y, x), k.pen = k.pen, ...)
   est$call <- match.call()
   est$formula <- formula
