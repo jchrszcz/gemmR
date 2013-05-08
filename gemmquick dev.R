@@ -209,9 +209,15 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   }
   coefficients <- matrix(fit.out[,-1], ncol = p,
     dimnames = list(c(), c(colnames(input.data))[-1]))
-  # bug for 1-predictor model
-  fitted.values <- matrix(input.data[,-1], ncol = p) %*%
-    as.matrix(coefficients[fit.out[,1] == min(fit.out[,1]),])[1,]
+  # kludge fix for 1 chain
+  if (n.data.gen == 1) {
+    fitted.values <- matrix(input.data[,-1],
+      ncol = p) %*% matrix(coefficients[fit.out[,1] == min(fit.out[,1]),])
+  }
+  if (n.data.gen > 1) {
+    fitted.values <- matrix(input.data[,-1],
+      ncol = p) %*% matrix(coefficients[fit.out[,1] == min(fit.out[,1]),][1,])
+  }
   sim.results <- list(date = date(),
     call = match.call(),
     coefficients = coefficients,
