@@ -37,130 +37,7 @@
 require(Rcpp)
 ##### GeMM Functions #####
 
-geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-                             bestmodels, seed.metric) {
-  ################################################################################
-  # This functions generates candidate beta weights for each predictor in the    #
-  # model.                                                                       #
-  #   metric.beta    - starting beta weights, generally from lm()                #
-  #   n.beta         - the number of candidate betas for each n.rep. This is     #
-  #                    controlled by gemmModel()                                 #
-  #   n.super.elites - argument used to index a certain portion of the beta for  #
-  #                    different randomization.                                  #
-  #   p              - number of predictors                                      #
-  #   reps           - number of replications. If >1, best beta vectors from     #
-  #                    previous replication are included.                        #
-  #   bestmodels     - best betas from previous replication.                     #
-  #   seed.metric    - control whether lm() estimated betas seed GA. Default is  #
-  #                    TRUE                                                      #
-  ################################################################################
-  
-  #  cat("-----metric.beta-----\n")
-  #  print(metric.beta)
-  #  cat("\n")
-  
-  # ls would control whether to seed the betas with OLS estimates. Currently this
-  # happens by default and cannot be changed outside of the function.
-  if (seed.metric != TRUE) {metric.beta <- runif(p)}
-  # this controls the first generation of beta generation.
-  if (reps == 1) {
-    betas <- matrix(rep(0, times = n.beta * p), ncol = p)
-    scaling <- sqrt(.1)
-    betas[1,] <- metric.beta
-    for (i in 2:n.beta) {
-      temp.rand <- runif(p)
-      temp.norm <- rnorm(p)
-      if (i >= 2 & i < 1000) {
-        betas[i,] <- ifelse(temp.rand < .5, 1, 0)
-        betas[i,] <- betas[i,] * metric.beta
-      }
-      if (i >= 1000 & i < 3000) {
-        betas[i,] <- ifelse(temp.rand < .5, 1, betas)
-        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.1)
-      }
-      if (i >= 3000 & i < 6000) {
-        betas[i,] <- ifelse(temp.rand < .5, 1, betas)
-        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.01)
-      }
-      if (i >= 6000) {
-        betas[i,] <- ifelse(temp.rand < .25, 1, ifelse(temp.rand > .75, -1,
-                                                       temp.rand))
-        betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.5)
-      }
-    }
-    
-    #    cat("-----betas-----\n")
-    #    print(summary(betas))
-    #    cat("\n")
-    
-    for (i in 1:n.beta) {
-      if (sum(betas[i,]) == 0) {
-        betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
-        temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
-        betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
-                                       1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
-      }
-    }
-  }
-  # Reps > 1 do not use OLS estimates to seed the model, but do use the top 25%
-  # (jcz - I think) from previous generation.
-  if (reps > 1) {
-    size <- dim(bestmodels)
-    elites <- bestmodels
-    sorted.elites <- elites[order(elites[,1]),]
-    super.elites <- sorted.elites[1:n.super.elites,]
-    temp.betas.a <- as.matrix(sorted.elites[,2:size[2]])
-    temp.betas.b <- as.matrix(sorted.elites[,2:size[2]])
-    parent.1 <- round(1 + (size[1] - 1) * runif(1))
-    parent.2 <- 0
-    while (parent.1 == parent.2 | parent.2 == 0) {
-      parent.2 <- round(1 + (size[1] - 1) * runif(1))
-    }
-    temp.rand <- runif(n.beta/2)
-    new.X1 <- matrix(rep(0, times = (n.beta/2 * p)), ncol = p)
-    new.X2 <- new.X1
-    for (i in 1:(n.beta/2)) {
-      parent.1 <- round(1 + (size[1] - 1) * runif(1))
-      parent.2 <- 0
-      while (parent.1 == parent.2 | parent.2 == 0) {
-        parent.2 <- round(1 + (size[1] - 1) * runif(1))
-      }
-      if (temp.rand[i] < .85) {
-        k <- round(1 + ((size[2] - 1) * runif(1)))
-        if (k == p) {
-          new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,]))
-          new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,]))
-        }
-        if (k < p) {
-          new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,1:k],
-                                     temp.betas.b[parent.2, ((k+1):p)]))
-          new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,1:k],
-                                     temp.betas.a[parent.2, ((k+1):p)]))
-        }
-      }
-      if (temp.rand[i] >= .85) {
-        new.X1[i,] <- as.numeric(temp.betas.a[parent.1,])
-        new.X2[i,] <- as.numeric(temp.betas.b[parent.2,])
-      }
-    }
-    temp.rand <- matrix(runif(n.beta*p), ncol = (p*2))
-    temp.rand.2 <- matrix(runif(n.beta*p), ncol = (p*2))
-    for (i in 1:p) {
-      new.X1[,i] <- ifelse(temp.rand[,i] < .01, temp.rand[,(i + p)], new.X1[,i])
-      new.X2[,i] <- ifelse(temp.rand.2[,i] < .01,
-                           temp.rand.2[,(i + p)], new.X2[,i])
-    }
-    super.elites <- super.elites[,-1]
-    betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
-  }
-  # turn half of all candidate betas negative
-  #   temp.rand <- rbinom(prod(dim(betas)), 1, .5)
-  #   temp.rand[temp.rand == 0] <- -1
-  #   temp.rand <- matrix(temp.rand, ncol = ncol(betas))
-  #   betas <- betas * temp.rand
-  y <- betas[1:n.beta,]
-  return(y)
-}
+sourceCpp("new_ga.cpp")
 
 gemmFit <- function(n, betas, data, p, k.cor, pearson) {
   ################################################################################
@@ -243,7 +120,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
   #cat("-----gemmEst-----\n")                  
   
   
-  bestmodels <- c()
+  bestmodels <- matrix(rep(0, times = (ncol(input.data) - 1)))
   var.name <- colnames(input.data[,-1])
   
   #  cat("-----variables-----\n",var.name,"\n")
@@ -282,8 +159,8 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     if(sum(is.na(lin.mod))) {
       error("lm() generates NA")
     }
-    metric.beta <- matrix(lin.mod$coef[2:(p + 1)], ncol = p)
-    names(metric.beta) <- names(data[2:length(data)])
+    metricbeta <- matrix(lin.mod$coef[2:(p + 1)], ncol = p)
+    names(metricbeta) <- names(data[2:length(data)])
     p.vals <- summary(lin.mod)[[4]][-1,4]
     names(p.vals) <- names(data[2:length(data)])
     ps <- ifelse(summary(lin.mod)[[4]][-1,4] < .05, 1, 0)
@@ -292,9 +169,9 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
         get.r <- TRUE
       }
       # beta generation here
-      betas <- geneticAlgorithm(metric.beta, n.beta, n.super.elites, p, reps,
-                                bestmodels, seed.metric)
-      betas <- as.matrix(betas)
+      betas <- genAlg(metricbeta, n.beta, n.super.elites, p, reps,
+                 t(bestmodels), seed.metric)
+      betas <- t(as.matrix(betas))
       
       #     cat("-----Calculate kCorFact----\n")
       
@@ -363,7 +240,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     est.bic = fit.out[,1],
     est.r = c(fit.out.r),
     est.tau = c(fit.out.tau),
-    metric.betas = metric.beta,
+    metric.betas = metricbeta,
     p.vals = p.vals,
     model = data.frame(input.data))
   if (p.est < 1) {
@@ -567,3 +444,130 @@ convergencePlot <- function(beta, ...) {
   legend(xrange[1], yrange[2], 1:chains, cex=0.8, col=colors, pch=plotchar,
     lty=linetype, title="Chains")
 }
+
+##### Deprecated #####
+
+# geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
+#                              bestmodels, seed.metric) {
+#   ################################################################################
+#   # This functions generates candidate beta weights for each predictor in the    #
+#   # model.                                                                       #
+#   #   metric.beta    - starting beta weights, generally from lm()                #
+#   #   n.beta         - the number of candidate betas for each n.rep. This is     #
+#   #                    controlled by gemmModel()                                 #
+#   #   n.super.elites - argument used to index a certain portion of the beta for  #
+#   #                    different randomization.                                  #
+#   #   p              - number of predictors                                      #
+#   #   reps           - number of replications. If >1, best beta vectors from     #
+#   #                    previous replication are included.                        #
+#   #   bestmodels     - best betas from previous replication.                     #
+#   #   seed.metric    - control whether lm() estimated betas seed GA. Default is  #
+#   #                    TRUE                                                      #
+#   ################################################################################
+#   
+#   #  cat("-----metric.beta-----\n")
+#   #  print(metric.beta)
+#   #  cat("\n")
+#   
+#   # ls would control whether to seed the betas with OLS estimates. Currently this
+#   # happens by default and cannot be changed outside of the function.
+#   if (seed.metric != TRUE) {metric.beta <- runif(p)}
+#   # this controls the first generation of beta generation.
+#   if (reps == 1) {
+#     betas <- matrix(rep(0, times = n.beta * p), ncol = p)
+#     scaling <- sqrt(.1)
+#     betas[1,] <- metric.beta
+#     for (i in 2:n.beta) {
+#       temp.rand <- runif(p)
+#       temp.norm <- rnorm(p)
+#       if (i >= 2 & i < 1000) {
+#         betas[i,] <- ifelse(temp.rand < .5, 1, 0)
+#         betas[i,] <- betas[i,] * metric.beta
+#       }
+#       if (i >= 1000 & i < 3000) {
+#         betas[i,] <- ifelse(temp.rand < .5, 1, betas)
+#         betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.1)
+#       }
+#       if (i >= 3000 & i < 6000) {
+#         betas[i,] <- ifelse(temp.rand < .5, 1, betas)
+#         betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.01)
+#       }
+#       if (i >= 6000) {
+#         betas[i,] <- ifelse(temp.rand < .25, 1, ifelse(temp.rand > .75, -1,
+#                                                        temp.rand))
+#         betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.5)
+#       }
+#     }
+#     
+#     #    cat("-----betas-----\n")
+#     #    print(summary(betas))
+#     #    cat("\n")
+#     
+#     for (i in 1:n.beta) {
+#       if (sum(betas[i,]) == 0) {
+#         betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
+#         temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
+#         betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
+#                                        1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
+#       }
+#     }
+#   }
+#   # Reps > 1 do not use OLS estimates to seed the model, but do use the top 25%
+#   # (jcz - I think) from previous generation.
+#   if (reps > 1) {
+#     size <- dim(bestmodels)
+#     elites <- bestmodels
+#     sorted.elites <- elites[order(elites[,1]),]
+#     super.elites <- sorted.elites[1:n.super.elites,]
+#     temp.betas.a <- as.matrix(sorted.elites[,2:size[2]])
+#     temp.betas.b <- as.matrix(sorted.elites[,2:size[2]])
+#     parent.1 <- round(1 + (size[1] - 1) * runif(1))
+#     parent.2 <- 0
+#     while (parent.1 == parent.2 | parent.2 == 0) {
+#       parent.2 <- round(1 + (size[1] - 1) * runif(1))
+#     }
+#     temp.rand <- runif(n.beta/2)
+#     new.X1 <- matrix(rep(0, times = (n.beta/2 * p)), ncol = p)
+#     new.X2 <- new.X1
+#     for (i in 1:(n.beta/2)) {
+#       parent.1 <- round(1 + (size[1] - 1) * runif(1))
+#       parent.2 <- 0
+#       while (parent.1 == parent.2 | parent.2 == 0) {
+#         parent.2 <- round(1 + (size[1] - 1) * runif(1))
+#       }
+#       if (temp.rand[i] < .85) {
+#         k <- round(1 + ((size[2] - 1) * runif(1)))
+#         if (k == p) {
+#           new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,]))
+#           new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,]))
+#         }
+#         if (k < p) {
+#           new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,1:k],
+#                                      temp.betas.b[parent.2, ((k+1):p)]))
+#           new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,1:k],
+#                                      temp.betas.a[parent.2, ((k+1):p)]))
+#         }
+#       }
+#       if (temp.rand[i] >= .85) {
+#         new.X1[i,] <- as.numeric(temp.betas.a[parent.1,])
+#         new.X2[i,] <- as.numeric(temp.betas.b[parent.2,])
+#       }
+#     }
+#     temp.rand <- matrix(runif(n.beta*p), ncol = (p*2))
+#     temp.rand.2 <- matrix(runif(n.beta*p), ncol = (p*2))
+#     for (i in 1:p) {
+#       new.X1[,i] <- ifelse(temp.rand[,i] < .01, temp.rand[,(i + p)], new.X1[,i])
+#       new.X2[,i] <- ifelse(temp.rand.2[,i] < .01,
+#                            temp.rand.2[,(i + p)], new.X2[,i])
+#     }
+#     super.elites <- super.elites[,-1]
+#     betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
+#   }
+#   # turn half of all candidate betas negative
+#   #   temp.rand <- rbinom(prod(dim(betas)), 1, .5)
+#   #   temp.rand[temp.rand == 0] <- -1
+#   #   temp.rand <- matrix(temp.rand, ncol = ncol(betas))
+#   #   betas <- betas * temp.rand
+#   y <- betas[1:n.beta,]
+#   return(y)
+# }

@@ -2,11 +2,14 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-NumericMatrix genAlg(NumericVector metricbeta, int nbeta,
+NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta,
   int nsuperelites, int p, int reps,
   NumericMatrix bestmodels, bool seedmetric) {
   if (!seedmetric) {
-    metricbeta = runif(p);
+    NumericVector tempmetric = runif(p);
+    for (int i = 0; i < p; i++) {
+      metricbeta(i,0)= tempmetric(i);
+    }
   }
   NumericMatrix betas(p, nbeta);
   if (reps == 1) {
@@ -48,8 +51,8 @@ NumericMatrix genAlg(NumericVector metricbeta, int nbeta,
   if (reps > 1) {
     NumericMatrix superelites(p, nsuperelites);
     superelites = bestmodels(_,Range(0,(nsuperelites-1)));
-    NumericMatrix betasa = bestmodels(Range(1,p-1),_);
-    NumericMatrix betasb = bestmodels(Range(1,p-1),_);
+    NumericMatrix betasa = bestmodels(Range(1,1 + (p-1)),_);
+    NumericMatrix betasb = bestmodels(Range(1,1 + (p-1)),_);
     NumericVector parent1(1);
     NumericVector parent2(1);
     int tempsize = floor(nbeta/2 + .5) - floor(nsuperelites/2 + .5);
@@ -84,7 +87,7 @@ NumericMatrix genAlg(NumericVector metricbeta, int nbeta,
         newx2(_,i) = betasb(_,parent1(0));
       }
     }
-    superelites = superelites(Range(1,(p-1)),_);
+    superelites = superelites(Range(1,(1 + (p-1))),_);
     for (int i = 0; i < nbeta; i++) {
       if (i < nsuperelites) {
         betas(_,i) = superelites(_,i);

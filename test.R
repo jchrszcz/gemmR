@@ -6,7 +6,7 @@ nsuperelites <- 6
 p <- 3
 reps <- 2
 bestmodels <- matrix(rnorm(96), nrow = 4)
-genAlg(metricbeta, nbeta = 2000, nsuperelites, p, reps, bestmodels, seedmetric = FALSE)
+genAlg(metricbeta, nbeta = 2000, nsuperelites, p, reps, bestmodels, seedmetric = TRUE)
 
 cppFunction('
   NumericVector randTest() {
