@@ -47,7 +47,6 @@ NumericMatrix genAlg(NumericVector metricbeta, int nbeta,
     }
   }
   if (reps > 1) {
-    int x = bestmodels.ncol();
     NumericMatrix superelites(p, nsuperelites);
     superelites = bestmodels(_,Range(0,(nsuperelites-1)));
     NumericMatrix betasa = bestmodels(Range(1,p-1),_);
@@ -87,7 +86,6 @@ NumericMatrix genAlg(NumericVector metricbeta, int nbeta,
       }
     }
     superelites = superelites(Range(1,(p-1)),_);
-    // stl library replacement for cbind
     for (int i = 0; i < nbeta; i++) {
       if (i < nsuperelites) {
         betas(_,i) = superelites(_,i);
