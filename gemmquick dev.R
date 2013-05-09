@@ -38,55 +38,8 @@ require(Rcpp)
 ##### GeMM Functions #####
 
 sourceCpp("new_ga.cpp")
+sourceCpp("kt_gemmR.cpp")
 
-gemmFit <- function(n, betas, data, p, k.cor, pearson) {
-  ################################################################################
-  # Function generates model estimates based on sets of weights and predictors,  #
-  # calculates Kendall's tau between dependent variable and model predictions.   #
-  #   n     - number of betas for which fit statistics will be calculated.       #
-  #   betas - matrix of betas, rows are different collections of betas, columns  #
-  #           are different predictors.                                          #
-  #   data  - original predictors and outcome used to calculate fit.             #
-  #   p     - number of predictors.                                              #
-  #                                                                              #
-  #  NOTE: k or p for tau transformation needs to be solved.                     #
-  ################################################################################
-  # null models are common, these lines return 0 for both fit metrics when all
-  # betas are 0.
-  if (sum(betas == 0) == p) {
-    tau <- 0
-    r <- 0
-  }
-  # non-null models trigger these lines of code, which produce the summed products
-  # of weights and predictors, return the correlation coefficient between those
-  # predictions and the predicted variable.
-  if (sum(betas == 0) != p) {
-    tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-               method = "kendall")
-    if (pearson) {
-      r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
-    }
-  }
-  # this might cause problems, reverses the scale for any negative correlations
-  # and recalculates fit. Might be able to just multiply by -1?
-  if (tau < 0) {
-    betas <- betas * -1
-    tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-               method = "kendall")
-    if (pearson) {
-      r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
-    }
-  }
-  #k <- sum(betas != 0)
-  knp <- sin(pi/2*tau*((n-k.cor-1)/n))
-  bic <- n * log(1 - knp ^ 2) + k.cor * log(n)
-  y <- list(bic = bic)
-  if (pearson) {
-    y$r <- r
-    y$tau <- tau
-  }
-  return(y)
-}
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
                     n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
@@ -175,15 +128,27 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
         fit.stats.r <- fit.stats
         fit.stats.tau <- fit.stats
       }
-      # this loop calculates fit. Could be optimized.
-      for (i in 1:dim(betas)[1]) {
-        gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i], pearson = get.r)
-        fit.stats[i,] <- gemm.fit.out$bic
-        if (get.r) {
-          fit.stats.r[i,] <- gemm.fit.out$r
-          fit.stats.tau[i,] <- gemm.fit.out$tau
-        }
-      }
+      
+#### Loop and gemmFit replaced with gemmFitRcppI()
+#       # this loop calculates fit. Could be optimized.
+#       for (i in 1:dim(betas)[1]) {
+#         gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i], pearson = get.r)
+#         fit.stats[i,] <- gemm.fit.out$bic
+#         if (get.r) {
+#           fit.stats.r[i,] <- gemm.fit.out$r
+#           fit.stats.tau[i,] <- gemm.fit.out$tau
+#         }
+#       }
+      
+      
+      fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r)
+      fit.stats <- fitStats$bic
+      fit.stats.r <- fitStats$r
+      fit.stats.tau <- fitStats$tau
+      
+      
+      
+      
       model.stats <- cbind(fit.stats, betas)
       model.stats <- rbind(rep(0, times = length(model.stats[1,])), model.stats)
       model.stats <- model.stats[order(model.stats[,1]),]
@@ -545,5 +510,55 @@ convergencePlot <- function(beta, ...) {
 #   #   temp.rand <- matrix(temp.rand, ncol = ncol(betas))
 #   #   betas <- betas * temp.rand
 #   y <- betas[1:n.beta,]
+#   return(y)
+# }
+
+
+# gemmFit <- function(n, betas, data, p, k.cor, pearson) {
+#   ################################################################################
+#   # Function generates model estimates based on sets of weights and predictors,  #
+#   # calculates Kendall's tau between dependent variable and model predictions.   #
+#   #   n     - number of betas for which fit statistics will be calculated.       #
+#   #   betas - matrix of betas, rows are different collections of betas, columns  #
+#   #           are different predictors.                                          #
+#   #   data  - original predictors and outcome used to calculate fit.             #
+#   #   p     - number of predictors.                                              #
+#   #                                                                              #
+#   #  NOTE: k or p for tau transformation needs to be solved.                     #
+#   ################################################################################
+#   # null models are common, these lines return 0 for both fit metrics when all
+#   # betas are 0.
+#   if (sum(betas == 0) == p) {
+#     tau <- 0
+#     r <- 0
+#   }
+#   # non-null models trigger these lines of code, which produce the summed products
+#   # of weights and predictors, return the correlation coefficient between those
+#   # predictions and the predicted variable.
+#   if (sum(betas == 0) != p) {
+#     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
+#                method = "kendall")
+#     if (pearson) {
+#       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
+#     }
+#   }
+#   # this might cause problems, reverses the scale for any negative correlations
+#   # and recalculates fit. Might be able to just multiply by -1?
+#   if (tau < 0) {
+#     betas <- betas * -1
+#     tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
+#                method = "kendall")
+#     if (pearson) {
+#       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
+#     }
+#   }
+#   #k <- sum(betas != 0)
+#   knp <- sin(pi/2*tau*((n-k.cor-1)/n))
+#   bic <- n * log(1 - knp ^ 2) + k.cor * log(n)
+#   y <- list(bic = bic)
+#   if (pearson) {
+#     y$r <- r
+#     y$tau <- tau
+#   }
 #   return(y)
 # }
