@@ -20,12 +20,11 @@
 # * PACKAGE BY 14 NOVEMBER 2013                                           *----*
 # * better plot function (ask argument)                                   *Jeff*
 # * error messages?                                                       *----*
-# * GA optimization                                                        *Joe*
-# * gemmFit optimization                                                   *Joe*
 # * summary                                                               *Jeff*
 # * predict                                                               *Jeff*
+# * parallel                                                               *Joe*
 ##### Bugs #####################################################################
-# * name for single continuous predictor is always "x"
+
 ##### Ideas ####################################################################
 # * posterior predictive checks                                           *----*
 # * OMR weights                                                           *Jeff*
