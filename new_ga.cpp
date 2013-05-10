@@ -87,7 +87,6 @@ NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta,
         newx2(_,i) = betasb(_,parent1(0));
       }
     }
-    
     NumericVector temprand3 = runif(p*tempsize);
     NumericVector temprand2 = runif(p*tempsize);
     for (int i = 0; i < tempsize; i++) {
@@ -102,7 +101,6 @@ NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta,
         }
       }
     }
-    
     superelites = superelites(Range(1,(1 + (p-1))),_);
     for (int i = 0; i < nbeta; i++) {
       if (i < nsuperelites) {
