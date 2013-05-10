@@ -117,7 +117,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
       betas <- t(as.matrix(betas))
       # calculate penalized k for interactions
       k.cor <- rep(1, times = nrow(betas))
-      
       if (!is.null(dim(k.pen))) {
         k.cor <- kCorFact(k.pen, betas)
         k.cor <- matrix(k.cor, ncol = 1)
@@ -127,27 +126,10 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
         fit.stats.r <- fit.stats
         fit.stats.tau <- fit.stats
       }
-      
-#### Loop and gemmFit replaced with gemmFitRcppI()
-#       # this loop calculates fit. Could be optimized.
-#       for (i in 1:dim(betas)[1]) {
-#         gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i], pearson = get.r)
-#         fit.stats[i,] <- gemm.fit.out$bic
-#         if (get.r) {
-#           fit.stats.r[i,] <- gemm.fit.out$r
-#           fit.stats.tau[i,] <- gemm.fit.out$tau
-#         }
-#       }
-      
-      
       fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r)
       fit.stats <- fitStats$bic
       fit.stats.r <- fitStats$r
       fit.stats.tau <- fitStats$tau
-      
-      
-      
-      
       model.stats <- cbind(fit.stats, betas)
       model.stats <- rbind(rep(0, times = length(model.stats[1,])), model.stats)
       model.stats <- model.stats[order(model.stats[,1]),]
@@ -165,10 +147,10 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     fit.out.r[datagen,] <- fit.stats.r[1]
     fit.out.tau[datagen,] <- fit.stats.tau[1]
     if (p.est < 1) {
-      temp.out <- gemmFit(n, betas[i,], cross.val, p, pearson = get.r)
-      gemm.cross.out[datagen,] <- temp.out$bic
-      gemm.cross.out.r[datagen,] <- temp.out$r
-      gemm.cross.out.tau[datagen,] <- temp.out$tau
+      tempOut <- gemmFitRcppI(nrow(cross.val), matrix(bestmodels[1,2:(p+1)], nrow = 1), cross.val, p, k.cor, get.r)
+      gemm.cross.out[datagen,] <- tempOut$bic
+      gemm.cross.out.r[datagen,] <- tempOut$r
+      gemm.cross.out.tau[datagen,] <- tempOut$tau
     }
   }
   coefficients <- matrix(fit.out[,-1], ncol = p,

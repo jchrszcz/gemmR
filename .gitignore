@@ -1,4 +1,6 @@
 .Rproj.user
 .Rhistory
-.RData
+*.RData
 gemm.Rproj
+*.csv
+validation_testing.R
