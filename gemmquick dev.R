@@ -42,30 +42,31 @@ sourceCpp("kt_gemmR.cpp")
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
                     n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
-                    seed.metric = TRUE, check.convergence = FALSE) {
-  ################################################################################
-  # Function controls the GeMM process. Takes data and, over successive          #
-  # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
-  # calculates ordinal model fit using these betas, and produces an output that  #
-  # reports weights and fit statistics for best models at each generation,       #
-  # (optionally, for cross-validation as well).                                  #
-  #   input.data  - must be data frame, first column is treated as dependent     #
-  #                 variable.                                                    #
-  #   output      - string argument for use in naming file output. gemmModel     #
-  #                 writes a .RData file in the current working directory each   #
-  #                 time the function is called.                                 #
-  #   n.beta      - Number of beta vectors to generate per replication. Default  #
-  #                 is 2000.                                                     #
-  #   p.est       - Percept of data used to estimate the model. Default is 1,    #
-  #                 values less than 1 will cause gemmModel to produce           #
-  #                 cross-validation estimates.                                  #
-  #   n.data.gen  - Number of times the entire GeMM process will be repeated,    #
-  #                 due for removal.                                             #
-  #   n.reps      - Number of replications, default is 10.                       #
-  #   k.pen       - additional penalty to BIC for including, NA by default.      # 
-  #   seed.metric - control whether lm() estimated betas seed GA. Default is     #
-  #                 TRUE                                                         #
-  ################################################################################
+                    seed.metric = TRUE, check.convergence = FALSE, roe = FALSE) {
+################################################################################
+# Function controls the GeMM process. Takes data and, over successive          #
+# replications, uses geneticAlgorithm to generate candidate beta vectors,      #
+# calculates ordinal model fit using these betas, and produces an output that  #
+# reports weights and fit statistics for best models at each generation,       #
+# (optionally, for cross-validation as well).                                  #
+#   input.data  - must be data frame, first column is treated as dependent     #
+#                 variable.                                                    #
+#   output      - string argument for use in naming file output. gemmModel     #
+#                 writes a .RData file in the current working directory each   #
+#                 time the function is called.                                 #
+#   n.beta      - Number of beta vectors to generate per replication. Default  #
+#                 is 2000.                                                     #
+#   p.est       - Percept of data used to estimate the model. Default is 1,    #
+#                 values less than 1 will cause gemmModel to produce           #
+#                 cross-validation estimates.                                  #
+#   n.data.gen  - Number of times the entire GeMM process will be repeated,    #
+#                 due for removal.                                             #
+#   n.reps      - Number of replications, default is 10.                       #
+#   k.pen       - additional penalty to BIC for including, NA by default.      # 
+#   seed.metric - control whether lm() estimated betas seed GA. Default is     #
+#                 TRUE                                                         #
+#   roe         - Region of Equivalence                                        #
+################################################################################
   bestmodels <- matrix(rep(0, times = (ncol(input.data) - 1)))
   var.name <- colnames(input.data[,-1])
   n.super.elites <- round(n.beta/16)
@@ -73,6 +74,10 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
                     nrow = n.data.gen)
   fit.out.r <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
   fit.out.tau <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
+  if (roe) {
+    roe.mat <- matrix(0, nrow = (n.beta * n.reps * n.data.gen),
+      ncol = ncol(input.data))
+  }
   if (check.convergence) {
     converge.bic <- matrix(rep(0, times = (n.reps * n.data.gen)),
                            ncol = n.data.gen)
@@ -137,6 +142,11 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
         fit.stats.r <- fit.stats.r[order(model.stats[,1])]
         fit.stats.tau <- fit.stats.tau[order(model.stats[,1])]
       }
+      if (roe) {
+      	# check this
+        roe.mat[1:n.beta + (n.beta * (reps - 1)) +
+          (n.beta * n.reps * (datagen - 1)),] <- model.stats[-1,]
+      }
       bestmodels <- model.stats[1:(4*n.super.elites),]
       if (check.convergence) {
         converge.bic[reps, datagen] <- bestmodels[1,1]
@@ -160,6 +170,12 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     best.coef <- best.coef[1,]
   }
   fitted.values <- matrix(input.data[,-1], ncol = p) %*% matrix(best.coef, ncol = 1)
+  if (roe) {
+  	roe.df <- data.frame(roe.mat)
+  	roe.df$beta <- rep(1:n.beta, times = n.reps * n.data.gen)
+  	roe.df$reps <- rep(1:n.reps, each = n.beta, times = n.data.gen)
+  	roe.df$data.gen <- rep(1:n.data.gen, each = n.beta * n.reps)
+  }
   sim.results <- list(date = date(),
     call = match.call(),
     coefficients = coefficients,
@@ -177,11 +193,16 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
     sim.results.cross.val.tau <- c(gemm.cross.out.tau)
+    attr(sim.results, "cross.val") <- TRUE
   }
   if (check.convergence) {
     sim.results$converge.bic <- converge.bic
     sim.results$converge.beta <- converge.beta
     attr(sim.results, "converge.check") <- TRUE
+  }
+  if (roe) {
+    sim.results$roe <- roe.df
+    attr(sim.results, "roe") <- TRUE
   }
   if (save.results) {
     save(sim.results, file = paste(output, ".Rdata"))
