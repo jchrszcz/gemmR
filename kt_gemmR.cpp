@@ -232,6 +232,7 @@ double kt(NumericVector arr1, NumericVector arr2, int length) {
  return kendallNlogN(xx.begin(), yy.begin(), length);
 }
 
+// [[Rcpp::export]]
 NumericVector fitValues (NumericVector betas, NumericMatrix data) {
   NumericVector values(data.nrow());
   for (int i = 0; i < data.nrow(); i++) {
@@ -241,9 +242,6 @@ NumericVector fitValues (NumericVector betas, NumericMatrix data) {
   }
   return(values);
 }
-
-
-
 
 // [[Rcpp::export]]
 List gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool pearson) {
@@ -257,7 +255,7 @@ List gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor
 
 
   if (sum(betas == 0) != p) {
-    tau = kt(data(_,0), fitValues(betas,data), data.ncol());    
+    tau = kt(data(_,0), fitValues(betas,data), data.nrow());    
 //    if (pearson) {
 //      r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
 //    }
@@ -268,7 +266,7 @@ List gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor
   if (tau < 0) {
     betas = betas * -1;
 
-    tau = kt(data(_,0), fitValues(betas,data), data.ncol());
+    tau = kt(data(_,0), fitValues(betas,data), data.nrow());
     //if (pearson) {
     //  r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
     //}
