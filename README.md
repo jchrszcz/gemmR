@@ -8,4 +8,4 @@ General Monotone Model in R. This is an R version of the non-parametric regressi
 3. Select top 1/16th of candidate beta vectors, mutate and generate new weights, repeat for some number of generations.
 4. Repeat entire process some number of times to check for convergence.
 
-The resulting `gemm` object is currently an S3 class object. We're currently working on reducing runtime, (this thing is really, really slow for the moment), and writing a proper helpfile. Information on the basis for GeMM can be found in the [original paper](http://www.bsos.umd.edu/psyc/dougherty/pdf%20articles/DoughertyThomas2012Rev.pdf).
+The resulting `gemm` object is currently an S3 class object. We're working on reducing runtime, (mostly through parallelization at this point), and writing a proper helpfile. Information on the basis for GeMM can be found in the [original paper](http://www.bsos.umd.edu/psyc/dougherty/pdf%20articles/DoughertyThomas2012Rev.pdf).
