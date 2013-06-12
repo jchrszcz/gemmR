@@ -1,0 +1,14 @@
+Package: gemmR
+Type: Package
+Title: General Monotone Model, R version
+Version: 0.1
+Date: 2013-06-12
+Authors@R: c(person("Jeffrey", "Chrabaszcz", role = c("aut", "cre"),
+                     email = "jchrabaszcz@gmail.com"),
+            person("Joe", "Tidwell", role = "aut, cre",
+                     email = "joetidwell@gmail.com"))
+Description: Packages provides functions to   
+Depends: R (>= 3.0), Rcpp ()
+Imports:  
+Suggests: 
+License: GPL (>= 3)
