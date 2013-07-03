@@ -53,7 +53,7 @@ sourceCpp("new_ga.cpp")
 sourceCpp("kt_gemmR.cpp")
 
 
-gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
+gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                     n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
                     seed.metric = TRUE, check.convergence = FALSE, roe = FALSE) {
 ################################################################################
@@ -68,7 +68,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 2000, p.est = 1,
 #                 writes a .RData file in the current working directory each   #
 #                 time the function is called.                                 #
 #   n.beta      - Number of beta vectors to generate per replication. Default  #
-#                 is 2000.                                                     #
+#                 is 8000.                                                     #
 #   p.est       - Percept of data used to estimate the model. Default is 1,    #
 #                 values less than 1 will cause gemmModel to produce           #
 #                 cross-validation estimates.                                  #

@@ -292,7 +292,7 @@ List gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor
 
 
   double knp, bic; // = sin( (PIE/2) * tau * ((n-kCor-1)/n));
-  knp = sin(PIE/2*tau*(n-kCor-1)/n);
+  knp = sin(PIE/2*tau*(n-p-1)/n);
   bic = n * log(1 - pow(knp,2)) + kCor * log(n);
 
   return Rcpp::List::create(Rcpp::Named("tau") = tau,
