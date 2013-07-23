@@ -241,10 +241,10 @@ double kendallNlogN(double* arr1, double* arr2, size_t len) {
 // [[Rcpp::export]]
 double kt(NumericVector arr1, NumericVector arr2, int length) {
  std::vector<double> y(length);
- NumericVector xx(arr1);
- NumericVector yy(arr2);
+ NumericVector xx(clone(arr1));
+ NumericVector yy(clone(arr2));
   
- return kendallNlogN(xx.begin(), yy.begin(), length);
+return kendallNlogN(xx.begin(), yy.begin(), length);
 }
 
 // [[Rcpp::export]]
@@ -259,83 +259,87 @@ NumericVector fitValues (NumericVector betas, NumericMatrix data) {
 }
 
 // [[Rcpp::export]]
-List gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool pearson) {
+double corRcpp(NumericVector x, const NumericVector y)
+{
+    size_t n = x.size();
+    double ex(0), ey(0), sxx(0), sxy(0), syy(0), xt(0), yt(0);
+    double tiny = 1e-20;
 
+  for (size_t i = 0; i < n; i++) { // Find the means.
+   ex += x[i];
+   ey += y[i];
+  }
+  ex /= n;
+  ey /= n;
+  for (size_t i = 0; i < n; i++) { // Compute the correlation coeﬃcient.
+    xt = x[i] - ex;
+    yt = y[i] - ey;
+    sxx += xt * xt;
+    syy += yt * yt;
+    sxy += xt * yt;
+  }
+return sxy/(sqrt(sxx*syy)+tiny);
+}
+
+
+// [[Rcpp::export]]
+NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool pearson) {
   double tau, r;
 
-  if (sum(betas == 0) == p) {
+if (sum(betas == 0) == p) {
     tau = 0;
     r = 0;
   }
 
-
   if (sum(betas == 0) != p) {
     tau = kt(data(_,0), fitValues(betas,data), data.nrow());    
-//    if (pearson) {
-//      r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
-//    }
+      if(pearson) {
+      r = corRcpp(data(_,0), fitValues(betas,data));
+    }
   }
-
-
 
   if (tau < 0) {
     betas = betas * -1;
-
     tau = kt(data(_,0), fitValues(betas,data), data.nrow());
-    //if (pearson) {
-    //  r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
-    //}
-
+    if(pearson) {
+       r = corRcpp(data(_,0), fitValues(betas,data));
+    }
   }
 
-
-
-
-  double knp, bic; // = sin( (PIE/2) * tau * ((n-kCor-1)/n));
+  double knp, bic, bicr; // = sin( (PIE/2) * tau * ((n-kCor-1)/n));
   knp = sin(PIE/2*tau*(n-p-1)/n);
   bic = n * log(1 - pow(knp,2)) + kCor * log(n);
+  bicr = n * log(1 - pow(r,2)) + kCor * log(n);
 
-  return Rcpp::List::create(Rcpp::Named("tau") = tau,
-                            Rcpp::Named("r") = r,
-                            Rcpp::Named("bic") = bic,
-                            Rcpp::Named("knp") = knp);
-
-
+  return Rcpp::NumericVector::create(tau,r,bic,bicr,knp);
 }
 
 
 
 // [[Rcpp::export]]
 List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, bool getR) {
-  NumericVector fitR(betas.nrow()), fitTau(betas.nrow()), fitBIC(betas.nrow());
-  List fit;
 
-  for (int i=0; i < betas.nrow(); i++) {
-    fit = gemmFitRcpp(n, betas(i,_), data, p, kCor[i], getR);
-    fitBIC(i) = fit["bic"];
-    if (getR) {
-      fitR(i) = fit["r"];
-      fitTau(i) = fit["tau"];
+  NumericVector fit;
+  NumericVector fitR(betas.nrow()), fitTau(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow());
+
+  NumericMatrix data2(clone(data));
+
+for (int i=0; i < betas.nrow(); i++) {
+  fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), getR);
+
+    fitBIC(i) = fit[2];
+    fitBICr(i) = fit[3];
+  if (getR) {
+      fitR(i) = fit[1];
+      fitTau(i) = fit[0];
     }
   }
 
-/*
-  for (i in 1:dim(betas)[1]) {
-    gemm.fit.out <- gemmFitRcpp(n, betas[i,], data, p, k.cor[i], pearson = get.r)
-    fit.stats[i,] <- gemm.fit.out$bic
-    if (get.r) {
-      fit.stats.r[i,] <- gemm.fit.out$r
-      fit.stats.tau[i,] <- gemm.fit.out$tau
-    }
-  }
-*/
   return Rcpp::List::create(Rcpp::Named("r") = fitR,
                             Rcpp::Named("bic") = fitBIC,
-                            Rcpp::Named("tau") = fitTau);
+                            Rcpp::Named("tau") = fitTau,
+                            Rcpp::Named("bic.r") = fitBICr);
 }
-
-
-// blah
 
 NumericMatrix stl_sort_matrix(NumericMatrix x) {
    NumericMatrix y = clone(x);

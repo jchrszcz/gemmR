@@ -4,3 +4,4 @@
 *.RData
 *.csv
 validation_testing.R
+.Rproj.user

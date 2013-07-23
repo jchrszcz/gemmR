@@ -1,14 +1,12 @@
-Package: gemmR
+Package: gemmR2
 Type: Package
-Title: General Monotone Model, R version
-Version: 0.1
-Date: 2013-06-12
-Authors@R: c(person("Jeffrey", "Chrabaszcz", role = c("aut", "cre"),
-                     email = "jchrabaszcz@gmail.com"),
-            person("Joe", "Tidwell", role = "aut, cre",
-                     email = "joetidwell@gmail.com"))
-Description: Packages provides functions to   
-Depends: R (>= 3.0), Rcpp ()
-Imports:  
-Suggests: 
-License: GPL (>= 3)
+Title: What the package does (short line)
+Version: 1.0
+Date: 2013-07-22
+Author: Who wrote it
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+License: What Licence is it under ?
+Depends: Rcpp (>= 0.10.4)
+LinkingTo: Rcpp
+Packaged: 2013-07-22 23:53:23 UTC; joe
