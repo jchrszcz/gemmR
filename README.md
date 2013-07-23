@@ -10,6 +10,12 @@ General Monotone Model in R. This is an R version of the non-parametric regressi
 
 The resulting `gemm` object is currently an S3 class object. We're working on reducing runtime, (mostly through parallelization at this point), and writing a proper helpfile. Information on the basis for GeMM can be found in the [original paper](http://www.bsos.umd.edu/psyc/dougherty/pdf%20articles/DoughertyThomas2012Rev.pdf).
 
+**Bug Note**
+
+On 07/22/2013, we implemented a bugfix that allows the code to be compiled on Windows and Mac OS X. You can now install the gemmR2 package by downloading `gemmR2_1.0.tar.gz`, including it in your working directory, and running:
+
+`install.packages("gemmR2_1.0.tar.gz", repos = NULL, type = "source")`
+
 **Licensing Note**
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
