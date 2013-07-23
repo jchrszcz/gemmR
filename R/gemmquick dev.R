@@ -1,22 +1,3 @@
-##### gemmR ####################################################################
-#
-# Authors: Jeff Chrabaszcz & Joe Tidwell
-#
-# An R implementation of the General Monotone Model, (Dougherty & Thomas, 2012),
-# with some improvements.
-#
-# Please cite:
-# @article{dougherty2012robust,
-#   title={Robust decision making in a nonlinear world},
-#   author={Dougherty, Michael R and Thomas, Rick P},
-#   journal={Psychological Review},
-#   volume={119},
-#   number={2},
-#   pages={321--344},
-#   year={2012},
-#   publisher={American Psychological Association},
-# }
-#
 # License:
 # This file is part of gemmR. gemmR is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -30,235 +11,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with gemmR.  If not, see <http://www.gnu.org/licenses/>.
-#
-##### TODO #####################################################################
-# * PACKAGE BY 14 NOVEMBER 2013                                           *----*
-# * better plot function (ask argument)                                   *Jeff*
-# * error messages?                                                       *----*
-# * summary                                                               *Jeff*
-# * predict                                                               *Jeff*
-# * parallel                                                               *Joe*
-##### Bugs #####################################################################
 
-##### Ideas ####################################################################
-# * posterior predictive checks                                           *----*
-# * OMR weights                                                           *Jeff*
-################################################################################
-
-##### Dependencies #####
-require(Rcpp)
-##### GeMM Functions #####
-
-#sourceCpp("new_ga.cpp")
-#sourceCpp("kt_gemmR.cpp")
-
-# gemmFit <- function(n, betas, data, p, k.cor, pearson) {
-#   ################################################################################
-#   # Function generates model estimates based on sets of weights and predictors,  #
-#   # calculates Kendall's tau between dependent variable and model predictions.   #
-#   #   n     - number of betas for which fit statistics will be calculated.       #
-#   #   betas - matrix of betas, rows are different collections of betas, columns  #
-#   #           are different predictors.                                          #
-#   #   data  - original predictors and outcome used to calculate fit.             #
-#   #   p     - number of predictors.                                              #
-#   #                                                                              #
-#   #  NOTE: k or p for tau transformation needs to be solved.                     #
-#   ################################################################################
-#   # null models are common, these lines return 0 for both fit metrics when all
-#   # betas are 0.
-#   if (sum(betas == 0) == p) {
-#     tau <- 0
-#     r <- 0
-#   }
-#   # non-null models trigger these lines of code, which produce the summed products
-#   # of weights and predictors, return the correlation coefficient between those
-#   # predictions and the predicted variable.
-#   if (sum(betas == 0) != p) {
-#     #tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-#     #           method = "kendall")
-#     tau <- kt(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-#                length(data[,1]))
-#     
-#     if (pearson) {
-#       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
-#     }
-#   }
-#   # this might cause problems, reverses the scale for any negative correlations
-#   # and recalculates fit. Might be able to just multiply by -1?
-#   if (tau < 0) {
-#     betas <- betas * -1
-#     #tau <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-#     #           method = "kendall")
-#     tau <- kt(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)),
-#               length(data[,1]))
-#     
-#     if (pearson) {
-#       r <- cor(c(data[,1]), c(.rowSums(t(betas * t(data[,-1])), n, p)))
-#     }
-#   }
-#   #k <- sum(betas != 0)
-#   knp <- sin(pi/2*tau*((n-k.cor-1)/n))
-#   bic <- n * log(1 - knp ^ 2) + k.cor * log(n)
-#   y <- list(bic = bic)
-#   if (pearson) {
-#     y$r <- r
-#     y$tau <- tau
-#   }
-#   return(y)
-# }
-
-# geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-#                              bestmodels, seed.metric) {
-#   ################################################################################
-#   # This functions generates candidate beta weights for each predictor in the    #
-#   # model.                                                                       #
-#   #   metric.beta    - starting beta weights, generally from lm()                #
-#   #   n.beta         - the number of candidate betas for each n.rep. This is     #
-#   #                    controlled by gemmModel()                                 #
-#   #   n.super.elites - argument used to index a certain portion of the beta for  #
-#   #                    different randomization.                                  #
-#   #   p              - number of predictors                                      #
-#   #   reps           - number of replications. If >1, best beta vectors from     #
-#   #                    previous replication are included.                        #
-#   #   bestmodels     - best betas from previous replication.                     #
-#   #   seed.metric    - control whether lm() estimated betas seed GA. Default is  #
-#   #                    TRUE                                                      #
-#   ################################################################################
-#   
-#   #  cat("-----metric.beta-----\n")
-#   #  print(metric.beta)
-#   #  cat("\n")
-#   
-#   # ls would control whether to seed the betas with OLS estimates. Currently this
-#   # happens by default and cannot be changed outside of the function.
-#   if (seed.metric != TRUE) {metric.beta <- runif(p)}
-#   # this controls the first generation of beta generation.
-#   if (reps == 1) {
-#     betas <- matrix(rep(0, times = n.beta * p), ncol = p)
-#     scaling <- sqrt(.1)
-#     betas[1,] <- metric.beta
-#     for (i in 2:n.beta) {
-#       temp.rand <- runif(p)
-#       temp.norm <- rnorm(p)
-#       if (i >= 2 & i < 1000) {
-#         betas[i,] <- ifelse(temp.rand < .5, 1, 0)
-#         betas[i,] <- betas[i,] * metric.beta
-#       }
-#       if (i >= 1000 & i < 3000) {
-#         betas[i,] <- ifelse(temp.rand < .5, 1, betas)
-#         betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.1)
-#       }
-#       if (i >= 3000 & i < 6000) {
-#         betas[i,] <- ifelse(temp.rand < .5, 1, betas)
-#         betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.01)
-#       }
-#       if (i >= 6000) {
-#         betas[i,] <- ifelse(temp.rand < .25, 1, ifelse(temp.rand > .75, -1,
-#                                                        temp.rand))
-#         betas[i,] <- betas[i,] * metric.beta + temp.norm * sqrt(.5)
-#       }
-#     }
-#     
-#     #    cat("-----betas-----\n")
-#     #    print(summary(betas))
-#     #    cat("\n")
-#     
-#     for (i in 1:n.beta) {
-#       if (sum(betas[i,]) == 0) {
-#         betas[i,] <- ifelse(betas[i,] < .5, 1, 0)
-#         temp.norm.2 <- matrix(rnorm(2*length(betas[i,][betas[i,]])), ncol = 2)
-#         betas[i,][betas[i,]] <- ifelse(temp.norm.2[,1] > 1,
-#                                        1 + temp.norm.2[,2] * scaling, -1 +temp.norm.2[,2] * scaling)
-#       }
-#     }
-#   }
-#   # Reps > 1 do not use OLS estimates to seed the model, but do use the top 25%
-#   # (jcz - I think) from previous generation.
-#   if (reps > 1) {
-#     size <- dim(bestmodels)
-#     elites <- bestmodels
-#     sorted.elites <- elites[order(elites[,1]),]
-#     super.elites <- sorted.elites[1:n.super.elites,]
-#     temp.betas.a <- as.matrix(sorted.elites[,2:size[2]])
-#     temp.betas.b <- as.matrix(sorted.elites[,2:size[2]])
-#     parent.1 <- round(1 + (size[1] - 1) * runif(1))
-#     parent.2 <- 0
-#     while (parent.1 == parent.2 | parent.2 == 0) {
-#       parent.2 <- round(1 + (size[1] - 1) * runif(1))
-#     }
-#     temp.rand <- runif(n.beta/2)
-#     new.X1 <- matrix(rep(0, times = (n.beta/2 * p)), ncol = p)
-#     new.X2 <- new.X1
-#     for (i in 1:(n.beta/2)) {
-#       parent.1 <- round(1 + (size[1] - 1) * runif(1))
-#       parent.2 <- 0
-#       while (parent.1 == parent.2 | parent.2 == 0) {
-#         parent.2 <- round(1 + (size[1] - 1) * runif(1))
-#       }
-#       if (temp.rand[i] < .85) {
-#         k <- round(1 + ((size[2] - 1) * runif(1)))
-#         if (k == p) {
-#           new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,]))
-#           new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,]))
-#         }
-#         if (k < p) {
-#           new.X1[i,] <- as.numeric(c(temp.betas.a[parent.1,1:k],
-#                                      temp.betas.b[parent.2, ((k+1):p)]))
-#           new.X2[i,] <- as.numeric(c(temp.betas.b[parent.1,1:k],
-#                                      temp.betas.a[parent.2, ((k+1):p)]))
-#         }
-#       }
-#       if (temp.rand[i] >= .85) {
-#         new.X1[i,] <- as.numeric(temp.betas.a[parent.1,])
-#         new.X2[i,] <- as.numeric(temp.betas.b[parent.2,])
-#       }
-#     }
-#     temp.rand <- matrix(runif(n.beta*p), ncol = (p*2))
-#     temp.rand.2 <- matrix(runif(n.beta*p), ncol = (p*2))
-#     for (i in 1:p) {
-#       new.X1[,i] <- ifelse(temp.rand[,i] < .01, temp.rand[,(i + p)], new.X1[,i])
-#       new.X2[,i] <- ifelse(temp.rand.2[,i] < .01,
-#                            temp.rand.2[,(i + p)], new.X2[,i])
-#     }
-#     super.elites <- super.elites[,-1]
-#     betas <- rbind(as.matrix(super.elites), new.X1, new.X2)
-#   }
-#   # turn half of all candidate betas negative
-#   #   temp.rand <- rbinom(prod(dim(betas)), 1, .5)
-#   #   temp.rand[temp.rand == 0] <- -1
-#   #   temp.rand <- matrix(temp.rand, ncol = ncol(betas))
-#   #   betas <- betas * temp.rand
-#   y <- betas[1:n.beta,]
-#   return(y)
-# }
+#' gemmR controller function.
+#'
+#' This function is called by \code{\link{gemm.default}} and runs a handful of subordinate functions to produce a gemm object. Takes data and, over successive replications, uses geneticAlgorithm to generate candidate beta vectors, calculates ordinal model fit using these betas, and produces an output that reports weights and fit statistics for best models at each generation, (optionally, for cross-validation as well).
+#' @param input.data must be data frame, first column is treated as dependent variable.
+#' @param output string argument for use in naming file output. \code{\link{gemmEst}} writes a .RData file in the current working directory each time the function is called.
+#' @param n.beta Number of beta vectors to generate per replication.
+#' @param p.est Percept of data used to estimate the model. Values less than 1 will cause gemmModel to produce cross-validation estimates.
+#' @param n.data.gen Number of times the fitting process will be repeated.
+#' @param n.reps Number of generations for \code{\link{genAlg}}.
+#' @param save.results Logical value to determine whether the resulting gemm object is saved to a .RData file.
+#' @param k.pen Penalty term for BIC, as calculated by \code{\link{gemm.formula}}.
+#' @param seed.metric Logical value to control whether \code{\link{genAlg}} is seeded with OLS regression weights or random values.
+#' @param check.convergence Logical value to indicate whether BIC for each generation is retained, mostly useful for checking performance of \code{\link{genAlg}}.
+#' @param roe Logical value to determine whether region of equivalence data are retained.
+#' @keywords ordinal
+#' @export
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                     n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
                     seed.metric = TRUE, check.convergence = FALSE, roe = FALSE) {
-################################################################################
-# Function controls the GeMM process. Takes data and, over successive          #
-# replications, uses geneticAlgorithm to generate candidate beta vectors,      #
-# calculates ordinal model fit using these betas, and produces an output that  #
-# reports weights and fit statistics for best models at each generation,       #
-# (optionally, for cross-validation as well).                                  #
-#   input.data  - must be data frame, first column is treated as dependent     #
-#                 variable.                                                    #
-#   output      - string argument for use in naming file output. gemmModel     #
-#                 writes a .RData file in the current working directory each   #
-#                 time the function is called.                                 #
-#   n.beta      - Number of beta vectors to generate per replication. Default  #
-#                 is 8000.                                                     #
-#   p.est       - Percept of data used to estimate the model. Default is 1,    #
-#                 values less than 1 will cause gemmModel to produce           #
-#                 cross-validation estimates.                                  #
-#   n.data.gen  - Number of times the entire GeMM process will be repeated,    #
-#                 due for removal.                                             #
-#   n.reps      - Number of replications, default is 10.                       #
-#   k.pen       - additional penalty to BIC for including, NA by default.      # 
-#   seed.metric - control whether lm() estimated betas seed GA. Default is     #
-#                 TRUE                                                         #
-#   roe         - Region of Equivalence                                        #
-################################################################################
   bestmodels <- matrix(rep(0, times = (ncol(input.data) - 1)))
   var.name <- colnames(input.data[,-1])
   n.super.elites <- round(n.beta/16)
@@ -312,11 +85,11 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
       betas <- genAlg(metricbeta, n.beta, n.super.elites, p, reps,
                  t(bestmodels), seed.metric)
       betas <- t(as.matrix(betas))
-      
       # calculate penalized k for interactions
       k.cor <- rep(1, times = nrow(betas))
       if (!is.null(dim(k.pen))) {
-        k.cor <- kCorFact(k.pen, betas)
+        #k.cor <- kCorFact(k.pen, betas)
+        k.cor <- apply(betas,1, function(x) sum(as.matrix(k.pen)%*%x!=0))
         k.cor <- matrix(k.cor, ncol = 1)
       } 
       fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
@@ -324,25 +97,10 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
         fit.stats.r <- fit.stats
         fit.stats.tau <- fit.stats
       }
-
-      
-       fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r)
-       fit.stats <- fitStats$bic
-       fit.stats.r <- fitStats$r
-       fit.stats.tau <- fitStats$tau
-
-#      print(fitStats$betas.nrow)
-#        for (i in 1:dim(betas)[1]) {
-#          #gemm.fit.out <- gemmFit(n, betas[i,], data, p, k.cor[i], pearson = get.r)
-#          gemm.fit.out <- gemmFitRcpp(n, betas[i,], data, p, k.cor[i], pearson = get.r) 
-#          fit.stats[i,] <- gemm.fit.out$bic
-#          if (get.r) {
-#            fit.stats.r[i,] <- gemm.fit.out$r
-#            fit.stats.tau[i,] <- gemm.fit.out$tau
-#          }
-#        }
-      
-      
+      fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r)
+      fit.stats <- fitStats$bic
+      fit.stats.r <- fitStats$r
+      fit.stats.tau <- fitStats$tau      
       model.stats <- cbind(fit.stats, betas)
       model.stats <- rbind(rep(0, times = length(model.stats[1,])), model.stats)
       model.stats <- model.stats[order(model.stats[,1]),]
@@ -418,20 +176,24 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
   return(sim.results)
 }
 
-kCorFact <- function(k.pen, beta.vecs) {
-  ################################################################################
-  # Computes the correctd k for interaction terms. Returns a vector.             #
-  #   k.pen     - factor matrix from model.frame called in gemm.formula.         #
-  #   beta.vecs - matrix of beta vectors produced by geneticAlgorithm.           #
-  ################################################################################
-  
-  return(apply(beta.vecs,1, function(x) sum(as.matrix(k.pen)%*%x!=0)))
-  
-}
-################################################################################
+#' gemm 
+#'
+#' This function is called by \code{\link{gemm.default}} and runs a handful of subordinate functions to produce a gemm object. Takes data and, over successive replications, uses geneticAlgorithm to generate candidate beta vectors, calculates ordinal model fit using these betas, and produces an output that reports weights and fit statistics for best models at each generation, (optionally, for cross-validation as well).
+#' @param x Formula input for gemm procedure.
+#' @param ... Other arguments to be passed to \code{\link{gemm.formula}} and \code{\link{gemmEst}}.
+#' @export
 
-##### Package functions #####
 gemm <- function(x, ...) UseMethod("gemm")
+
+#' Default method for gemm
+#' 
+#' This function is the default method for gemm. It calls \code{\link{gemmEst}}, assigns a "gemm" class to the resultant list object, and returns that list.
+#' @param x dataframe to be passed to \code{\link{gemmEst}}. First column is predicted variable.
+#' @param k.pen Penalty term, necessary for appropriate penalty related to interaction terms.
+#' @param ... Other arguments passed to \code{\link{gemmEst}}.
+#' @method gemm default
+#' @S3method gemm default
+#' @export
 
 gemm.default <- function(x, k.pen = k.pen, ...) {
   est <- gemmEst(input.data = x, k.pen = k.pen, ...)
@@ -439,7 +201,16 @@ gemm.default <- function(x, k.pen = k.pen, ...) {
   est
 }
 
-print.gemm <- function(x, ...) {
+#' Print method for gemm
+#' 
+#' This function is the print method for gemm. It returns the most-referenced parts of a gem object: formula call, coefficients, and fit indices.
+#' @param x gemm object to be referenced.
+#' @param ... Other arguments.
+#' @method gemm print
+#' @S3method gemm print
+#' @export
+
+gemm.print <- function(x, ...) {
   cat("Call:\n")
   print(x$call)
   cat("\nCoefficients:\n")
@@ -448,8 +219,17 @@ print.gemm <- function(x, ...) {
   print(x$est.bic)
 }
 
+#' Function method for gemm
+#' 
+#' This is the function method for gemm. It calls \code{\link{gemm.default}} after creating the design matrix and calculating the appropriate penalty term
+#' @param formula Linear model equivalent to be fit by gemm.
+#' @param data Dataframe referred to by formula.
+#' @param ... Other arguments to be passed to \code{\link{gemmEst}}.
+#' @method gemm formula
+#' @S3method gemm formula
+#' @export
+
 gemm.formula <- function(formula, data=list(), ...) {
-  
   mf <- model.frame(formula=formula, data=data)
   x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
   y <- model.response(mf)
@@ -457,35 +237,27 @@ gemm.formula <- function(formula, data=list(), ...) {
   me <- attributes(attributes(mf)$terms)$term.labels[attributes(attributes(mf)$terms)$order==1]
   mm <- model.matrix(attr(mf, "terms"), data=mf)
   fmla <- as.formula(paste("y ~ ", paste(me, collapse= "*")))
-
   #names 
   names <- data.frame(var=names(mf)[-1])
   names$cnt.betas <- apply(names,1,function(x) ifelse(is.factor(mf[,x]),length(levels(mf[,x]))-1,1))
   vars <- apply(names,1,function(x) if(x[2]==1) {x[1]} else {paste(x[1],1:x[2],sep="")} )
-  
   if(dim(names)[1]==1) {
     names = as.vector(vars)
   } else {
-  
     vars <- lapply(vars,function(x)c("",x))
     mat <- t(unique(expand.grid(vars)))
-    
     names <- apply(mat,2,function(x) paste(x, collapse=':'))
-  
     while (length(grep("::",names))>0) {  
           names <- sub("::",':',names)
     }
     names <- sub(':$', '', names)
-    names <- sub('^:', '', names)[-1]
-    
+    names <- sub('^:', '', names)[-1] 
   }
   #names.betas.all <- attr(terms(fmla),"term.labels")
   names.betas.all <- names
   names.betas.in.model <- attr(terms(mf),"term.labels")
-  
   #skip if only 1 predictor
   if(length(names.betas.all)>1) {
-    
     #full combination of variables/factors
     count <- 0
     for (var in me) {
@@ -501,10 +273,8 @@ gemm.formula <- function(formula, data=list(), ...) {
       lst[[i]] <- c(0,1)  
     }
     lst <- t(expand.grid(lst))[,-1]
-    
     lst <- data.frame(lst)
     lst$assign <- attributes(mm)$assign[-1][1:count]
-    
     #remove columns with within factor comparisons
     tmp <- rep(TRUE, times=dim(lst)[2])
     
@@ -513,9 +283,7 @@ gemm.formula <- function(formula, data=list(), ...) {
       tmp <- ifelse(tmp==tmp2 & tmp2==TRUE,TRUE,FALSE)
     }
     k.pen <- lst[,tmp==TRUE]
-  
     colnames(k.pen) <- names.betas.all
-    
     # Select Main Effects
     grep.str <- ""
     for (tmp in me) {
@@ -524,11 +292,9 @@ gemm.formula <- function(formula, data=list(), ...) {
     grep.str <- substr(grep.str, 1, nchar(grep.str)-1)
     keep.main <- grepl(grep.str,  names.betas.all)
     keep <- matrix(keep.main,ncol=length(keep.main))
-      
     # Select interactions 
     interactions <- names.betas.in.model[grepl(":",names.betas.in.model)]
     search.terms <- strsplit(interactions,":")
-    
     if (length(search.terms)>0) {
       keep.tmp <- matrix(ncol=dim(k.pen)[2],nrow=length(search.terms))
       keep.tmp[1,] <- F   
@@ -562,7 +328,16 @@ gemm.formula <- function(formula, data=list(), ...) {
   est
 }
 
-plot.gemm <- function(x, ...) {
+#' plot method for gemm
+#' 
+#' This function is the plot method for a gemm object.
+#' @param x "gemm" class object to be used for plotting. Note that plots differ based on whether \code{check.convergence} was called for the initial gemm fitting.
+#' @param ... Other arguments.
+#' @method gemm plot
+#' @S3method gemm plot
+#' @export
+
+gemm.plot <- function(x, ...) {
   par(mfrow = c(1,3))
   if (!is.null(attr(x, "converge.check"))) {
     par(mfrow = c(2,2))
@@ -577,6 +352,12 @@ plot.gemm <- function(x, ...) {
     main = "Rank disparity by criterion rank",
     xlab = "Ordered criterion", ylab = "Rank disparity")
 }
+
+#' convergencePlot function for visualizing genetic algorithm in gemmR
+#' 
+#' This function plots convergence for gemm objects that were called with the "check.convergence" argument. Generally doesn't work well with n.data.gen < 10.
+#' @param beta Matrix of BIC values for the best model in each generation.
+#' @export
 
 convergencePlot <- function(beta, ...) {
   chains <- ncol(beta)
@@ -595,9 +376,3 @@ convergencePlot <- function(beta, ...) {
   legend(xrange[1], yrange[2], 1:chains, cex=0.8, col=colors, pch=plotchar,
     lty=linetype, title="Chains")
 }
-
-##### Deprecated #####
-
-
-
-

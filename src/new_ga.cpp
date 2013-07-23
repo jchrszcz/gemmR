@@ -13,13 +13,23 @@
 # along with gemmR.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//' genAlg
+//' 
+//' Generatic algorithm for gemmR.
+//' @param metricbeta Weights derived using multiple regression. Overwritten if \code{seedmetric} is FALSE.
+//' @param nbeta Number of candidate weight vectors in each generation.
+//' @param nsuperelites Number of candidate weight vectors to involve in permutation for reps > 1.
+//' @param p Number of potential predictors.
+//' @param reps Generation number. For reps == 1, entirely new weights are generated. When reps > 1, bestmodels are used to generate permutations.
+//' @param bestmodels Matrix of best candidate weight vectors from previous generation.
+//' @param seedmetric If TRUE, multiple regression weights are used to seed the genetic algorithm. Otherwise, random weights are used.
+//' @return y Matrix of candidate weights with number of rows equal to p.
+//' 
 #include <Rcpp.h>
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta,
-  int nsuperelites, int p, int reps,
-  NumericMatrix bestmodels, bool seedmetric) {
+NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta, int nsuperelites, int p, int reps, NumericMatrix bestmodels, bool seedmetric) {
   if (!seedmetric) {
     NumericVector tempmetric = runif(p);
     for (int i = 0; i < p; i++) {
