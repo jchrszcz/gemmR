@@ -1,6 +1,6 @@
-\name{gemmR2-package}
-\alias{gemmR2-package}
-\alias{gemmR2}
+\name{gemmR-package}
+\alias{gemmR-package}
+\alias{gemmR}
 \docType{package}
 \title{
 What the package does (short line)
@@ -11,10 +11,10 @@ More about what it does (maybe more than one line)
 }
 \details{
 \tabular{ll}{
-Package: \tab gemmR2\cr
+Package: \tab gemmR\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
-Date: \tab 2013-07-22\cr
+Date: \tab 2013-07-24\cr
 License: \tab What license is it under?\cr
 }
 ~~ An overview of how to use the package, including the most important functions ~~
@@ -27,8 +27,7 @@ Maintainer: Who to complain to <yourfault@somewhere.net>
 \references{
 ~~ Literature or other references for background information ~~
 }
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R documentation ~~
-~~ directory ~~
+~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R documentation directory ~~
 \keyword{ package }
 \seealso{
 ~~ Optional links to other man pages, e.g. ~~
