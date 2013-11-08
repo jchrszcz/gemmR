@@ -25,11 +25,7 @@ sortIt <- function(x) {
     .Call('gemmR_sortIt', PACKAGE = 'gemmR', x)
 }
 
-genAlg <- function(metricbeta, nbeta, nsuperelites, p, reps, bestmodels, seedmetric) {
-    .Call('gemmR_genAlg', PACKAGE = 'gemmR', metricbeta, nbeta, nsuperelites, p, reps, bestmodels, seedmetric)
-}
-
-rcpp_hello_world <- function() {
-    .Call('gemmR_rcpp_hello_world', PACKAGE = 'gemmR')
+genAlg <- function(metricbeta, nbeta, nsuperelites, p, gens, bestmodels, seedmetric) {
+    .Call('gemmR_genAlg', PACKAGE = 'gemmR', metricbeta, nbeta, nsuperelites, p, gens, bestmodels, seedmetric)
 }
 

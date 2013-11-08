@@ -2,15 +2,25 @@
 \alias{convergencePlot}
 \title{convergencePlot function for visualizing genetic algorithm in gemmR}
 \usage{
-  convergencePlot(beta, ...)
+  convergencePlot(beta, fit.metric, ...)
 }
 \arguments{
-  \item{beta}{Matrix of BIC values for the best model in
+  \item{beta}{matrix of BIC values for the best model in
   each generation.}
+  
+  \item{fit.metric}{selected metric for a given model, specified when
+  \code{\link{gemm}} is run.}
 }
 \description{
   This function plots convergence for gemm objects that
   were called with the "check.convergence" argument.
-  Generally doesn't work well with n.data.gen < 10.
 }
-
+\details{
+  Generally does not work well with \code{n.chains} < 10.
+}
+\examples{
+  data(mtcars)
+  gemm.model <- gemm(mpg ~ disp + hp, data = mtcars, check.convergence = TRUE,
+    seed.metric = FALSE)
+  with(gemm.model, convergencePlot(converge.fit.metric, fit.metric))
+}

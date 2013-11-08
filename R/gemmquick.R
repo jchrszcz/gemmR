@@ -1,26 +1,3 @@
-
-#### OCLO
-#### 1- tau
-
-##### gemmR ####################################################################
-#
-# Authors: Jeff Chrabaszcz & Joe Tidwell
-#
-# An R implementation of the General Monotone Model, (Dougherty & Thomas, 2012),
-# with some improvements.
-#
-# Please cite:
-# @article{dougherty2012robust,
-#   title={Robust decision making in a nonlinear world},
-#   author={Dougherty, Michael R and Thomas, Rick P},
-#   journal={Psychological Review},
-#   volume={119},
-#   number={2},
-#   pages={321--344},
-#   year={2012},
-#   publisher={American Psychological Association},
-# }
-#
 # License:
 # This file is part of gemmR. gemmR is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -34,53 +11,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with gemmR.  If not, see <http://www.gnu.org/licenses/>.
-#
-##### TODO #####################################################################
-# * PACKAGE BY 14 NOVEMBER 2013                                           *----*
-# * better plot function (ask argument)                                   *Jeff*
-# * error messages?                                                       *----*
-# * summary                                                               *Jeff*
-# * predict                                                               *Jeff*
-# * parallel                                                               *Joe*
-##### Bugs #####################################################################
-
-##### Ideas ####################################################################
-# * posterior predictive checks                                           *----*
-# * OMR weights                                                           *Jeff*
-################################################################################
-
-##### Dependencies #####
-require(Rcpp)
-##### GeMM Functions #####
-
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
-                    n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
+                    n.chains = 3, n.gens = 10, save.results = FALSE, k.pen = k.pen,
                     seed.metric = TRUE, check.convergence = FALSE, roe = FALSE, fit.metric = "bic", correction = "knp") {
-################################################################################
-# Function controls the GeMM process. Takes data and, over successive          #
-# replications, uses geneticAlgorithm to generate candidate beta vectors,      #
-# calculates ordinal model fit using these betas, and produces an output that  #
-# reports weights and fit statistics for best models at each generation,       #
-# (optionally, for cross-validation as well).                                  #
-#   input.data  - must be data frame, first column is treated as dependent     #
-#                 variable.                                                    #
-#   output      - string argument for use in naming file output. gemmModel     #
-#                 writes a .RData file in the current working directory each   #
-#                 time the function is called.                                 #
-#   n.beta      - Number of beta vectors to generate per replication. Default  #
-#                 is 8000.                                                     #
-#   p.est       - Percept of data used to estimate the model. Default is 1,    #
-#                 values less than 1 will cause gemmModel to produce           #
-#                 cross-validation estimates.                                  #
-#   n.data.gen  - Number of times the entire GeMM process will be repeated,    #
-#                 due for removal.                                             #
-#   n.reps      - Number of replications, default is 10.                       #
-#   k.pen       - additional penalty to BIC for including, NA by default.      # 
-#   seed.metric - control whether lm() estimated betas seed GA. Default is     #
-#                 TRUE                                                         #
-#   roe         - Region of Equivalence                                        #
-################################################################################
 
   # Select fitting function
 getFitMetric <- switch(tolower(fit.metric),
@@ -92,46 +26,36 @@ fit.null <- switch(tolower(fit.metric),
                   bic = 0,
                   tau = 1
                   )
-
-  
-#   fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r)
-#   #fit.stats <- fitStats$bic
-#   fit.stats.r <- fitStats$r
-#   fit.stats.tau <- fitStats$tau
-# 
-#   fit.stats <- 1-fitStats$tau
-
-
   # Allocate Variables 
   bestmodels <- matrix(rep(0, times = (ncol(input.data) - 1)))
   var.name <- colnames(input.data[,-1])
   n.super.elites <- round(n.beta/16)
-  fit.out <- matrix(rep(0, times = n.data.gen * (dim(input.data)[2])),
-                    nrow = n.data.gen)
-  fit.out.r <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
-  fit.out.tau <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
-  fit.out.bic <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
-
+  fit.out <- matrix(rep(0, times = n.chains * (dim(input.data)[2])),
+                    nrow = n.chains)
+  fit.out.r <- matrix(rep(0, times = n.chains), nrow = n.chains)
+  fit.out.tau <- matrix(rep(0, times = n.chains), nrow = n.chains)
+  fit.out.bic <- matrix(rep(0, times = n.chains), nrow = n.chains)
   if (roe) {
-    roe.mat <- matrix(0, nrow = (n.beta * n.reps * n.data.gen),
+    roe.mat <- matrix(0, nrow = (n.beta * n.gens * n.chains),
       ncol = ncol(input.data))
   }
   if (check.convergence) {
-    converge.fit.metric <- matrix(rep(0, times = (n.reps * n.data.gen)),
-                           ncol = n.data.gen)
+    converge.fit.metric <- matrix(rep(0, times = (n.gens * n.chains)),
+                           ncol = n.chains)
     converge.beta <- matrix(rep(0,
-                      times = (n.reps * n.data.gen * (dim(input.data)[2] - 1))),
+                      times = (n.gens * n.chains * (dim(input.data)[2] - 1))),
                             ncol = (dim(input.data)[2] - 1))
-    converge.r <- matrix(rep(0, times = (n.reps * n.data.gen)),
-                            ncol = n.data.gen)
+    converge.r <- matrix(rep(0, times = (n.gens * n.chains)),
+                            ncol = n.chains)
   }
   if (p.est < 1) {
-    gemm.cross.out <- matrix(rep(0, times = n.data.gen), nrow = n.data.gen)
+    gemm.cross.out <- matrix(rep(0, times = n.chains), nrow = n.chains)
     gemm.cross.out.r <- gemm.cross.out
     gemm.cross.out.tau <- gemm.cross.out
   }
-  for (datagen in 1:n.data.gen) {
-    get.r <- FALSE
+  for (chains in 1:n.chains) {
+    # hack, get.r needs to be removed
+    get.r <- TRUE
     data <- input.data
     size <- dim(data)
     est.ss <- floor(p.est * size[1])
@@ -152,16 +76,16 @@ fit.null <- switch(tolower(fit.metric),
     p.vals <- summary(lin.mod)[[4]][-1,4]
     names(p.vals) <- names(data[2:length(data)])
     ps <- ifelse(summary(lin.mod)[[4]][-1,4] < .05, 1, 0)
-    for (reps in 1:n.reps) {
-      #if (reps == n.reps) { #cow
+    for (gens in 1:n.gens) {
+      #if (gens == n.gens) { #cow
 
       # hacked to always return r
-      if (1 == 1) { #cow
-          get.r <- TRUE
-      }
+      #if (1 == 1) { #cow
+      #    get.r <- TRUE
+      #}
       
       # beta generation here
-      betas <- genAlg(metricbeta, n.beta, n.super.elites, p, reps,
+      betas <- genAlg(metricbeta, n.beta, n.super.elites, p, gens,
                  t(bestmodels), seed.metric)
       betas <- t(as.matrix(betas))
       
@@ -187,34 +111,20 @@ fit.null <- switch(tolower(fit.metric),
       fit.stats.bic <- fitStats$bic
       fit.stats.r <- fitStats$r
       fit.stats.tau <- fitStats$tau
-            
-    #  fit.stats <- 1-fitStats$tau
-    #  print(summary(fit.stats))
-    #  print(length(fit.stats))
-      
-#       # COW hack to replace ordinal with metric fits
-#       #get fitted values
-#       y.hat <- data[,-1]%*%t(betas)
-#       # get r
-#       fit.stats.r <- apply(y.hat,2,function(x) cor(x,data[,1]))
-#       # get bic
-#       fit.stats <- n * log(1 - fit.stats.r^2) + k.cor * log(n);
-#       fit.stats.tau <- apply(y.hat,2,function(x) kt(x,data[,1],length(x)))
-      
-      
+
       # COW
       model.stats <- cbind(fit.stats, fit.stats.r, betas)
       
       # Change first value in null vector based on fit metric
       
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
-      print(head(model.stats))
-      print("-------------------------")
+      #print(head(model.stats))
+      #print("-------------------------")
 
       # Order by BIC then by r
       model.stats <- model.stats[order((model.stats[,1]),-model.stats[,2]),]
       
-      print(head(model.stats))
+      #print(head(model.stats))
       
       #model.stats <- cbind(model.stats[,1],model.stats[,3:ncol(model.stats)])
       #print(summary(model.stats))
@@ -224,14 +134,14 @@ fit.null <- switch(tolower(fit.metric),
       }
       if (roe) {
       	# check this
-        roe.mat[1:n.beta + (n.beta * (reps - 1)) +
-          (n.beta * n.reps * (datagen - 1)),] <- model.stats[-1,]
+        roe.mat[1:n.beta + (n.beta * (gens - 1)) +
+          (n.beta * n.gens * (chains - 1)),] <- model.stats[-1,]
       }
       bestmodels <- model.stats[1:(4*n.super.elites),-2]
       if (check.convergence) {
-        converge.fit.metric[reps, datagen] <- bestmodels[1,1]
-        converge.beta[(reps + reps * (datagen - 1)),] <- bestmodels[1,-1]
-        converge.r[reps, datagen] <- model.stats[1,2]
+        converge.fit.metric[gens, chains] <- bestmodels[1,1]
+        converge.beta[(gens + gens * (chains - 1)),] <- bestmodels[1,-1]
+        converge.r[gens, chains] <- model.stats[1,2]
       }
 
       #COW
@@ -243,21 +153,20 @@ fit.null <- switch(tolower(fit.metric),
     
     #print(head(bestmodels))
     
-    fit.out[datagen,] <- bestmodels[1,]
-    fit.out.r[datagen,] <- fit.stats.r[1]
-    fit.out.tau[datagen,] <- fit.stats.tau[1]
-    fit.out.bic[datagen,] <- fit.stats.bic[1]
+    fit.out[chains,] <- bestmodels[1,]
+    fit.out.r[chains,] <- fit.stats.r[1]
+    fit.out.tau[chains,] <- fit.stats.tau[1]
+    fit.out.bic[chains,] <- fit.stats.bic[1]
     if (p.est < 1) {
       tempOut <- gemmFitRcppI(nrow(cross.val), matrix(bestmodels[1,2:(p+1)], nrow = 1), cross.val, p, k.cor, get.r, correction)
-      gemm.cross.out[datagen,] <- tempOut$bic
-      gemm.cross.out.r[datagen,] <- tempOut$r
-      gemm.cross.out.tau[datagen,] <- tempOut$tau
+      gemm.cross.out[chains,] <- tempOut$bic
+      gemm.cross.out.r[chains,] <- tempOut$r
+      gemm.cross.out.tau[chains,] <- tempOut$tau
     }
   }
   coefficients <- matrix(fit.out[,-1], ncol = p,
     dimnames = list(c(), c(colnames(input.data))[-1]))
-
-  #print(head(coefficients))
+  coefficients <- t(apply(matrix(coefficients, ncol = p), 1, function(x) x/abs(sum(x))))
 
   best.coef <- matrix(fit.out[fit.out[,1] == min(fit.out[,1]), -1], ncol = p)
   if (nrow(best.coef) > 1) {
@@ -266,9 +175,9 @@ fit.null <- switch(tolower(fit.metric),
   fitted.values <- matrix(input.data[,-1], ncol = p) %*% matrix(best.coef, ncol = 1)
   if (roe) {
   	roe.df <- data.frame(roe.mat)
-  	roe.df$beta <- rep(1:n.beta, times = n.reps * n.data.gen)
-  	roe.df$reps <- rep(1:n.reps, each = n.beta, times = n.data.gen)
-  	roe.df$data.gen <- rep(1:n.data.gen, each = n.beta * n.reps)
+  	roe.df$beta <- rep(1:n.beta, times = n.gens * n.chains)
+  	roe.df$gens <- rep(1:n.gens, each = n.beta, times = n.chains)
+  	roe.df$chain <- rep(1:n.chains, each = n.beta * n.gens)
   }
   sim.results <- list(date = date(),
     call = match.call(),
@@ -309,22 +218,15 @@ fit.null <- switch(tolower(fit.metric),
   return(sim.results)
 }
 
-kCorFact <- function(k.pen, beta.vecs) {
-  ################################################################################
-  # Computes the correctd k for interaction terms. Returns a vector.             #
-  #   k.pen     - factor matrix from model.frame called in gemm.formula.         #
-  #   beta.vecs - matrix of beta vectors produced by geneticAlgorithm.           #
-  ################################################################################
-  
-  return(apply(beta.vecs,1, function(x) sum(as.matrix(k.pen)%*%x!=0)))
-  
-}
-################################################################################
-
 ##### Package functions #####
+
+kCorFact <- function(k.pen, beta.vecs) {  
+  return(apply(beta.vecs,1, function(x) sum(as.matrix(k.pen)%*%x!=0)))
+}
+
 gemm <- function(x, ...) UseMethod("gemm")
 
-gemm.default <- function(x, k.pen = k.pen, ...) {
+gemm.default <- function(x, k.pen, ...) {
   est <- gemmEst(input.data = x, k.pen = k.pen, ...)
   class(est) <- "gemm"
   est
@@ -345,7 +247,6 @@ print.gemm <- function(x, ...) {
 }
 
 gemm.formula <- function(formula, data=list(), ...) {
-  
   mf <- model.frame(formula=formula, data=data)
   x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
   y <- model.response(mf)
@@ -472,10 +373,7 @@ plot.gemm <- function(x, ...) {
   plot(order(x$model[1]), x$rank.residuals[order(x$model[1])],
     main = "Rank disparity by criterion rank",
     xlab = "Ordered criterion", ylab = "Rank disparity")
-
-    #COW
     par(mfrow=c(1,1))
-
 }
 
 convergencePlot <- function(beta, fit.metric, ...) {
@@ -483,7 +381,6 @@ convergencePlot <- function(beta, fit.metric, ...) {
                   bic = "BIC",
                   tau = "1 - tau"
                   )
-  
   chains <- ncol(beta)
   max.rep <- nrow(beta)
   xrange <- c(1, max.rep) 
@@ -500,11 +397,3 @@ convergencePlot <- function(beta, fit.metric, ...) {
   legend(xrange[1], yrange[2], 1:chains, cex=0.8, col=colors, pch=plotchar,
     lty=linetype, title="Chains")
 }
-
-
-?paste
-##### Deprecated #####
-
-
-
-

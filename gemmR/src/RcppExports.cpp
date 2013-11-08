@@ -112,8 +112,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // genAlg
-NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta, int nsuperelites, int p, int reps, NumericMatrix bestmodels, bool seedmetric);
-RcppExport SEXP gemmR_genAlg(SEXP metricbetaSEXP, SEXP nbetaSEXP, SEXP nsuperelitesSEXP, SEXP pSEXP, SEXP repsSEXP, SEXP bestmodelsSEXP, SEXP seedmetricSEXP) {
+NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta, int nsuperelites, int p, int gens, NumericMatrix bestmodels, bool seedmetric);
+RcppExport SEXP gemmR_genAlg(SEXP metricbetaSEXP, SEXP nbetaSEXP, SEXP nsuperelitesSEXP, SEXP pSEXP, SEXP gensSEXP, SEXP bestmodelsSEXP, SEXP seedmetricSEXP) {
 BEGIN_RCPP
     SEXP __sexp_result;
     {
@@ -122,24 +122,10 @@ BEGIN_RCPP
         Rcpp::traits::input_parameter< int >::type nbeta(nbetaSEXP );
         Rcpp::traits::input_parameter< int >::type nsuperelites(nsuperelitesSEXP );
         Rcpp::traits::input_parameter< int >::type p(pSEXP );
-        Rcpp::traits::input_parameter< int >::type reps(repsSEXP );
+        Rcpp::traits::input_parameter< int >::type gens(gensSEXP );
         Rcpp::traits::input_parameter< NumericMatrix >::type bestmodels(bestmodelsSEXP );
         Rcpp::traits::input_parameter< bool >::type seedmetric(seedmetricSEXP );
-        NumericMatrix __result = genAlg(metricbeta, nbeta, nsuperelites, p, reps, bestmodels, seedmetric);
-        PROTECT(__sexp_result = Rcpp::wrap(__result));
-    }
-    UNPROTECT(1);
-    return __sexp_result;
-END_RCPP
-}
-// rcpp_hello_world
-List rcpp_hello_world();
-RcppExport SEXP gemmR_rcpp_hello_world() {
-BEGIN_RCPP
-    SEXP __sexp_result;
-    {
-        Rcpp::RNGScope __rngScope;
-        List __result = rcpp_hello_world();
+        NumericMatrix __result = genAlg(metricbeta, nbeta, nsuperelites, p, gens, bestmodels, seedmetric);
         PROTECT(__sexp_result = Rcpp::wrap(__result));
     }
     UNPROTECT(1);

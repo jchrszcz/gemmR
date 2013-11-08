@@ -16,30 +16,9 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-
-//# geneticAlgorithm <- function(metric.beta, n.beta, n.super.elites, p, reps,
-//#                              bestmodels, seed.metric) {
-//#   ################################################################################
-//#   # This functions generates candidate beta weights for each predictor in the    #
-//#   # model.                                                                       #
-//#   #   metric.beta    - starting beta weights, generally from lm()                #
-//#   #   n.beta         - the number of candidate betas for each n.rep. This is     #
-//#   #                    controlled by gemmModel()                                 #
-//#   #   n.super.elites - argument used to index a certain portion of the beta for  #
-//#   #                    different randomization.                                  #
-//#   #   p              - number of predictors                                      #
-//#   #   reps           - number of replications. If >1, best beta vectors from     #
-//#   #                    previous replication are included.                        #
-//#   #   bestmodels     - best betas from previous replication.                     #
-//#   #   seed.metric    - control whether lm() estimated betas seed GA. Default is  #
-//#   #                    TRUE                                                      #
-//#   ################################################################################
-//genAlg(metricbeta, n.beta, n.super.elites, p, reps,
-//                 t(bestmodels), seed.metric)
-
 // [[Rcpp::export]]
 NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta,
-  int nsuperelites, int p, int reps,
+  int nsuperelites, int p, int gens,
   NumericMatrix bestmodels, bool seedmetric) {
   if (!seedmetric) {
     NumericVector tempmetric = runif(p);
@@ -50,7 +29,7 @@ NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta,
   
   NumericMatrix betas(p, nbeta);
  
-  if (reps == 1) {
+  if (gens == 1) {
     NumericVector temprand(p);
     NumericVector tempnorm(p);
     double scaling = sqrt(.1);
@@ -87,7 +66,7 @@ NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta,
     }
   }
   
-  if (reps > 1) {
+  if (gens > 1) {
     // assign beta vectors from bestmodels to superelites
     NumericMatrix superelites(p, nsuperelites);
     superelites = bestmodels(_,Range(0,(nsuperelites-1)));
@@ -185,6 +164,6 @@ NumericMatrix genAlg(NumericMatrix metricbeta, int nbeta,
       }
     }
   }
-  NumericMatrix y = betas;
-  return y;
+  NumericMatrix allbetas = betas;
+  return allbetas;
 }

@@ -1,23 +1,112 @@
 \name{gemm}
 \alias{gemm}
-\title{gemm}
+\alias{gemm.default}
+\alias{gemm.formula}
+\alias{print.gemm}
+\alias{plot.gemm}
+\title{Fit General Monotone Models.}
 \usage{
-  gemm(x, ...)
+\method{gemm}{formula}(formula, data=list(), ...)
+
+\method{gemm}{default}(x, k.pen, ...)
 }
 \arguments{
-  \item{x}{Formula input for gemm procedure.}
-
-  \item{...}{Other arguments to be passed to
-  \code{\link{gemm.formula}} and \code{\link{gemmEst}}.}
+  \item{formula}{an object of the class "\code{\link{formula}}".}
+  
+  \item{data}{optional data frame, list, or environment.}
+  
+  \item{x}{must be data frame, first column is treated as dependent variable.
+  Not needed if formula is supplied.}
+  
+  \item{k.pen}{vector of integers giving penalty equivalent to main effects for
+  any interaction terms. Calculated by \code{\link{gemm.formula}} or defaults to
+  no special interaction weighting.}
 }
 \description{
-  This function is called by \code{\link{gemm.default}} and
-  runs a handful of subordinate functions to produce a gemm
-  object. Takes data and, over successive replications,
-  uses geneticAlgorithm to generate candidate beta vectors,
-  calculates ordinal model fit using these betas, and
-  produces an output that reports weights and fit
-  statistics for best models at each generation,
-  (optionally, for cross-validation as well).
+  \code{gemm} is used to fit general monotone models. By default, the function
+  will generate metric weights that minimize rank order inversion between the
+  model predictions and a response variable, subject to a parsimony correction.
+  Optional argument passed to \code{\link{gemmEst}}.
 }
-
+\details{
+  Models for \code{gemm} are constructed with syntax similar to
+  \code{\link{lm}}. By default, \code{gemm} will use random search to minimize
+  penalized rank order inversions between model predictions and a response
+  variable. This is accomplished by generating candidate weights using
+  \code{\link{genAlg}} and deriving a BIC based on transformed Kendall's
+  \code{tau} using \code{\link{gemmFitRcppI}}. \code{gemm} may take some time
+  to run depending on the complexity of the model. 
+}
+\value{
+  A list with class "\code{gemm}" containing the following components:
+  
+  \item{date}{system time and date for model completion.}
+  
+  \item{call}{the matched call.}
+  
+  \item{coefficients}{matrix of best weights with one row for each chain.}
+  
+  \item{fitted.values}{model predictions for criterion generated from weights
+  associated with best chain.}
+  
+  \item{residuals}{metric values for response minus fitted.}
+  
+  \item{rank.residuals}{rank response minus rank criterion.}
+  
+  \item{est.bic}{vector of Bayesian Information Criteria for estimation sample
+  of each chain.}
+  
+  \item{est.r}{vector of Pearson's \code{r} values for estimation sample of
+  each chain.}
+  
+  \item{est.tau}{vector of Kendall's \code{tau} for estimation sample of each
+  chain.}
+  
+  \item{metric.betas}{regression weights derived using \code{\link{lm}}.}
+  
+  \item{p.vals}{p-values associated with ordinary least squares regression
+  weights.}
+  
+  \item{model}{data frame including modeled data.}
+  
+  \item{fit.metric}{sorting metric used.}
+  
+  \item{cross.val.bic}{vector of Bayesian Information Criteria for
+  cross-validation sample of each chain.}
+  
+  \item{cross.val.r}{vector of Pearson's \code{r} values for cross-validation
+  sample of each chain.}
+  
+  \item{cross.val.tau}{vector of Kendall's \code{tau} for cross-validation
+  sample of each chain.}
+  
+  \item{converge.fit.metric}{matrix of "\code{fit.metric}" values with
+  generations by chains.}
+  
+  \item{converge.beta}{matrix derived weights for each generation within each
+  chain, column for each predictor.}
+  
+  \item{converge.r}{generations by chains matrix of Pearson's \code{r}.}
+  
+  \item{formula}{\code{\link{formula}} object used.}
+}
+\seealso{
+  \code{\link{genAlg}} for search, \code{\link{gemmFitRcppI}} for fitting
+  routine, \code{\link{kt}} for \code{O*(N log N)} scale Kendall's \code{tau},
+  \code{\link{convergencePlot}} for the optional plot pane when
+  \code{check.convergence = TRUE}. \code{\link{gemmEst}} may be useful in some
+  circumstances when formula input and interaction terms are not needed.
+}
+\examples{
+  data(mtcars)
+  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
+  print(gemm.model)
+  plot(gemm.model)
+}
+\references{
+  Dougherty, M. R., & Thomas, R. P. (2012). Robust decision making in a
+  nonlinear world. \emph{Psychological review, 119}(2), 321.
+}
+\keyword{
+  ordinal, regression
+}

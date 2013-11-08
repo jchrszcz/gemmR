@@ -1,64 +1,133 @@
 \name{gemmEst}
 \alias{gemmEst}
-\title{gemmR controller function.}
+\title{Fit General Monotone Models.}
 \usage{
-  gemmEst(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
-                    n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
-                    seed.metric = TRUE, check.convergence = FALSE, roe = FALSE, fit.metric = "bic", correction = "knp")
+  gemmEst(input.data, output = "gemmr", n.beta = 8000, p.est = 1, n.chains = 3,
+  n.gens = 10, save.results = FALSE, k.pen = k.pen, seed.metric = TRUE,
+  check.convergence = FALSE, roe = FALSE, fit.metric = "bic",
+  correction = "knp")
 }
 \arguments{
   \item{input.data}{must be data frame, first column is
   treated as dependent variable.}
 
   \item{output}{string argument for use in naming file
-  output. \code{\link{gemmEst}} writes a .RData file in the
+  output. \code{\link{gemmEst}} may write a .RData file in the
   current working directory each time the function is
   called.}
 
-  \item{n.beta}{Number of beta vectors to generate per
-  replication.}
+  \item{n.beta}{number of beta vectors to generate per
+  generation.}
 
-  \item{p.est}{Percept of data used to estimate the model.
-  Values less than 1 will cause gemmModel to produce
+  \item{p.est}{proportion of data used to estimate the model.
+  Values less than 1 will cause \code{gemm} to produce
   cross-validation estimates.}
 
-  \item{n.data.gen}{Number of times the fitting process
+  \item{n.chains}{number of times the fitting process
   will be repeated.}
 
-  \item{n.reps}{Number of generations for
-  \code{\link{genAlg}}.}
+  \item{n.gens}{number of generations for per chain.}
 
-  \item{save.results}{Logical value to determine whether
+  \item{save.results}{logical value to determine whether
   the resulting gemm object is saved to a .RData file.}
 
-  \item{k.pen}{Penalty term for BIC, as calculated by
+  \item{k.pen}{penalty term for BIC, as calculated by
   \code{\link{gemm.formula}}.}
 
-  \item{seed.metric}{Logical value to control whether
+  \item{seed.metric}{logical value to control whether
   \code{\link{genAlg}} is seeded with OLS regression
   weights or random values.}
 
-  \item{check.convergence}{Logical value to indicate
+  \item{check.convergence}{logical value to indicate
   whether BIC for each generation is retained, mostly
   useful for checking performance of \code{\link{genAlg}}.}
 
-  \item{roe}{Logical value to determine whether region of
+  \item{roe}{logical value to determine whether region of
   equivalence data are retained.}
   
-  \item{fit.metric}{Whether or not to reorder equivalent BIC-tau values based on
-  minimized least-squares error.}
+  \item{fit.metric}{value used to order models. Currently works for "\code{tau}"
+  or "\code{bic}". Always performs secondary sort on r for equivalent BIC/tau
+  models.}
   
-  \item{correction}{PLACEHOLDER TEXT.}
+  \item{correction}{placeholder for correction transformations on the fit
+  statistic, (r or tau).}
 }
 \description{
-  This function is called by \code{\link{gemm.default}} and
-  runs a handful of subordinate functions to produce a gemm
-  object. Takes data and, over successive replications,
-  uses geneticAlgorithm to generate candidate beta vectors,
-  calculates ordinal model fit using these betas, and
-  produces an output that reports weights and fit
-  statistics for best models at each generation,
-  (optionally, for cross-validation as well).
+  \code{gemmEst} is called by \code{\link{gemm}} to fit general monotone models.
 }
-\keyword{ordinal}
-
+\details{
+  Formula syntax and interaction penalty terms can be avoided by fitting data
+  directly using \code{gemmEst}.
+}
+\value{
+  A list with class "\code{gemm}" containing the following components:
+  
+  \item{date}{system time and date for model completion.}
+  
+  \item{call}{the matched call.}
+  
+  \item{coefficients}{matrix of best weights with one row for each chain.}
+  
+  \item{fitted.values}{model predictions for criterion generated from weights
+  associated with best chain.}
+  
+  \item{residuals}{metric values for response minus fitted.}
+  
+  \item{rank.residuals}{rank response minus rank criterion.}
+  
+  \item{est.bic}{vector of Bayesian Information Criteria for estimation sample
+  of each chain.}
+  
+  \item{est.r}{vector of Pearson's \code{r} values for estimation sample of
+  each chain.}
+  
+  \item{est.tau}{vector of Kendall's \code{tau} for estimation sample of each
+  chain.}
+  
+  \item{metric.betas}{regression weights derived using \code{\link{lm}}.}
+  
+  \item{p.vals}{p-values associated with ordinary least squares regression
+  weights.}
+  
+  \item{model}{data frame including modeled data.}
+  
+  \item{fit.metric}{sorting metric used.}
+  
+  \item{cross.val.bic}{vector of Bayesian Information Criteria for
+  cross-validation sample of each chain.}
+  
+  \item{cross.val.r}{vector of Pearson's \code{r} values for cross-validation
+  sample of each chain.}
+  
+  \item{cross.val.tau}{vector of Kendall's \code{tau} for cross-validation
+  sample of each chain.}
+  
+  \item{converge.fit.metric}{matrix of "\code{fit.metric}" values with
+  generations by chains.}
+  
+  \item{converge.beta}{matrix derived weights for each generation within each
+  chain, column for each predictor.}
+  
+  \item{converge.r}{generations by chains matrix of Pearson's \code{r}.}
+  
+  \item{formula}{\code{\link{formula}} object used.}
+}
+\seealso{
+  \code{\link{gemm}} for normal use. \code{\link{genAlg}} for search,
+  \code{\link{gemmFitRcppI}} for fitting routine, \code{\link{kt}} for
+  \code{O*(N log N)} scale Kendall's \code{tau}, \code{\link{convergencePlot}}
+  for the optional plot pane when \code{check.convergence = TRUE}.
+}
+\examples{
+  data(mtcars)
+  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
+  print(gemm.model)
+  plot(gemm.model)
+}
+\references{
+  Dougherty, M. R., & Thomas, R. P. (2012). Robust decision making in a
+  nonlinear world. \emph{Psychological review, 119}(2), 321.
+}
+\keyword{
+  ordinal, regression
+}

@@ -1,6 +1,0 @@
-PWD /Users/joetidwell/Dropbox/learn r!/gemmr/man
-INPUT /usr/local/texlive/2013/texmf.cnf
-INPUT /usr/local/texlive/2013/texmf-dist/web2c/texmf.cnf
-INPUT /usr/local/texlive/2013/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT /Users/joetidwell/Dropbox/Learn R!/gemmR/man/gemmR-package.Rd
-OUTPUT /Users/joetidwell/Dropbox/Learn R!/gemmR/man/Output/gemmR-package.log

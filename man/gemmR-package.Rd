@@ -3,36 +3,51 @@
 \alias{gemmR}
 \docType{package}
 \title{
-What the package does (short line)
+  General Monotone Model in R (gemmR)
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+  The \code{gemmR} package provides functions for fitting and analyzing General
+  Monotone Models (GeMM). The GeMM is a statistical algorithm for predicting
+  rank orders from a set of \code{k} predictors. As shown in Dougherty and
+  Thomas (2012, Psychological Review), GeMM is unaffected by any monotonic
+  transformation of the criterion variable, unaffected by non-linear monotone
+  relationships, and shows better power and predictive accuracy than
+  Least-Squares regression procedures in a variety of contexts. The primary
+  \code{gemmR} function is \code{\link{gemm}}.
 }
 \details{
-\tabular{ll}{
-Package: \tab gemmR\cr
-Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2013-07-24\cr
-License: \tab What license is it under?\cr
-}
-~~ An overview of how to use the package, including the most important functions ~~
+  \tabular{ll}{
+    Package: \tab gemmR\cr
+    Type: \tab Package\cr
+    Version: \tab 1.0\cr
+    Date: \tab 2013-11-08\cr
+    License: \tab GPL-3\cr
+  }
 }
 \author{
-Who wrote it
+  Jeffrey S. Chrabaszcz\cr
+  Joe Tidwell\cr
+  Michael R. Dougherty\cr
+}
+\section{license}{
+  This file is part of gemmR. gemmR is free software: you can redistribute it
+  and/or modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-Maintainer: Who to complain to <yourfault@somewhere.net>
+  gemmR is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+  A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along with
+  gemmR.  If not, see \url{<http://www.gnu.org/licenses/>}.
 }
 \references{
-~~ Literature or other references for background information ~~
+  Dougherty, M. R., & Thomas, R. P. (2012). Robust decision making in a
+  nonlinear world. \emph{Psychological Review}, 119(2), 321.
+  \url{http://www.bsos.umd.edu/psyc/dougherty/pdf\%20articles/
+  DoughertyThomas2012Rev.pdf}
 }
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R documentation directory ~~
-\keyword{ package }
-\seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
-}
-\examples{
-%% ~~ simple examples of the most important functions ~~
+\keyword{
+  package
 }
