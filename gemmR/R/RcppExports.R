@@ -13,12 +13,12 @@ corRcpp <- function(x, y) {
     .Call('gemmR_corRcpp', PACKAGE = 'gemmR', x, y)
 }
 
-gemmFitRcpp <- function(n, betas, data, p, kCor, pearson) {
-    .Call('gemmR_gemmFitRcpp', PACKAGE = 'gemmR', n, betas, data, p, kCor, pearson)
+gemmFitRcpp <- function(n, betas, data, p, kCor, pearson, correction) {
+    .Call('gemmR_gemmFitRcpp', PACKAGE = 'gemmR', n, betas, data, p, kCor, pearson, correction)
 }
 
-gemmFitRcppI <- function(n, betas, data, p, kCor, getR) {
-    .Call('gemmR_gemmFitRcppI', PACKAGE = 'gemmR', n, betas, data, p, kCor, getR)
+gemmFitRcppI <- function(n, betas, data, p, kCor, getR, correction) {
+    .Call('gemmR_gemmFitRcppI', PACKAGE = 'gemmR', n, betas, data, p, kCor, getR, correction)
 }
 
 sortIt <- function(x) {

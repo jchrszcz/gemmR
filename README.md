@@ -12,9 +12,9 @@ The resulting `gemm` object is currently an S3 class object. We're working on re
 
 **Bug Note**
 
-On 07/22/2013, we implemented a bugfix that allows the code to be compiled on Windows and Mac OS X. You can now install the gemmR2 package by downloading `gemmR2_1.0.tar.gz`, including it in your working directory, and running:
+On 07/22/2013, we implemented a bugfix that allows the code to be compiled on Windows and Mac OS X. You can now install the gemmR package by downloading the `.tar.gz` file in this repository, including it in your working directory, and running:
 
-`install.packages("gemmR2_1.0.tar.gz", repos = NULL, type = "source")`
+`install.packages("gemmR_0.1.tar.gz", repos = NULL, type = "source")`
 
 **Licensing Note**
 

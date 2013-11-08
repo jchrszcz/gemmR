@@ -53,13 +53,10 @@
 require(Rcpp)
 ##### GeMM Functions #####
 
-#sourceCpp("new_ga.cpp")
-#sourceCpp("kt_gemmR.cpp")
-
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                     n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
-                    seed.metric = TRUE, check.convergence = FALSE, roe = FALSE, fit.metric = "bic") {
+                    seed.metric = TRUE, check.convergence = FALSE, roe = FALSE, fit.metric = "bic", correction = "knp") {
 ################################################################################
 # Function controls the GeMM process. Takes data and, over successive          #
 # replications, uses geneticAlgorithm to generate candidate beta vectors,      #
@@ -183,7 +180,7 @@ fit.null <- switch(tolower(fit.metric),
       }
 
       # COW
-      fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r)
+      fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r, correction)
       
       fit.stats <- getFitMetric(fitStats)
       
@@ -211,10 +208,13 @@ fit.null <- switch(tolower(fit.metric),
       # Change first value in null vector based on fit metric
       
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
+      print(head(model.stats))
+      print("-------------------------")
+
       # Order by BIC then by r
-      model.stats <- model.stats[order(model.stats[,1],-model.stats[,2]),]
+      model.stats <- model.stats[order((model.stats[,1]),-model.stats[,2]),]
       
-      #print(head(model.stats))
+      print(head(model.stats))
       
       #model.stats <- cbind(model.stats[,1],model.stats[,3:ncol(model.stats)])
       #print(summary(model.stats))
@@ -248,7 +248,7 @@ fit.null <- switch(tolower(fit.metric),
     fit.out.tau[datagen,] <- fit.stats.tau[1]
     fit.out.bic[datagen,] <- fit.stats.bic[1]
     if (p.est < 1) {
-      tempOut <- gemmFitRcppI(nrow(cross.val), matrix(bestmodels[1,2:(p+1)], nrow = 1), cross.val, p, k.cor, get.r)
+      tempOut <- gemmFitRcppI(nrow(cross.val), matrix(bestmodels[1,2:(p+1)], nrow = 1), cross.val, p, k.cor, get.r, correction)
       gemm.cross.out[datagen,] <- tempOut$bic
       gemm.cross.out.r[datagen,] <- tempOut$r
       gemm.cross.out.tau[datagen,] <- tempOut$tau
@@ -500,3 +500,11 @@ convergencePlot <- function(beta, fit.metric, ...) {
   legend(xrange[1], yrange[2], 1:chains, cex=0.8, col=colors, pch=plotchar,
     lty=linetype, title="Chains")
 }
+
+
+?paste
+##### Deprecated #####
+
+
+
+

@@ -283,7 +283,7 @@ return sxy/(sqrt(sxx*syy)+tiny);
 
 
 // [[Rcpp::export]]
-NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool pearson) {
+NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool pearson, bool correction) {
   double tau, r;
 
 if (sum(betas == 0) == p) {
@@ -293,39 +293,59 @@ if (sum(betas == 0) == p) {
 
   if (sum(betas == 0) != p) {
     tau = kt(data(_,0), fitValues(betas,data), data.nrow());    
-      if(pearson) {
+//      if(pearson) {
       r = corRcpp(data(_,0), fitValues(betas,data));
-    }
+//    }
   }
 
-  if (tau < 0) {
-    betas = betas * -1;
-    tau = kt(data(_,0), fitValues(betas,data), data.nrow());
-    if(pearson) {
-       r = corRcpp(data(_,0), fitValues(betas,data));
-    }
-  }
+//  if (tau < 0) {
+//    betas = betas * -1;
+//    tau = kt(data(_,0), fitValues(betas,data), data.nrow());
+//    if(pearson) {
+//       r = corRcpp(data(_,0), fitValues(betas,data));
+//    }
+//  }
 
   double knp, bic, bicr; // = sin( (PIE/2) * tau * ((n-kCor-1)/n));
-  knp = sin(PIE/2*tau*(n-p-1)/n);
-  bic = n * log(1 - pow(knp,2)) + kCor * log(n);
-  bicr = n * log(1 - pow(r,2)) + kCor * log(n);
-
+  
+  if(correction) {
+    knp = sin(PIE/2*tau*(n-p-1)/n);
+    bic = n * log(1 - pow(knp,2)) + kCor * log(n);
+    bicr = n * log(1 - pow(r,2)) + kCor * log(n);
+  } else {
+    knp = sin(PIE/2*tau*(n-p-1)/n);
+    bic = n * log(1 - pow(knp,2)) + p * log(n);
+    bicr = n * log(1 - pow(r,2)) + p * log(n);    
+  }
+  
   return Rcpp::NumericVector::create(tau,r,bic,bicr,knp);
 }
 
 
 
 // [[Rcpp::export]]
-List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, bool getR) {
+List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, bool getR, CharacterVector correction) {
 
   NumericVector fit;
   NumericVector fitR(betas.nrow()), fitTau(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow());
 
   NumericMatrix data2(clone(data));
+  
+  bool corType; 
+  
+  /*std::string s_targetname = as<std::string>(targetname)
+  */
+  
+  (as<std::string>(correction)=="knp") ? (corType=true) : (corType=false);
+
 
 for (int i=0; i < betas.nrow(); i++) {
-  fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), getR);
+  fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), getR, corType);
+  if(fit[1]<0) {
+    for(int j =0; j<p;j++) {
+      betas(i,j) = betas(i,j)*-1;
+    }
+  }
 
     fitBIC(i) = fit[2];
     fitBICr(i) = fit[3];

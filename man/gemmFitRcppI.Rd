@@ -2,7 +2,7 @@
 \alias{gemmFitRcppI}
 \title{gemmFitRcppI}
 \usage{
-  gemmFitRcppI(n, betas, data, p, kCor, getR)
+  gemmFitRcppI(n, betas, data, p, kCor, getR, correction)
 }
 \arguments{
   \item{n}{Number of observations in dataset.}
@@ -22,6 +22,8 @@
   \item{getR}{Whether or not to return Pearson's r. To save
   computation time, r is only returned on the last
   generation of each chain.}
+  
+  \item{correction}{PLACEHOLDER TEXT.}
 }
 \value{
   fit List of named vectors for BICtau, BICr, tau, and r.

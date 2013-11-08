@@ -2,11 +2,9 @@
 \alias{gemmEst}
 \title{gemmR controller function.}
 \usage{
-  gemmEst(input.data, output = "gemmr", n.beta = 8000,
-    p.est = 1, n.data.gen = 3, n.reps = 10,
-    save.results = FALSE, k.pen = k.pen,
-    seed.metric = TRUE, check.convergence = FALSE,
-    roe = FALSE)
+  gemmEst(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
+                    n.data.gen = 3, n.reps = 10, save.results = FALSE, k.pen = k.pen,
+                    seed.metric = TRUE, check.convergence = FALSE, roe = FALSE, fit.metric = "bic", correction = "knp")
 }
 \arguments{
   \item{input.data}{must be data frame, first column is
@@ -46,6 +44,11 @@
 
   \item{roe}{Logical value to determine whether region of
   equivalence data are retained.}
+  
+  \item{fit.metric}{Whether or not to reorder equivalent BIC-tau values based on
+  minimized least-squares error.}
+  
+  \item{correction}{PLACEHOLDER TEXT.}
 }
 \description{
   This function is called by \code{\link{gemm.default}} and

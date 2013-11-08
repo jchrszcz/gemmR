@@ -2,13 +2,13 @@ Package: gemmR
 Type: Package
 Title: General Monotone Model in R
 Version: 0.1
-Date: 2013-10-31
+Date: 2013-11-06
 Author: Jeffrey Chrabaszcz, Joe Tidwell
 Maintainer: Jeffrey Chrabaszcz <jchrabaszcz@gmail.com>
 Description: gemmR is an R-language implementation of the General Monotone Model proposed by Michael Dougherty and Rick Thomas. It is a procedure for estimating weights for a set of independent predictors that minimize the rank-order inversions between the model predictions and some outcome.
 License: GNU >= 2
 Depends:
-    Rcpp (>= 0.10.5)
+    Rcpp (>= 0.10.6)
 LinkingTo: Rcpp
 Collate:
     'gemmquick.R'
