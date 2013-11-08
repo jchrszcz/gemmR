@@ -103,7 +103,6 @@ fit.null <- switch(tolower(fit.metric),
         fit.stats.tau <- fit.stats
       }
 
-      # COW
       fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r, correction)
       
       fit.stats <- getFitMetric(fitStats)
@@ -112,22 +111,17 @@ fit.null <- switch(tolower(fit.metric),
       fit.stats.r <- fitStats$r
       fit.stats.tau <- fitStats$tau
 
-      # COW
+      fix.tau <- ifelse(fit.stats.tau < 0, -1, 1)
+      fit.stats.r <- fit.stats.r * fix.tau
+      fit.stats.tau <- fit.stats.tau * fix.tau
+      betas <- betas * fix.tau
+      
       model.stats <- cbind(fit.stats, fit.stats.r, betas)
       
-      # Change first value in null vector based on fit metric
-      
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
-      #print(head(model.stats))
-      #print("-------------------------")
 
       # Order by BIC then by r
       model.stats <- model.stats[order((model.stats[,1]),-model.stats[,2]),]
-      
-      #print(head(model.stats))
-      
-      #model.stats <- cbind(model.stats[,1],model.stats[,3:ncol(model.stats)])
-      #print(summary(model.stats))
       if (get.r) {
         fit.stats.r <- fit.stats.r[order(model.stats[,1])]
         fit.stats.tau <- fit.stats.tau[order(model.stats[,1])]
@@ -197,9 +191,6 @@ fit.null <- switch(tolower(fit.metric),
   if (p.est < 1) {
     sim.results$cross.val.bic <- c(gemm.cross.out)
     sim.results$cross.val.r <- c(gemm.cross.out.r)
-    
-    #HAHA
-    
     sim.results$cross.val.tau <- c(gemm.cross.out.tau)
     attr(sim.results, "cross.val") <- TRUE
   }
@@ -398,3 +389,32 @@ convergencePlot <- function(beta, fit.metric, ...) {
   legend(xrange[1], yrange[2], 1:chains, cex=0.8, col=colors, pch=plotchar,
     lty=linetype, title="Chains")
 }
+
+predict.gemm <- function(object, newdata = NULL, tie.struct = FALSE, ...) {
+  if (tie.struct) {
+    correct <- 0
+    incorrect <- 0
+    cue.tie <- 0
+    crit.tie <- 0
+    c1 <- unlist(model.frame(object)[1], use.names = FALSE)
+    c2 <- c(fitted(object))
+    for (i in 1:(length(c1) - 1)) {
+      for (j in (i + 1):length(c1)) {
+        if (c1[i] == c1[j]) {
+          crit.tie <- crit.tie + 1
+        } else if (c2[i] == c2[j]) {
+          cue.tie <- cue.tie + 1
+        } else if (((c1[i] > c1[j]) & (c2[i] > c2[j])) | ((c1[i] < c1[j]) & (c2[i] < c2[j]))) {
+          correct <- correct + 1
+        } else {
+          incorrect <- incorrect + 1
+        }
+      }
+    }
+    y <- data.frame(correct, incorrect, cue.tie, crit.tie)
+  } else { 
+    y <- fitted(object)  
+  }
+  return(y)
+}
+
