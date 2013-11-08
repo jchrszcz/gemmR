@@ -1,6 +1,0 @@
-*.Rproj.user
-*.Rproj
-*.Rhistory
-*.RData
-*.csv
-validation_testing.R
