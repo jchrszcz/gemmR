@@ -2,7 +2,7 @@
 \alias{genAlg}
 \title{genAlg}
 \usage{
-  genAlg(metricbeta, nbeta, nsuperelites, p, reps, bestmodels, seedmetric)
+  genAlg(metricbeta, nbeta, nsuperelites, p, gens, bestmodels, seedmetric)
 }
 \arguments{
   \item{metricbeta}{Weights derived using multiple

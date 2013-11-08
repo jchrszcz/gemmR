@@ -166,7 +166,8 @@ fit.null <- switch(tolower(fit.metric),
   }
   coefficients <- matrix(fit.out[,-1], ncol = p,
     dimnames = list(c(), c(colnames(input.data))[-1]))
-  coefficients <- t(apply(matrix(coefficients, ncol = p), 1, function(x) x/abs(sum(x))))
+
+  coefficients <- t(apply(matrix(coefficients, ncol = p), 1, function(x) x/sum(abs(x))))
 
   best.coef <- matrix(fit.out[fit.out[,1] == min(fit.out[,1]), -1], ncol = p)
   if (nrow(best.coef) > 1) {
