@@ -26,7 +26,7 @@
   \item{n.chains}{number of times the fitting process
   will be repeated.}
 
-  \item{n.gens}{number of generations for per chain.}
+  \item{n.gens}{number of generations per chain.}
 
   \item{save.results}{logical value to determine whether
   the resulting gemm object is saved to a .RData file.}
