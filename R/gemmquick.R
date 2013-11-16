@@ -158,10 +158,9 @@ fit.null <- switch(tolower(fit.metric),
       gemm.cross.out.tau[chains,] <- tempOut$tau
     }
   }
-  coefficients <- matrix(fit.out[,-1], ncol = p,
-    dimnames = list(c(), c(colnames(input.data))[-1]))
-
+  coefficients <- matrix(fit.out[,-1], ncol = p)
   coefficients <- t(apply(matrix(coefficients, ncol = p), 1, function(x) x/sum(abs(x))))
+  colnames(coefficients) <- colnames(input.data)[-1]
 
   best.coef <- matrix(fit.out[fit.out[,1] == min(fit.out[,1]), -1], ncol = p)
   if (nrow(best.coef) > 1) {
