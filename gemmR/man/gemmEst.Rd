@@ -2,7 +2,7 @@
 \alias{gemmEst}
 \title{Fit General Monotone Models.}
 \usage{
-  gemmEst(input.data, output = "gemmr", n.beta = 8000, p.est = 1, n.chains = 3,
+  gemmEst(input.data, output = "gemmr", n.beta = 8000, p.est = 1, n.chains = n.chains,
   n.gens = 10, save.results = FALSE, k.pen = k.pen, seed.metric = TRUE,
   check.convergence = FALSE, roe = FALSE, fit.metric = "bic",
   correction = "knp")
@@ -26,7 +26,7 @@
   \item{n.chains}{number of times the fitting process
   will be repeated.}
 
-  \item{n.gens}{number of generations for per chain.}
+  \item{n.gens}{number of generations per chain.}
 
   \item{save.results}{logical value to determine whether
   the resulting gemm object is saved to a .RData file.}

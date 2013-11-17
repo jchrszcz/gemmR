@@ -13,16 +13,16 @@
 # along with gemmR.  If not, see <http://www.gnu.org/licenses/>.
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
-                    n.chains = 3, n.gens = 10, save.results = FALSE, k.pen = k.pen,
+                    n.chains = n.chains, n.gens = 10, save.results = FALSE, k.pen = k.pen,
                     seed.metric = TRUE, check.convergence = FALSE, roe = FALSE, fit.metric = "bic", correction = "knp") {
 
   # Select fitting function
-getFitMetric <- switch(tolower(fit.metric),
+  getFitMetric <- switch(tolower(fit.metric),
                       bic = function(fitStats) {return(fitStats$bic)},
                       tau = function(fitStats) {return(1-abs(fitStats$tau))}
                       )
 
-fit.null <- switch(tolower(fit.metric),
+  fit.null <- switch(tolower(fit.metric),
                   bic = 0,
                   tau = 1
                   )
@@ -37,7 +37,7 @@ fit.null <- switch(tolower(fit.metric),
   fit.out.bic <- matrix(rep(0, times = n.chains), nrow = n.chains)
   if (roe) {
     roe.mat <- matrix(0, nrow = (n.beta * n.gens * n.chains),
-      ncol = ncol(input.data))
+      ncol = (ncol(input.data) + 1))
   }
   if (check.convergence) {
     converge.fit.metric <- matrix(rep(0, times = (n.gens * n.chains)),
@@ -102,24 +102,18 @@ fit.null <- switch(tolower(fit.metric),
         fit.stats.r <- fit.stats
         fit.stats.tau <- fit.stats
       }
-
       fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r, correction)
-      
       fit.stats <- getFitMetric(fitStats)
-      
       fit.stats.bic <- fitStats$bic
       fit.stats.r <- fitStats$r
       fit.stats.tau <- fitStats$tau
-
       fix.tau <- ifelse(fit.stats.tau < 0, -1, 1)
       fit.stats.r <- fit.stats.r * fix.tau
       fit.stats.tau <- fit.stats.tau * fix.tau
       betas <- betas * fix.tau
       
       model.stats <- cbind(fit.stats, fit.stats.r, betas)
-      
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
-
       # Order by BIC then by r
       model.stats <- model.stats[order((model.stats[,1]),-model.stats[,2]),]
       if (get.r) {
@@ -137,16 +131,7 @@ fit.null <- switch(tolower(fit.metric),
         converge.beta[(gens + gens * (chains - 1)),] <- bestmodels[1,-1]
         converge.r[gens, chains] <- model.stats[1,2]
       }
-
-      #COW
-      #print(apply(bestmodels,2,var))
-      
     }
-    
-    #bestmodels <- bestmodels[,-2]
-    
-    #print(head(bestmodels))
-    
     fit.out[chains,] <- bestmodels[1,]
     fit.out.r[chains,] <- fit.stats.r[1]
     fit.out.tau[chains,] <- fit.stats.tau[1]
@@ -161,39 +146,44 @@ fit.null <- switch(tolower(fit.metric),
   coefficients <- matrix(fit.out[,-1], ncol = p)
   coefficients <- t(apply(matrix(coefficients, ncol = p), 1, function(x) x/sum(abs(x))))
   colnames(coefficients) <- colnames(input.data)[-1]
+  coefficients[is.na(coefficients)] <- 0
 
-  best.coef <- matrix(fit.out[fit.out[,1] == min(fit.out[,1]), -1], ncol = p)
-  if (nrow(best.coef) > 1) {
-    best.coef <- best.coef[1,]
+  if (fit.metric == "bic") {
+    best.chain <- sort(fit.out[,1], index.return = TRUE)$ix
+  } else {
+    best.chain <- sort(fit.out[,1], index.return = TRUE, decreasing = TRUE)$ix
   }
+  best.coef <- matrix(fit.out[1, -1], ncol = p)
   fitted.values <- matrix(input.data[,-1], ncol = p) %*% matrix(best.coef, ncol = 1)
   if (roe) {
   	roe.df <- data.frame(roe.mat)
-  	roe.df$beta <- rep(1:n.beta, times = n.gens * n.chains)
-  	roe.df$gens <- rep(1:n.gens, each = n.beta, times = n.chains)
-  	roe.df$chain <- rep(1:n.chains, each = n.beta * n.gens)
+    names(roe.df) <- c("fit.metric", "est.r", colnames(input.data)[-1])
+  	roe.df$beta <- factor(rep(1:n.beta, times = n.gens * n.chains))
+  	roe.df$gens <- factor(rep(1:n.gens, each = n.beta, times = n.chains))
+  	roe.df$chain <- factor(rep(1:n.chains, each = n.beta * n.gens))
   }
   sim.results <- list(date = date(),
     call = match.call(),
-    coefficients = coefficients,
+    coefficients = coefficients[best.chain,],
     fitted.values = fitted.values,
     residuals = unlist(input.data[,1] - fitted.values),
     rank.residuals = (rank(input.data[,1]) -
         rank(fitted.values)),
-    est.bic = c(fit.out.bic),
-    est.r = c(fit.out.r),
-    est.tau = c(fit.out.tau),
+    est.bic = c(fit.out.bic)[best.chain],
+    est.r = c(fit.out.r)[best.chain],
+    est.tau = c(fit.out.tau)[best.chain],
     metric.betas = metricbeta,
     p.vals = p.vals,
     model = data.frame(input.data),
     fit.metric = fit.metric)
   if (p.est < 1) {
-    sim.results$cross.val.bic <- c(gemm.cross.out)
-    sim.results$cross.val.r <- c(gemm.cross.out.r)
-    sim.results$cross.val.tau <- c(gemm.cross.out.tau)
+    sim.results$cross.val.bic <- c(gemm.cross.out)[best.chain]
+    sim.results$cross.val.r <- c(gemm.cross.out.r)[best.chain]
+    sim.results$cross.val.tau <- c(gemm.cross.out.tau)[best.chain]
     attr(sim.results, "cross.val") <- TRUE
   }
   if (check.convergence) {
+    # add chain ordering
     sim.results$converge.fit.metric <- converge.fit.metric
     sim.results$converge.beta <- converge.beta
     sim.results$converge.r <- converge.r
@@ -217,10 +207,32 @@ kCorFact <- function(k.pen, beta.vecs) {
 
 gemm <- function(x, ...) UseMethod("gemm")
 
-gemm.default <- function(x, k.pen, ...) {
-  est <- gemmEst(input.data = x, k.pen = k.pen, ...)
-  class(est) <- "gemm"
-  est
+gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, ...) {
+  if(!(parallel)) {
+    est <- gemmEst(input.data = x, k.pen = k.pen, n.chains=n.chains, ...)
+    class(est) <- "gemm"
+    est
+  } else {
+    require(foreach)
+    require(doMC)
+    registerDoMC()
+    gemm.list <- foreach(i = 1:n.chains) %dopar% {
+      gemmEst(input.data = x, k.pen = k.pen, n.chains=1, ...)
+    }
+    # Make everything gemm objects
+    lapply(gemm.list, "class<-", "gemm")
+    # Order Chains
+    chain.order <- order(sapply(gemm.list[1:n.chains], function(x) x$est.bic))
+    gemm.ordered <- gemm.list[rank(chain.order)]
+    # Select Best Chain
+    best.chain <- gemm.ordered[[1]]
+    best.chain$coefficients <-  do.call(rbind,lapply(gemm.ordered[1:n.chains],coefficients))
+    best.chain$est.bic <-  sapply(gemm.ordered,function(x) x$est.bic)
+    best.chain$est.r <-  sapply(gemm.ordered,function(x) x$est.r)
+    best.chain$est.tau <-  sapply(gemm.ordered,function(x) x$est.tau)
+    
+    return(best.chain)
+  }
 }
 
 print.gemm <- function(x, ...) {
@@ -237,7 +249,7 @@ print.gemm <- function(x, ...) {
   print(fit)
 }
 
-gemm.formula <- function(formula, data=list(), ...) {
+gemm.formula <- function(formula, data=list(),...) {
   mf <- model.frame(formula=formula, data=data)
   x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
   y <- model.response(mf)
@@ -265,15 +277,10 @@ gemm.formula <- function(formula, data=list(), ...) {
     }
     names <- sub(':$', '', names)
     names <- sub('^:', '', names)[-1]
-    
   }
-  #names.betas.all <- attr(terms(fmla),"term.labels")
   names.betas.all <- names
   names.betas.in.model <- attr(terms(mf),"term.labels")
-  
-  #skip if only 1 predictor
   if(length(names.betas.all)>1) {
-    
     #full combination of variables/factors
     count <- 0
     for (var in me) {
@@ -301,10 +308,8 @@ gemm.formula <- function(formula, data=list(), ...) {
       tmp <- ifelse(tmp==tmp2 & tmp2==TRUE,TRUE,FALSE)
     }
     k.pen <- lst[,tmp==TRUE]
-  
     colnames(k.pen) <- names.betas.all
-    
-    # Select Main Effects
+# Select Main Effects
     grep.str <- ""
     for (tmp in me) {
       grep.str <- paste(grep.str,"^",tmp,"([0-9]|)$|",sep="")  
@@ -312,11 +317,9 @@ gemm.formula <- function(formula, data=list(), ...) {
     grep.str <- substr(grep.str, 1, nchar(grep.str)-1)
     keep.main <- grepl(grep.str,  names.betas.all)
     keep <- matrix(keep.main,ncol=length(keep.main))
-      
-    # Select interactions 
+# Select interactions 
     interactions <- names.betas.in.model[grepl(":",names.betas.in.model)]
     search.terms <- strsplit(interactions,":")
-    
     if (length(search.terms)>0) {
       keep.tmp <- matrix(ncol=dim(k.pen)[2],nrow=length(search.terms))
       keep.tmp[1,] <- F   
@@ -417,3 +420,38 @@ predict.gemm <- function(object, newdata = NULL, tie.struct = FALSE, ...) {
   return(y)
 }
 
+summary.gemm <- function(x) {
+  y <- x
+  y$logLik <- logLik(y)
+  y$AIC <- AIC(y)
+  y$r.squared <- y$est.r[1]^2
+  y$adj.r.squared <- 1 - (1 - y$r.squared) * (nobs(y) - 1)/(nobs(y) - sum(y$best.coef != 0) - 1)
+  class(y) <- "summary.gemm"
+  return(y)
+}
+
+print.summary.gemm <- function(x, ...) {
+  print.gemm(x, ...)
+}
+
+logLik.gemm <- function(object, ...) {
+  res <- object$residuals
+  p <- sum(object$best.coef != 0)
+  N <- length(res)
+  w <- rep.int(1, N)
+  N0 <- N
+  val <- 0.5 * (sum(log(w)) - N * (log(2 * pi) + 1 - log(N) + log(sum(w * res^2))))
+  attr(val, "nall") <- N0
+  attr(val, "nobs") <- N
+  attr(val, "df") <- p + 1
+  class(val) <- "logLik"
+  val
+}
+
+deviance.gemm <- function(object) {
+  return(sum(weighted.residuals(object)^2))
+}
+
+nobs.gemm <- function(object) {
+  return(nrow(residuals(object)))
+}
