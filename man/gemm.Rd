@@ -4,14 +4,15 @@
 \alias{gemm.formula}
 \alias{print.gemm}
 \alias{plot.gemm}
+\alisa{summary.gemm}
 \title{Fit General Monotone Models.}
 \usage{
 \method{gemm}{formula}(formula, data=list(), ...)
 
-\method{gemm}{default}(x, k.pen, ...)
+\method{gemm}{default}(x, k.pen, parallel = FALSE, n.chains = 4,...)
 }
 \arguments{
-  \item{formula}{an object of the class "\code{\link{formula}}".}
+  \item{formula}{an object of the class \code{\link{formula}}.}
   
   \item{data}{optional data frame, list, or environment.}
   
@@ -21,6 +22,10 @@
   \item{k.pen}{vector of integers giving penalty equivalent to main effects for
   any interaction terms. Calculated by \code{\link{gemm.formula}} or defaults to
   no special interaction weighting.}
+  
+  \item{parallel}{boolean flag to run chains in parallel over available cores using \code{\link{doMC}}}
+  
+  \items{n.chains}{number or replications of the sampling process, used to assess various starting conditions}
 }
 \description{
   \code{gemm} is used to fit general monotone models. By default, the function
@@ -35,7 +40,9 @@
   variable. This is accomplished by generating candidate weights using
   \code{\link{genAlg}} and deriving a BIC based on transformed Kendall's
   \code{tau} using \code{\link{gemmFitRcppI}}. \code{gemm} may take some time
-  to run depending on the complexity of the model. 
+  to run depending on the complexity of the model. Methods for standard
+  goodness-of-fit functions are also available and are run by
+  \code{\link{summary.gemm}}.
 }
 \value{
   A list with class "\code{gemm}" containing the following components:
