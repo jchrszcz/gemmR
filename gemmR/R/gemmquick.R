@@ -13,9 +13,12 @@
 # along with gemmR.  If not, see <http://www.gnu.org/licenses/>.
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
-                    n.chains = n.chains, n.gens = 10, save.results = FALSE, k.pen = k.pen,
-                    seed.metric = TRUE, check.convergence = FALSE, roe = FALSE, fit.metric = "bic", correction = "knp") {
-
+                    n.chains = n.chains, n.gens = 10, save.results = FALSE,
+                    k.pen = k.pen, seed.metric = TRUE, check.convergence = FALSE,
+                    roe = roe, fit.metric = "bic", correction = "knp") {
+  if (p.est < 1 & roe) {
+    stop("roe = TRUE not meaningful for cross-validation")
+  }
   # Select fitting function
   getFitMetric <- switch(tolower(fit.metric),
                       bic = function(fitStats) {return(fitStats$bic)},
@@ -68,8 +71,9 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     n <- size[1]
     p <- size[2] - 1
     lin.mod <- lm(data[,1] ~ data[,2:(p + 1)])
-    if(sum(is.na(lin.mod))) {
-      error("lm() generates NA")
+    if(sum(is.na(lin.mod$coefficients))) {
+      warning("lm() generates NA, seeding with random values")
+      seed.metric <- FALSE
     }
     metricbeta <- matrix(lin.mod$coef[2:(p + 1)], ncol = p)
     names(metricbeta) <- names(data[2:length(data)])
@@ -160,7 +164,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     names(roe.df) <- c("fit.metric", "est.r", colnames(input.data)[-1])
   	roe.df$beta <- factor(rep(1:n.beta, times = n.gens * n.chains))
   	roe.df$gens <- factor(rep(1:n.gens, each = n.beta, times = n.chains))
-  	roe.df$chain <- factor(rep(1:n.chains, each = n.beta * n.gens))
+  	roe.df$chain <- factor(rep(best.chain, each = n.beta * n.gens))
   }
   sim.results <- list(date = date(),
     call = match.call(),
@@ -209,7 +213,7 @@ gemm <- function(x, ...) UseMethod("gemm")
 
 gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, ...) {
   if(!(parallel)) {
-    est <- gemmEst(input.data = x, k.pen = k.pen, n.chains=n.chains, ...)
+    est <- gemmEst(input.data = x, k.pen = k.pen, n.chains = n.chains, ...)
     class(est) <- "gemm"
     est
   } else {
@@ -217,7 +221,7 @@ gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, ...) {
     require(doMC)
     registerDoMC()
     gemm.list <- foreach(i = 1:n.chains) %dopar% {
-      gemmEst(input.data = x, k.pen = k.pen, n.chains=1, ...)
+      gemmEst(input.data = x, k.pen = k.pen, n.chains = 1, ...)
     }
     # Make everything gemm objects
     lapply(gemm.list, "class<-", "gemm")
@@ -230,7 +234,14 @@ gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, ...) {
     best.chain$est.bic <-  sapply(gemm.ordered,function(x) x$est.bic)
     best.chain$est.r <-  sapply(gemm.ordered,function(x) x$est.r)
     best.chain$est.tau <-  sapply(gemm.ordered,function(x) x$est.tau)
-    
+    if (attr(best.chain, "cross.val")) {
+      best.chain$cross.val.bic <- unlist(lapply(gemm.ordered,function(x) x$cross.val.bic))
+      best.chain$cross.val.r <- unlist(lapply(gemm.ordered,function(x) x$cross.val.tau))
+      best.chain$cross.val.tau <- unlist(lapply(gemm.ordered,function(x) x$cross.val.r))
+    }
+    if (attr(best.chain, "cross.val")) {
+      best.chain$roe <-  do.call(rbind, lapply(gemm.ordered[1:n.chains], function(x) x$roe))
+    }
     return(best.chain)
   }
 }

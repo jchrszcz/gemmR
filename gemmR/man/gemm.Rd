@@ -9,7 +9,7 @@
 \usage{
 \method{gemm}{formula}(formula, data=list(), ...)
 
-\method{gemm}{default}(x, k.pen, parallel = FALSE, n.chains = 4,...)
+\method{gemm}{default}(x, k.pen, parallel = FALSE, n.chains = 4, ...)
 }
 \arguments{
   \item{formula}{an object of the class \code{\link{formula}}.}
@@ -23,9 +23,11 @@
   any interaction terms. Calculated by \code{\link{gemm.formula}} or defaults to
   no special interaction weighting.}
   
-  \item{parallel}{boolean flag to run chains in parallel over available cores using \code{\link{doMC}}}
+  \item{parallel}{boolean flag to run chains in parallel over available cores
+  using \code{\link{doMC}}}
   
-  \item{n.chains}{number or replications of the sampling process, used to assess various starting conditions}
+  \item{n.chains}{number or replications of the sampling process, used to
+  assess various starting conditions}
 }
 \description{
   \code{gemm} is used to fit general monotone models. By default, the function
