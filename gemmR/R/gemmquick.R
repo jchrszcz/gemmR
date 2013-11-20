@@ -15,7 +15,7 @@
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                     n.chains = n.chains, n.gens = 10, save.results = FALSE,
                     k.pen = k.pen, seed.metric = TRUE, check.convergence = FALSE,
-                    roe = roe, fit.metric = "bic", correction = "knp") {
+                    roe = FALSE, fit.metric = "bic", correction = "knp") {
   if (p.est < 1 & roe) {
     stop("roe = TRUE not meaningful for cross-validation")
   }

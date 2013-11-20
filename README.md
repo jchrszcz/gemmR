@@ -10,7 +10,8 @@ General Monotone Model in R. This is an R version of the non-parametric regressi
 
 The resulting `gemm` object is an S3 class object. We're working on increasing usability and writing a proper vignette. Information on the basis for GeMM can be found in the [original paper](http://www.bsos.umd.edu/psyc/dougherty/pdf%20articles/DoughertyThomas2012Rev.pdf).
 
-### Installation
+Installation
+-----
 
 You can install `gemmR` by downloading the `.tar.gz` file in this repository, including it in your working directory, and running either:
 
@@ -27,15 +28,8 @@ install_github("gemmR", "jchrszcz", subdir = "gemmR")
 
 `gemmR` requires `Rcpp`, which also means you'll need a C++ compiler. Clear and reliably-updated directions for installing and troubleshooting those things are maintained at [the STAN project page](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started#prerequisites).
 
-### Licensing
-
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-### Bug Notes
+Bug Notes
+-----
 
 11-18-13
 
@@ -48,3 +42,13 @@ You should have received a copy of the GNU General Public License along with thi
 *  On 07/22/2013, we implemented a bugfix that allows the code to be compiled on Windows and Mac OS X.
 *  Predictor names that are entirely contained within other predictor names can cause problems with the `gemm.formula` function.
 * `roe` argument in `gemmEst` is not currently functioning.
+
+
+Licensing
+-----
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
