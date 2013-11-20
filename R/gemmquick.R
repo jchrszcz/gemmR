@@ -185,6 +185,8 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     sim.results$cross.val.r <- c(gemm.cross.out.r)[best.chain]
     sim.results$cross.val.tau <- c(gemm.cross.out.tau)[best.chain]
     attr(sim.results, "cross.val") <- TRUE
+  } else {
+    attr(sim.results, "cross.val") <- FALSE
   }
   if (check.convergence) {
     # add chain ordering
@@ -192,10 +194,14 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     sim.results$converge.beta <- converge.beta
     sim.results$converge.r <- converge.r
     attr(sim.results, "converge.check") <- TRUE
+  } else {
+    attr(sim.results, "converge.check") <- FALSE
   }
   if (roe) {
     sim.results$roe <- roe.df
     attr(sim.results, "roe") <- TRUE
+  } else {
+    attr(sim.results, "roe") <- FALSE
   }
   if (save.results) {
     save(sim.results, file = paste(output, ".Rdata"))
