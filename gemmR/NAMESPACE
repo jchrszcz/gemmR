@@ -1,0 +1,2 @@
+useDynLib(gemmR)
+exportPattern("^[[:alpha:]]+")
