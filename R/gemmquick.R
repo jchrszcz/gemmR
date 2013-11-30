@@ -114,6 +114,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
       fix.tau <- ifelse(fit.stats.tau < 0, -1, 1)
       fit.stats.r <- fit.stats.r * fix.tau
       fit.stats.tau <- fit.stats.tau * fix.tau
+      fix.tau <- ifelse(sum(betas) < 0, -1, fix.tau)
       betas <- betas * fix.tau
       
       model.stats <- cbind(fit.stats, fit.stats.r, betas)
