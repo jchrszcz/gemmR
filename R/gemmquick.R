@@ -95,7 +95,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
       fitStats$r <- fitStats$r * fix.tau
       fitStats$tau <- fitStats$tau * fix.tau
       betas <- betas * fix.tau
-      
       model.stats <- cbind(fit.stats, fitStats$r, betas)
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
       # Order by BIC then by r

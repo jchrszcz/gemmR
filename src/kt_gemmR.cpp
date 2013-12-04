@@ -341,11 +341,13 @@ List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, Numeric
 
 for (int i=0; i < betas.nrow(); i++) {
   fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), getR, corType);
-  if(fit[1]<0) {
-    for(int j =0; j<p;j++) {
-      betas(i,j) = betas(i,j)*-1;
-    }
-  }
+
+  // Removed because we do this in gemmquickR, and shouldnt be here anyway
+  // if(fit[1]<0) {
+  //   for(int j =0; j<p;j++) {
+  //     betas(i,j) = betas(i,j)*-1;
+  //   }
+  // }
 
     fitBIC(i) = fit[2];
     fitBICr(i) = fit[3];
