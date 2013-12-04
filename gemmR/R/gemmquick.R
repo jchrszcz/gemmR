@@ -81,49 +81,27 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     names(p.vals) <- names(data[2:length(data)])
     ps <- ifelse(summary(lin.mod)[[4]][-1,4] < .05, 1, 0)
     for (gens in 1:n.gens) {
-      #if (gens == n.gens) { #cow
-
-      # hacked to always return r
-      #if (1 == 1) { #cow
-      #    get.r <- TRUE
-      #}
-      
-      # beta generation here
       betas <- genAlg(metricbeta, n.beta, n.super.elites, p, gens,
                  t(bestmodels), seed.metric)
       betas <- t(as.matrix(betas))
-      
-      # calculate penalized k for interactions
       k.cor <- rep(1, times = nrow(betas))
       if (!is.null(dim(k.pen))) {
         k.cor <- kCorFact(k.pen, betas)
         k.cor <- matrix(k.cor, ncol = 1)
       } 
-      
-      # Allocate empty variables 
-      fit.stats <- matrix(rep(0, times = (dim(betas)[1])), ncol = 1)
-      if (get.r) {
-        fit.stats.r <- fit.stats
-        fit.stats.tau <- fit.stats
-      }
       fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r, correction)
       fit.stats <- getFitMetric(fitStats)
-      fit.stats.bic <- fitStats$bic
-      fit.stats.r <- fitStats$r
-      fit.stats.tau <- fitStats$tau
-      fix.tau <- ifelse(fit.stats.tau < 0, -1, 1)
-      fit.stats.r <- fit.stats.r * fix.tau
-      fit.stats.tau <- fit.stats.tau * fix.tau
+      fix.tau <- ifelse(fitStats$tau < 0, -1, 1)
+      fitStats$r <- fitStats$r * fix.tau
+      fitStats$tau <- fitStats$tau * fix.tau
       betas <- betas * fix.tau
-      
-      model.stats <- cbind(fit.stats, fit.stats.r, betas)
+      model.stats <- cbind(fit.stats, fitStats$r, betas)
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
       # Order by BIC then by r
       model.stats <- model.stats[order((model.stats[,1]),-model.stats[,2]),]
-      if (get.r) {
-        fit.stats.r <- fit.stats.r[order(model.stats[,1])]
-        fit.stats.tau <- fit.stats.tau[order(model.stats[,1])]
-      }
+      fit.stats.r <- fitStats$r[order((model.stats[,1]),-model.stats[,2])]
+      fit.stats.tau <- fitStats$tau[order((model.stats[,1]),-model.stats[,2])]
+      fit.stats.bic <- fitStats$bic[order((model.stats[,1]),-model.stats[,2])]
       if (roe) {
       	# check this
         roe.mat[1:n.beta + (n.beta * (gens - 1)) +
