@@ -98,10 +98,11 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
       model.stats <- cbind(fit.stats, fitStats$r, betas)
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
       # Order by BIC then by r
-      model.stats <- model.stats[order((model.stats[,1]),-model.stats[,2]),]
-      fit.stats.r <- fitStats$r[order((model.stats[,1]),-model.stats[,2])]
-      fit.stats.tau <- fitStats$tau[order((model.stats[,1]),-model.stats[,2])]
-      fit.stats.bic <- fitStats$bic[order((model.stats[,1]),-model.stats[,2])]
+      ord <- order((model.stats[,1]),-model.stats[,2])
+      model.stats <- model.stats[ord,]
+      fit.stats.r <- c(0, fitStats$r)[ord]
+      fit.stats.tau <- c(0, fitStats$tau)[ord]
+      fit.stats.bic <- c(0, fitStats$bic)[ord]
       if (roe) {
       	# check this
         roe.mat[1:n.beta + (n.beta * (gens - 1)) +
