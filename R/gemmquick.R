@@ -15,7 +15,7 @@
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                     n.chains = n.chains, n.gens = 10, save.results = FALSE,
                     k.pen = k.pen, seed.metric = TRUE, check.convergence = FALSE,
-                    roe = FALSE, fit.metric = "bic", correction = "knp") {
+                    roe = FALSE, fit.metric = "bic", correction = "knp", oclo=TRUE) {
   if (p.est < 1 & roe) {
     stop("roe = TRUE not meaningful for cross-validation")
   }
@@ -97,8 +97,11 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
       betas <- betas * fix.tau
       model.stats <- cbind(fit.stats, fitStats$r, betas)
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
-      # Order by BIC then by r
-      ord <- order((model.stats[,1]),-model.stats[,2])
+      # Order by BIC, then r if oclo=TRUE
+      ifelse(oclo, ord <- order((model.stats[,1]),-model.stats[,2]),
+                   ord<-order(model.stats[,1])
+            )
+
       model.stats <- model.stats[ord,]
       fit.stats.r <- c(0, fitStats$r)[ord]
       fit.stats.tau <- c(0, fitStats$tau)[ord]
