@@ -237,8 +237,8 @@ gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, fit.metric = 
     if (attr(best.chain, "cross.val")) {
       best.chain$cross.val.bic <- unlist(lapply(gemm.ordered,function(x) x$cross.val.bic))
       best.chain$cross.val.aic <- unlist(lapply(gemm.ordered,function(x) x$cross.val.aic))
-      best.chain$cross.val.r <- unlist(lapply(gemm.ordered,function(x) x$cross.val.tau))
-      best.chain$cross.val.tau <- unlist(lapply(gemm.ordered,function(x) x$cross.val.r))
+      best.chain$cross.val.tau <- unlist(lapply(gemm.ordered,function(x) x$cross.val.tau))
+      best.chain$cross.val.r <- unlist(lapply(gemm.ordered,function(x) x$cross.val.r))
     }
     if (attr(best.chain, "cross.val")) {
       best.chain$roe <-  do.call(rbind, lapply(gemm.ordered[1:n.chains], function(x) x$roe))
