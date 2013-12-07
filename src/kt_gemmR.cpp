@@ -283,7 +283,7 @@ return sxy/(sqrt(sxx*syy)+tiny);
 
 
 // [[Rcpp::export]]
-NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool pearson, bool correction) {
+NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool correction) {
   double tau, r;
 
 if (sum(betas == 0) == p) {
@@ -293,41 +293,35 @@ if (sum(betas == 0) == p) {
 
   if (sum(betas == 0) != p) {
     tau = kt(data(_,0), fitValues(betas,data), data.nrow());    
-//      if(pearson) {
-      r = corRcpp(data(_,0), fitValues(betas,data));
-//    }
+    r = corRcpp(data(_,0), fitValues(betas,data));
   }
 
-//  if (tau < 0) {
-//    betas = betas * -1;
-//    tau = kt(data(_,0), fitValues(betas,data), data.nrow());
-//    if(pearson) {
-//       r = corRcpp(data(_,0), fitValues(betas,data));
-//    }
-//  }
-
-  double knp, bic, bicr; // = sin( (PIE/2) * tau * ((n-kCor-1)/n));
+  double knp, bic, bicr, aic, aicr; // = sin( (PIE/2) * tau * ((n-kCor-1)/n));
   
   if(correction) {
     knp = sin(PIE/2*tau*(n-p-1)/n);
     bic = n * log(1 - pow(knp,2)) + kCor * log(n);
     bicr = n * log(1 - pow(r,2)) + kCor * log(n);
+    aic = n * log(1 - pow(knp,2)) + 2*kCor;
+    aicr = n * log(1 - pow(r,2)) + 2*kCor;
   } else {
     knp = sin(PIE/2*tau*(n-p-1)/n);
     bic = n * log(1 - pow(knp,2)) + p * log(n);
     bicr = n * log(1 - pow(r,2)) + p * log(n);    
+    aic = n * log(1 - pow(knp,2)) + 2*p;
+    aicr = n * log(1 - pow(r,2)) + 2*p;    
   }
   
-  return Rcpp::NumericVector::create(tau,r,bic,bicr,knp);
+  return Rcpp::NumericVector::create(tau,r,bic,bicr,knp,aic,aicr);
 }
 
 
 
 // [[Rcpp::export]]
-List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, bool getR, CharacterVector correction) {
+List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, CharacterVector correction) {
 
   NumericVector fit;
-  NumericVector fitR(betas.nrow()), fitTau(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow());
+  NumericVector fitR(betas.nrow()), fitTau(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow()), fitAIC(betas.nrow()), fitAICr(betas.nrow());
 
   NumericMatrix data2(clone(data));
   
@@ -340,27 +334,22 @@ List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, Numeric
 
 
 for (int i=0; i < betas.nrow(); i++) {
-  fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), getR, corType);
-
-  // Removed because we do this in gemmquickR, and shouldnt be here anyway
-  // if(fit[1]<0) {
-  //   for(int j =0; j<p;j++) {
-  //     betas(i,j) = betas(i,j)*-1;
-  //   }
-  // }
+  fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), corType);
 
     fitBIC(i) = fit[2];
     fitBICr(i) = fit[3];
-  if (getR) {
-      fitR(i) = fit[1];
-      fitTau(i) = fit[0];
-    }
+    fitR(i) = fit[1];
+    fitTau(i) = fit[0];
+    fitAIC(i) = fit[5];
+    fitAICr(i) = fit[6];
   }
 
   return Rcpp::List::create(Rcpp::Named("r") = fitR,
                             Rcpp::Named("bic") = fitBIC,
                             Rcpp::Named("tau") = fitTau,
-                            Rcpp::Named("bic.r") = fitBICr);
+                            Rcpp::Named("bic.r") = fitBICr,
+                            Rcpp::Named("aic") = fitAIC,
+                            Rcpp::Named("aic.r") = fitAICr);
 }
 
 NumericMatrix stl_sort_matrix(NumericMatrix x) {

@@ -22,12 +22,14 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
   # Select fitting function
   getFitMetric <- switch(tolower(fit.metric),
                       bic = function(fitStats) {return(fitStats$bic)},
-                      tau = function(fitStats) {return(1-abs(fitStats$tau))}
+                      aic = function(fitStats) {return(fitStats$aic)},
+                      tau = function(fitStats) {return(1-abs(fitStats$tau))},
                       )
 
   fit.null <- switch(tolower(fit.metric),
                   bic = 0,
-                  tau = 1
+                  tau = 1,
+                  aic = 0
                   )
   # Allocate Variables 
   bestmodels <- matrix(rep(0, times = (ncol(input.data) - 1)))
@@ -38,6 +40,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
   fit.out.r <- matrix(rep(0, times = n.chains), nrow = n.chains)
   fit.out.tau <- matrix(rep(0, times = n.chains), nrow = n.chains)
   fit.out.bic <- matrix(rep(0, times = n.chains), nrow = n.chains)
+  fit.out.aic <- matrix(rep(0, times = n.chains), nrow = n.chains)
   if (roe) {
     roe.mat <- matrix(0, nrow = (n.beta * n.gens * n.chains),
       ncol = (ncol(input.data) + 1))
@@ -57,8 +60,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     gemm.cross.out.tau <- gemm.cross.out
   }
   for (chains in 1:n.chains) {
-    # hack, get.r needs to be removed
-    get.r <- TRUE
     data <- input.data
     size <- dim(data)
     est.ss <- floor(p.est * size[1])
@@ -89,7 +90,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
         k.cor <- kCorFact(k.pen, betas)
         k.cor <- matrix(k.cor, ncol = 1)
       } 
-      fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, get.r, correction)
+      fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, correction)
       fit.stats <- getFitMetric(fitStats)
       fix.tau <- ifelse(fitStats$tau < 0, -1, 1)
       fitStats$r <- fitStats$r * fix.tau
@@ -106,6 +107,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
       fit.stats.r <- c(0, fitStats$r)[ord]
       fit.stats.tau <- c(0, fitStats$tau)[ord]
       fit.stats.bic <- c(0, fitStats$bic)[ord]
+      fit.stats.aic <- c(0, fitStats$aic)[ord]
       if (roe) {
       	# check this
         roe.mat[1:n.beta + (n.beta * (gens - 1)) +
@@ -122,11 +124,13 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     fit.out.r[chains,] <- fit.stats.r[1]
     fit.out.tau[chains,] <- fit.stats.tau[1]
     fit.out.bic[chains,] <- fit.stats.bic[1]
+    fit.out.aic[chains,] <- fit.stats.aic[1]
     if (p.est < 1) {
-      tempOut <- gemmFitRcppI(nrow(cross.val), matrix(bestmodels[1,2:(p+1)], nrow = 1), cross.val, p, k.cor, get.r, correction)
+      tempOut <- gemmFitRcppI(nrow(cross.val), matrix(bestmodels[1,2:(p+1)], nrow = 1), cross.val, p, k.cor, correction)
       gemm.cross.out[chains,] <- tempOut$bic
       gemm.cross.out.r[chains,] <- tempOut$r
       gemm.cross.out.tau[chains,] <- tempOut$tau
+      gemm.cross.out.aic[chains,] <- tempOut$aic
     }
   }
   coefficients <- matrix(fit.out[,-1], ncol = p)
@@ -134,11 +138,17 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
   colnames(coefficients) <- colnames(input.data)[-1]
   coefficients[is.na(coefficients)] <- 0
 
-  if (fit.metric == "bic") {
-    best.chain <- sort(fit.out[,1], index.return = TRUE)$ix
-  } else {
-    best.chain <- sort(fit.out[,1], index.return = TRUE, decreasing = TRUE)$ix
-  }
+  best.chain <- switch(tolower(fit.metric),
+                  bic = sort(fit.out[,1], index.return = TRUE)$ix,
+                  tau = sort(fit.out[,1], index.return = TRUE, decreasing = TRUE)$ix,
+                  aic = sort(fit.out[,1], index.return = TRUE)$ix
+                  )
+
+  # if (fit.metric == "bic") {
+  #   best.chain <- sort(fit.out[,1], index.return = TRUE)$ix
+  # } else {
+  #   best.chain <- sort(fit.out[,1], index.return = TRUE, decreasing = TRUE)$ix
+  # }
   best.coef <- matrix(fit.out[1, -1], ncol = p)
   fitted.values <- matrix(input.data[,-1], ncol = p) %*% matrix(best.coef, ncol = 1)
   if (roe) {
@@ -158,11 +168,13 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     est.bic = c(fit.out.bic)[best.chain],
     est.r = c(fit.out.r)[best.chain],
     est.tau = c(fit.out.tau)[best.chain],
+    est.aic = c(fit.out.aic)[best.chain],
     metric.betas = metricbeta,
     p.vals = p.vals,
     model = data.frame(input.data),
     fit.metric = fit.metric)
   if (p.est < 1) {
+    sim.results$cross.val.aic <- c(gemm.cross.out.aic)[best.chain]
     sim.results$cross.val.bic <- c(gemm.cross.out)[best.chain]
     sim.results$cross.val.r <- c(gemm.cross.out.r)[best.chain]
     sim.results$cross.val.tau <- c(gemm.cross.out.tau)[best.chain]
@@ -238,6 +250,7 @@ print.gemm <- function(x, ...) {
  # Select correct fit value 
   switch(tolower(x$fit.metric),
          bic = fit <- x$est.bic,
+         aic = fit <- x$est.aic,
          tau = fit <- x$est.tau
          )
   cat("Call:\n")
@@ -372,7 +385,8 @@ plot.gemm <- function(x, ...) {
 convergencePlot <- function(beta, fit.metric, ...) {
   y.lab <- switch(tolower(fit.metric),
                   bic = "BIC",
-                  tau = "1 - tau"
+                  tau = "1 - tau",
+                  aic = "AIC"
                   )
   chains <- ncol(beta)
   max.rep <- nrow(beta)
