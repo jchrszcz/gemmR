@@ -15,7 +15,7 @@
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                     n.chains = n.chains, n.gens = 10, save.results = FALSE,
                     k.pen = k.pen, seed.metric = TRUE, check.convergence = FALSE,
-                    roe = FALSE, fit.metric = "bic", correction = "knp", oclo=TRUE) {
+                    roe = FALSE, fit.metric = fit.metric, correction = "knp", oclo=TRUE) {
   if (p.est < 1 & roe) {
     stop("roe = TRUE not meaningful for cross-validation")
   }
@@ -56,8 +56,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
   }
   if (p.est < 1) {
     gemm.cross.out <- matrix(rep(0, times = n.chains), nrow = n.chains)
-    gemm.cross.out.r <- gemm.cross.out
-    gemm.cross.out.tau <- gemm.cross.out
+    gemm.cross.out.r <- gemm.cross.out.tau <- gemm.cross.out.aic <- gemm.cross.out
   }
   for (chains in 1:n.chains) {
     data <- input.data
@@ -144,11 +143,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                   aic = sort(fit.out[,1], index.return = TRUE)$ix
                   )
 
-  # if (fit.metric == "bic") {
-  #   best.chain <- sort(fit.out[,1], index.return = TRUE)$ix
-  # } else {
-  #   best.chain <- sort(fit.out[,1], index.return = TRUE, decreasing = TRUE)$ix
-  # }
   best.coef <- matrix(fit.out[1, -1], ncol = p)
   fitted.values <- matrix(input.data[,-1], ncol = p) %*% matrix(best.coef, ncol = 1)
   if (roe) {
@@ -211,9 +205,9 @@ kCorFact <- function(k.pen, beta.vecs) {
 
 gemm <- function(x, ...) UseMethod("gemm")
 
-gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, ...) {
+gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, fit.metric = "bic",...) {
   if(!(parallel)) {
-    est <- gemmEst(input.data = x, k.pen = k.pen, n.chains = n.chains, ...)
+    est <- gemmEst(input.data = x, k.pen = k.pen, n.chains = n.chains, fit.metric=fit.metric,...)
     class(est) <- "gemm"
     est
   } else {
@@ -221,12 +215,17 @@ gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, ...) {
     require(doMC)
     registerDoMC()
     gemm.list <- foreach(i = 1:n.chains) %dopar% {
-      gemmEst(input.data = x, k.pen = k.pen, n.chains = 1, ...)
+      gemmEst(input.data = x, k.pen = k.pen, n.chains = 1, fit.metric=fit.metric,...)
     }
     # Make everything gemm objects
     lapply(gemm.list, "class<-", "gemm")
     # Order Chains
-    chain.order <- order(sapply(gemm.list[1:n.chains], function(x) x$est.bic))
+    switch(tolower(fit.metric),
+        bic = fit.name <- "est.bic",
+        aic = fit.name <- "est.aic",
+        tau = fit.name <- "est.tau"
+        )
+    chain.order <- order(sapply(gemm.list[1:n.chains], function(x) get(fit.name,x)))
     gemm.ordered <- gemm.list[rank(chain.order)]
     # Select Best Chain
     best.chain <- gemm.ordered[[1]]
@@ -234,8 +233,10 @@ gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, ...) {
     best.chain$est.bic <-  sapply(gemm.ordered,function(x) x$est.bic)
     best.chain$est.r <-  sapply(gemm.ordered,function(x) x$est.r)
     best.chain$est.tau <-  sapply(gemm.ordered,function(x) x$est.tau)
+    best.chain$est.aic <-  sapply(gemm.ordered,function(x) x$est.aic)
     if (attr(best.chain, "cross.val")) {
       best.chain$cross.val.bic <- unlist(lapply(gemm.ordered,function(x) x$cross.val.bic))
+      best.chain$cross.val.aic <- unlist(lapply(gemm.ordered,function(x) x$cross.val.aic))
       best.chain$cross.val.r <- unlist(lapply(gemm.ordered,function(x) x$cross.val.tau))
       best.chain$cross.val.tau <- unlist(lapply(gemm.ordered,function(x) x$cross.val.r))
     }
