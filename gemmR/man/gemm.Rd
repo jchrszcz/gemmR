@@ -65,6 +65,9 @@
   \item{est.bic}{vector of Bayesian Information Criteria for estimation sample
   of each chain.}
   
+  \item{est.aic}{vector of Aikaike Information Criteria for estimation sample
+  of each chain.}
+  
   \item{est.r}{vector of Pearson's \code{r} values for estimation sample of
   each chain.}
   
@@ -83,6 +86,9 @@
   \item{cross.val.bic}{vector of Bayesian Information Criteria for
   cross-validation sample of each chain.}
   
+  \item{cross.val.aic}{vector of Aikaike Information Criteria for
+  cross-validation sample of each chain.}
+
   \item{cross.val.r}{vector of Pearson's \code{r} values for cross-validation
   sample of each chain.}
   

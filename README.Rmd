@@ -17,7 +17,7 @@ You can install `gemmR` by downloading the `.tar.gz` file in this repository, in
 
 ```{r,results='hide',eval=FALSE}
 # to install from .tar.gz
-install.packages("gemmR_1.1.tar.gz", repos = NULL, type = "source")
+install.packages("gemmR_1.2.tar.gz", repos = NULL, type = "source")
 
 # to install directly from github
 library(devtools)
@@ -26,9 +26,19 @@ install_github("gemmR", "jchrszcz", subdir = "gemmR")
 
 `gemmR` requires `Rcpp`, which also means you'll need a C++ compiler. Clear and reliably-updated directions for installing and troubleshooting those things are maintained at [the STAN project page](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started#prerequisites).
 
+New Version 1.2 (12-08-13)
+------
+### Changes
+* Added ```fit.metric``` option to selection criteria for fit evaluation and model selection. Options are ```bic```, ```aic```, or ```tau```. Default is ```bic```.
+* Added ```oclo``` logical to allow user to select whether beta weights should have a secondary sort based on ```r``` for the given model. Default is ```TRUE```. Stands for *Order Constrained Linear Optimization*.
+
+### Bug Fixes
+* ```cross.val.tau``` and ```cross.val.tau``` were flipped when performing cross-validation and using ```parallel=TRUE```.
+* When ```n.gens``` was 2 or less, wasn't returning optimized values.
+* Many misc minor fixes and optimization improvements.
+
 Bug Notes
 -----
-
 11-18-13
 
 * fixed check so NA values in `lin.mod` returns a warning and sets `seed.metric` to FALSE.

@@ -3,7 +3,6 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-<meta http-equiv="x-ua-compatible" content="IE=9" >
 
 <title>gemmR</title>
 
@@ -197,7 +196,7 @@ hljs.initHighlightingOnLoad();
 <p>You can install <code>gemmR</code> by downloading the <code>.tar.gz</code> file in this repository, including it in your working directory, and running either:</p>
 
 <pre><code class="r"># to install from .tar.gz
-install.packages(&quot;gemmR_1.1.tar.gz&quot;, repos = NULL, type = &quot;source&quot;)
+install.packages(&quot;gemmR_1.2.tar.gz&quot;, repos = NULL, type = &quot;source&quot;)
 
 # to install directly from github
 library(devtools)
@@ -205,6 +204,23 @@ install_github(&quot;gemmR&quot;, &quot;jchrszcz&quot;, subdir = &quot;gemmR&quo
 </code></pre>
 
 <p><code>gemmR</code> requires <code>Rcpp</code>, which also means you&#39;ll need a C++ compiler. Clear and reliably-updated directions for installing and troubleshooting those things are maintained at <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started#prerequisites">the STAN project page</a>.</p>
+
+<h2>New Version 1.2 (12-08-13)</h2>
+
+<h3>Changes</h3>
+
+<ul>
+<li>Added <code>fit.metric</code> option to selection criteria for fit evaluation and model selection. Options are <code>bic</code>, <code>aic</code>, or <code>tau</code>. Default is <code>bic</code>.</li>
+<li>Added <code>oclo</code> logical to allow user to select whether beta weights should have a secondary sort based on <code>r</code> for the given model. Default is <code>TRUE</code>. Stands for <em>Order Constrained Linear Optimization</em>.</li>
+</ul>
+
+<h3>Bug Fixes</h3>
+
+<ul>
+<li><code>cross.val.tau</code> and <code>cross.val.tau</code> were flipped when performing cross-validation and using <code>parallel=TRUE</code>.</li>
+<li>When <code>n.gens</code> was 2 or less, wasn&#39;t returning optimized values.</li>
+<li>Many misc minor fixes and optimization improvements.</li>
+</ul>
 
 <h2>Bug Notes</h2>
 

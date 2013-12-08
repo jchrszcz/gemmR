@@ -45,12 +45,17 @@
   \item{roe}{logical value to determine whether region of
   equivalence data are retained.}
   
-  \item{fit.metric}{value used to order models. Currently works for "\code{tau}"
-  or "\code{bic}". Always performs secondary sort on r for equivalent BIC/tau
-  models.}
+  \item{fit.metric}{value used to order models. Currently options: "\code{bic}",
+  "\code{aic}", "\code{tau}".}
   
   \item{correction}{placeholder for correction transformations on the fit
   statistic, (r or tau).}
+
+  \item{oclo}{logical for \emph{Ordered Constrained Linear Optimization}. If 
+  \code{TRUE} secondary sort based on \code{r} performed on matrix of beta 
+  weights in order to maximize linear fit, given the ordered fits determined by 
+  \code{fit.metric}.}
+
 }
 \description{
   \code{gemmEst} is called by \code{\link{gemm}} to fit general monotone models.
