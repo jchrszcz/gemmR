@@ -198,10 +198,19 @@ static uint64_t getMs(double* data, size_t len) {  /* Assumes data is sorted.*/
  * Note that it will completely overwrite arr1 and sort arr2, so these need
  * to be duplicated before passing them in.
  */
-double kendallNlogN(double* arr1, double* arr2, size_t len) {
+
+typedef struct {
+    double a;
+    double b;
+} TauPair;
+
+
+
+TauPair kendallNlogN(double* arr1, double* arr2, size_t len) {
     uint64_t m1 = 0, m2 = 0, tieCount, swapCount, nPair;
     int64_t s;
     size_t i;
+    TauPair tau;
 
     zipSort(arr1, arr2, len);
     nPair = (uint64_t) len * ((uint64_t) len - 1) / 2;
@@ -235,11 +244,14 @@ double kendallNlogN(double* arr1, double* arr2, size_t len) {
     double denominator1 = nPair - m1;
     double denominator2 = nPair - m2;
     double cor = s / sqrt(denominator1) / sqrt(denominator2);
-    return cor;
+
+    tau.a = s / (double)nPair;
+    tau.b = cor;
+
+    return tau;
 }
 
-// [[Rcpp::export]]
-double kt(NumericVector arr1, NumericVector arr2, int length) {
+TauPair kt(NumericVector arr1, NumericVector arr2, int length) {
  std::vector<double> y(length);
  NumericVector xx(clone(arr1));
  NumericVector yy(clone(arr2));
@@ -283,11 +295,14 @@ return sxy/(sqrt(sxx*syy)+tiny);
 
 
 // [[Rcpp::export]]
-NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool correction) {
-  double tau, r;
+NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data,
+                          int p, int kCor, bool correction) {
+  double r, tauVal;
+  TauPair tau;
 
 if (sum(betas == 0) == p) {
-    tau = 0;
+    tau.a = 0;
+    tau.b = 0;
     r = 0;
   }
 
@@ -298,21 +313,24 @@ if (sum(betas == 0) == p) {
 
   double knp, bic, bicr, aic, aicr; // = sin( (PIE/2) * tau * ((n-kCor-1)/n));
   
+  tauVal = tau.b;
+
+
   if(correction) {
-    knp = sin(PIE/2*tau*(n-p-1)/n);
+    knp = sin(PIE/2*tauVal*(n-p-1)/n);
     bic = n * log(1 - pow(knp,2)) + kCor * log(n);
     bicr = n * log(1 - pow(r,2)) + kCor * log(n);
     aic = n * log(1 - pow(knp,2)) + 2*kCor;
     aicr = n * log(1 - pow(r,2)) + 2*kCor;
   } else {
-    knp = sin(PIE/2*tau*(n-p-1)/n);
+    knp = sin(PIE/2*tauVal*(n-p-1)/n);
     bic = n * log(1 - pow(knp,2)) + p * log(n);
     bicr = n * log(1 - pow(r,2)) + p * log(n);    
     aic = n * log(1 - pow(knp,2)) + 2*p;
     aicr = n * log(1 - pow(r,2)) + 2*p;    
   }
   
-  return Rcpp::NumericVector::create(tau,r,bic,bicr,knp,aic,aicr);
+  return Rcpp::NumericVector::create(r,bic,bicr,knp,aic,aicr,tau.a,tau.b);
 }
 
 
@@ -321,7 +339,7 @@ if (sum(betas == 0) == p) {
 List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, CharacterVector correction) {
 
   NumericVector fit;
-  NumericVector fitR(betas.nrow()), fitTau(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow()), fitAIC(betas.nrow()), fitAICr(betas.nrow());
+  NumericVector fitR(betas.nrow()), fitTauA(betas.nrow()), fitTauB(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow()), fitAIC(betas.nrow()), fitAICr(betas.nrow());
 
   NumericMatrix data2(clone(data));
   
@@ -336,17 +354,20 @@ List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, Numeric
 for (int i=0; i < betas.nrow(); i++) {
   fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), corType);
 
-    fitBIC(i) = fit[2];
-    fitBICr(i) = fit[3];
-    fitR(i) = fit[1];
-    fitTau(i) = fit[0];
-    fitAIC(i) = fit[5];
-    fitAICr(i) = fit[6];
+    fitBIC(i) = fit[1];
+    fitBICr(i) = fit[2];
+    fitR(i) = fit[0];
+    fitAIC(i) = fit[4];
+    fitAICr(i) = fit[5];
+    fitTauA(i) = fit[6];
+    fitTauB(i) = fit[7];
+
   }
 
   return Rcpp::List::create(Rcpp::Named("r") = fitR,
                             Rcpp::Named("bic") = fitBIC,
-                            Rcpp::Named("tau") = fitTau,
+                            Rcpp::Named("tau.a") = fitTauA,
+                            Rcpp::Named("tau.b") = fitTauB,
                             Rcpp::Named("bic.r") = fitBICr,
                             Rcpp::Named("aic") = fitAIC,
                             Rcpp::Named("aic.r") = fitAICr);

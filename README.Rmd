@@ -37,6 +37,13 @@ New Version 1.2 (12-08-13)
 * When ```n.gens``` was 2 or less, wasn't returning optimized values.
 * Many misc minor fixes and optimization improvements.
 
+
+TODO (12-28-13)
+------
+* Remove redundance for tau.a/tau.b
+* Add tau.a/tau.b for cross-validation
+* Enable plot.gemm even when check.convergence==FALSE
+
 Bug Notes
 -----
 11-18-13
