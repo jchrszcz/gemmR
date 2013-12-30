@@ -14,8 +14,10 @@
 
 gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                     n.chains = n.chains, n.gens = 10, save.results = FALSE,
-                    k.pen = k.pen, seed.metric = TRUE, check.convergence = FALSE,
-                    roe = FALSE, fit.metric = fit.metric, correction = "knp", oclo=TRUE) {
+                    k.pen = k.pen, seed.metric = TRUE, 
+                    check.convergence = FALSE, roe = FALSE, 
+                    fit.metric = fit.metric, correction = "knp", 
+                    oclo=TRUE, isTauB = TRUE) {
   if (p.est < 1 & roe) {
     stop("roe = TRUE not meaningful for cross-validation")
   }
@@ -39,6 +41,8 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                     nrow = n.chains)
   fit.out.r <- matrix(rep(0, times = n.chains), nrow = n.chains)
   fit.out.tau <- matrix(rep(0, times = n.chains), nrow = n.chains)
+  fit.out.tau.a <- matrix(rep(0, times = n.chains), nrow = n.chains)
+  fit.out.tau.b <- matrix(rep(0, times = n.chains), nrow = n.chains)
   fit.out.bic <- matrix(rep(0, times = n.chains), nrow = n.chains)
   fit.out.aic <- matrix(rep(0, times = n.chains), nrow = n.chains)
   if (roe) {
@@ -90,10 +94,21 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
         k.cor <- matrix(k.cor, ncol = 1)
       } 
       fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, correction)
+
+      # Depends on which tau is used isTauB_
+      if(isTauB) {
+        fitStats$tau <- fitStats$tau.b
+      } else {
+        fitStats$tau <- fitStats$tau.a
+      }
+
       fit.stats <- getFitMetric(fitStats)
+
       fix.tau <- ifelse(fitStats$tau < 0, -1, 1)
       fitStats$r <- fitStats$r * fix.tau
       fitStats$tau <- fitStats$tau * fix.tau
+      fitStats$tau.a <- fitStats$tau.a * fix.tau
+      fitStats$tau.b <- fitStats$tau.b * fix.tau
       betas <- betas * fix.tau
       model.stats <- cbind(fit.stats, fitStats$r, betas)
       model.stats <- rbind(c(fit.null,rep(0, times = length(model.stats[1,])-1)), model.stats)
@@ -105,6 +120,8 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
       model.stats <- model.stats[ord,]
       fit.stats.r <- c(0, fitStats$r)[ord]
       fit.stats.tau <- c(0, fitStats$tau)[ord]
+      fit.stats.tau.a <- c(0, fitStats$tau.a)[ord]
+      fit.stats.tau.b <- c(0, fitStats$tau.b)[ord]
       fit.stats.bic <- c(0, fitStats$bic)[ord]
       fit.stats.aic <- c(0, fitStats$aic)[ord]
       if (roe) {
@@ -122,6 +139,8 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     fit.out[chains,] <- bestmodels[1,]
     fit.out.r[chains,] <- fit.stats.r[1]
     fit.out.tau[chains,] <- fit.stats.tau[1]
+    fit.out.tau.a[chains,] <- fit.stats.tau.a[1]
+    fit.out.tau.b[chains,] <- fit.stats.tau.b[1]
     fit.out.bic[chains,] <- fit.stats.bic[1]
     fit.out.aic[chains,] <- fit.stats.aic[1]
     if (p.est < 1) {
@@ -162,6 +181,8 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     est.bic = c(fit.out.bic)[best.chain],
     est.r = c(fit.out.r)[best.chain],
     est.tau = c(fit.out.tau)[best.chain],
+    est.tau.a = c(fit.out.tau.a)[best.chain],
+    est.tau.b = c(fit.out.tau.b)[best.chain],
     est.aic = c(fit.out.aic)[best.chain],
     metric.betas = metricbeta,
     p.vals = p.vals,
@@ -258,6 +279,13 @@ print.gemm <- function(x, ...) {
   print(x$call)
   cat("\nCoefficients:\n")
   print(x$coefficients)
+
+  if(x$fit.metric=="tau") {
+
+    x$fit.metric <- ifelse(as.list(x$call["isTauB"])[[1]],"tau-b","tau-a")
+
+  }
+
   cat("\n",x$fit.metric,"\n",sep="")
   print(fit)
 }
@@ -389,6 +417,7 @@ convergencePlot <- function(beta, fit.metric, ...) {
                   tau = "1 - tau",
                   aic = "AIC"
                   )
+
   chains <- ncol(beta)
   max.rep <- nrow(beta)
   xrange <- c(1, max.rep) 
