@@ -5,6 +5,23 @@
 
 using namespace Rcpp;
 
+// tauTest
+List tauTest(NumericVector arr1, NumericVector arr2, int length);
+RcppExport SEXP gemmR_tauTest(SEXP arr1SEXP, SEXP arr2SEXP, SEXP lengthSEXP) {
+BEGIN_RCPP
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< NumericVector >::type arr1(arr1SEXP );
+        Rcpp::traits::input_parameter< NumericVector >::type arr2(arr2SEXP );
+        Rcpp::traits::input_parameter< int >::type length(lengthSEXP );
+        List __result = tauTest(arr1, arr2, length);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
+END_RCPP
+}
 // fitValues
 NumericVector fitValues(NumericVector betas, NumericMatrix data);
 RcppExport SEXP gemmR_fitValues(SEXP betasSEXP, SEXP dataSEXP) {

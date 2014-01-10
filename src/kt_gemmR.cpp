@@ -375,6 +375,8 @@ List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, Numeric
 
   NumericVector fit;
   NumericVector fitR(betas.nrow()), fitTauA(betas.nrow()), fitTauB(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow()), fitAIC(betas.nrow()), fitAICr(betas.nrow());
+  NumericVector fitTauPairs(betas.nrow()), fitTauTies1(betas.nrow()), fitTauTies2(betas.nrow());
+  NumericVector fitTauTiesBoth(betas.nrow()), fitTauDis(betas.nrow()), fitTauCon(betas.nrow());
 
   NumericMatrix data2(clone(data));
   
@@ -396,7 +398,12 @@ for (int i=0; i < betas.nrow(); i++) {
     fitAICr(i) = fit[5];
     fitTauA(i) = fit[6];
     fitTauB(i) = fit[7];
-
+    fitTauPairs(i) = fit[8];
+    fitTauTies1(i) = fit[9];
+    fitTauTies2(i) = fit[10];
+    fitTauTiesBoth(i) = fit[11];
+    fitTauDis(i) = fit[12];
+    fitTauCon(i) = fit[13];
   }
 
 
@@ -404,12 +411,12 @@ for (int i=0; i < betas.nrow(); i++) {
                             Rcpp::Named("bic") = fitBIC,
                             Rcpp::Named("tau.a") = fitTauA,
                             Rcpp::Named("tau.b") = fitTauB,
-                            Rcpp::Named("tau.n.pairs") = fit[8],
-                            Rcpp::Named("tau.n.ties.1") = fit[9],
-                            Rcpp::Named("tau.n.ties.2") = fit[10],
-                            Rcpp::Named("tau.n.ties.both") = fit[11],
-                            Rcpp::Named("tau.n.dis") = fit[12],
-                            Rcpp::Named("tau.n.con") = fit[13],
+                            Rcpp::Named("tau.n.pairs") = fitTauPairs,
+                            Rcpp::Named("tau.n.ties.1") = fitTauTies1,
+                            Rcpp::Named("tau.n.ties.2") = fitTauTies2,
+                            Rcpp::Named("tau.n.ties.both") = fitTauTiesBoth,
+                            Rcpp::Named("tau.n.dis") = fitTauDis,
+                            Rcpp::Named("tau.n.con") = fitTauCon,
                             Rcpp::Named("bic.r") = fitBICr,
                             Rcpp::Named("aic") = fitAIC,
                             Rcpp::Named("aic.r") = fitAICr);
