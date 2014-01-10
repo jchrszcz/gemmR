@@ -365,7 +365,7 @@ if (sum(betas == 0) == p) {
     aicr = n * log(1 - pow(r,2)) + 2*p;    
   }
   
-  return Rcpp::NumericVector::create(r,bic,bicr,knp,aic,aicr,tau.a,tau.b);
+  return Rcpp::NumericVector::create(r,bic,bicr,knp,aic,aicr,tau.a,tau.b,tau.n0,tau.n1,tau.n2,tau.n3,tau.dis,tau.con);
 }
 
 
@@ -399,10 +399,17 @@ for (int i=0; i < betas.nrow(); i++) {
 
   }
 
+
   return Rcpp::List::create(Rcpp::Named("r") = fitR,
                             Rcpp::Named("bic") = fitBIC,
                             Rcpp::Named("tau.a") = fitTauA,
                             Rcpp::Named("tau.b") = fitTauB,
+                            Rcpp::Named("tau.n.pairs") = fit[8],
+                            Rcpp::Named("tau.n.ties.1") = fit[9],
+                            Rcpp::Named("tau.n.ties.2") = fit[10],
+                            Rcpp::Named("tau.n.ties.both") = fit[11],
+                            Rcpp::Named("tau.n.dis") = fit[12],
+                            Rcpp::Named("tau.n.con") = fit[13],
                             Rcpp::Named("bic.r") = fitBICr,
                             Rcpp::Named("aic") = fitAIC,
                             Rcpp::Named("aic.r") = fitAICr);
