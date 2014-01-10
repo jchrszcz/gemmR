@@ -144,10 +144,16 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     fit.out.bic[chains,] <- fit.stats.bic[1]
     fit.out.aic[chains,] <- fit.stats.aic[1]
     if (p.est < 1) {
-      tempOut <- gemmFitRcppI(nrow(cross.val), matrix(bestmodels[1,2:(p+1)], nrow = 1), cross.val, p, k.cor, correction)
+      tempOut <- gemmFitRcppI(nrow(cross.val), 
+                              matrix(bestmodels[1,2:(p+1)], nrow = 1), cross.val, p, k.cor, correction)
+
+      if(isTauB) {
+        gemm.cross.out.tau[chains,] <- fitStats$tau.b
+      } else {
+        gemm.cross.out.tau[chains,] <- fitStats$tau.a
+      }
       gemm.cross.out[chains,] <- tempOut$bic
       gemm.cross.out.r[chains,] <- tempOut$r
-      gemm.cross.out.tau[chains,] <- tempOut$tau
       gemm.cross.out.aic[chains,] <- tempOut$aic
     }
   }
