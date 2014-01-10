@@ -202,15 +202,21 @@ static uint64_t getMs(double* data, size_t len) {  /* Assumes data is sorted.*/
 typedef struct {
     double a;
     double b;
-} TauPair;
+    uint64_t n0;
+    uint64_t n1;
+    uint64_t n2;
+    uint64_t n3;
+    uint64_t dis;
+    uint64_t con;
+} TauStruct;
 
 
 
-TauPair kendallNlogN(double* arr1, double* arr2, size_t len) {
+TauStruct kendallNlogN(double* arr1, double* arr2, size_t len) {
     uint64_t m1 = 0, m2 = 0, tieCount, swapCount, nPair;
     int64_t s;
     size_t i;
-    TauPair tau;
+    TauStruct tau;
 
     zipSort(arr1, arr2, len);
     nPair = (uint64_t) len * ((uint64_t) len - 1) / 2;
@@ -239,6 +245,8 @@ TauPair kendallNlogN(double* arr1, double* arr2, size_t len) {
     swapCount = mergeSort(arr2, arr1, len);
 
     m2 = getMs(arr2, len);
+    int64_t tmp;
+    tmp = s;
     s -= (m1 + m2) + 2 * swapCount;
 
     double denominator1 = nPair - m1;
@@ -247,16 +255,43 @@ TauPair kendallNlogN(double* arr1, double* arr2, size_t len) {
 
     tau.a = s / (double)nPair;
     tau.b = cor;
+    tau.n0 = nPair;
+    tau.n1 = m1;
+    tau.n2 = m2;
+    tau.n3 = tmp-nPair;
+    tau.dis = swapCount;
+    tau.con = s + swapCount;
 
     return tau;
 }
 
-TauPair kt(NumericVector arr1, NumericVector arr2, int length) {
+TauStruct kt(NumericVector arr1, NumericVector arr2, int length) {
  std::vector<double> y(length);
  NumericVector xx(clone(arr1));
  NumericVector yy(clone(arr2));
   
-return kendallNlogN(xx.begin(), yy.begin(), length);
+ return kendallNlogN(xx.begin(), yy.begin(), length);
+}
+
+
+// [[Rcpp::export]]
+List tauTest(NumericVector arr1, NumericVector arr2, int length) {
+ std::vector<double> y(length);
+ NumericVector xx(clone(arr1));
+ NumericVector yy(clone(arr2));
+ TauStruct tau;
+ 
+ tau = kendallNlogN(xx.begin(), yy.begin(), length);
+
+ return Rcpp::List::create(Rcpp::Named("tau-a") = tau.a,
+                          Rcpp::Named("tau-b") = tau.b,
+                          Rcpp::Named("n.pairs") = tau.n0,
+                          Rcpp::Named("n.ties.1") = tau.n1,
+                          Rcpp::Named("n.ties.2") = tau.n2,
+                          Rcpp::Named("n.ties.both") = tau.n3,
+                          Rcpp::Named("n.dis") = tau.dis,
+                          Rcpp::Named("n.con") = tau.con);
+
 }
 
 // [[Rcpp::export]]
@@ -298,7 +333,7 @@ return sxy/(sqrt(sxx*syy)+tiny);
 NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data,
                           int p, int kCor, bool correction) {
   double r, tauVal;
-  TauPair tau;
+  TauStruct tau;
 
 if (sum(betas == 0) == p) {
     tau.a = 0;
