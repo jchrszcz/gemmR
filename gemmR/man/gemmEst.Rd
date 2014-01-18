@@ -5,7 +5,7 @@
   gemmEst(input.data, output = "gemmr", n.beta = 8000, p.est = 1, n.chains = n.chains,
   n.gens = 10, save.results = FALSE, k.pen = k.pen, seed.metric = TRUE,
   check.convergence = FALSE, roe = FALSE, fit.metric = "bic",
-  correction = "knp")
+  correction = "knp", oclo = TRUE, isTauB = TRUE)
 }
 \arguments{
   \item{input.data}{must be data frame, first column is
@@ -56,6 +56,9 @@
   weights in order to maximize linear fit, given the ordered fits determined by 
   \code{fit.metric}.}
 
+  \item{isTauB}{logical for whether to include ties in the denominator of the
+  tau calculation.}
+
 }
 \description{
   \code{gemmEst} is called by \code{\link{gemm}} to fit general monotone models.
@@ -88,6 +91,10 @@
   
   \item{est.tau}{vector of Kendall's \code{tau} for estimation sample of each
   chain.}
+
+  \item{est.tau.par}{vector containing the correction, incorrect, criterion
+  ties, predictor ties, and both between the weighted cues and outcome used
+  for model fit.}
   
   \item{metric.betas}{regression weights derived using \code{\link{lm}}.}
   
@@ -106,6 +113,10 @@
   
   \item{cross.val.tau}{vector of Kendall's \code{tau} for cross-validation
   sample of each chain.}
+
+  \item{cross.val.tau.par}{vector containing the correction, incorrect,
+  criterion ties, predictor ties, and both between the weighted cues and
+  outcome used for crossvalidation.}
   
   \item{converge.fit.metric}{matrix of "\code{fit.metric}" values with
   generations by chains.}

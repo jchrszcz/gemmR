@@ -1,8 +1,8 @@
-\name{kt}
-\alias{kt}
+\name{tauTest}
+\alias{tauTest}
 \title{quick Kendall's tau}
 \usage{
-  kt(arr1, arr2, length)
+  tauTest(arr1, arr2, length)
 }
 \arguments{
   \item{arr1}{numeric vector}
