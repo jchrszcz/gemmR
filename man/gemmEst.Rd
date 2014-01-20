@@ -130,7 +130,7 @@
 }
 \seealso{
   \code{\link{gemm}} for normal use. \code{\link{genAlg}} for search,
-  \code{\link{gemmFitRcppI}} for fitting routine, \code{\link{kt}} for
+  \code{\link{gemmFitRcppI}} for fitting routine, \code{\link{tauTest}} for
   \code{O*(N log N)} scale Kendall's \code{tau}, \code{\link{convergencePlot}}
   for the optional plot pane when \code{check.convergence = TRUE}.
 }

@@ -44,7 +44,7 @@
   gen.alg <- genAlg(matrix(rnorm(p), nrow = p), 5, 2, p, 1, matrix(1), TRUE)
 }
 \seealso{
-  \code{\link{gemm}} for full model-fitting function, \code{\link{kt}} for
+  \code{\link{gemm}} for full model-fitting function, \code{\link{tauTest}} for
   quick Kendall's \code{tau}.
 }
 

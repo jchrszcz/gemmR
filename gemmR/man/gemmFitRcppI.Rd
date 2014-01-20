@@ -33,6 +33,6 @@
   are hidden from R.
 }
 \seealso{
-  \code{\link{gemm}} for full model-fitting function, \code{\link{kt}} for
+  \code{\link{gemm}} for full model-fitting function, \code{\link{tauTest}} for
   quick Kendall's \code{tau}.
 }

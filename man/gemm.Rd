@@ -107,7 +107,7 @@
 }
 \seealso{
   \code{\link{genAlg}} for search, \code{\link{gemmFitRcppI}} for fitting
-  routine, \code{\link{kt}} for \code{O*(N log N)} scale Kendall's \code{tau},
+  routine, \code{\link{tauTest}} for \code{O*(N log N)} scale Kendall's \code{tau},
   \code{\link{convergencePlot}} for the optional plot pane when
   \code{check.convergence = TRUE}. \code{\link{gemmEst}} may be useful in some
   circumstances when formula input and interaction terms are not needed.
