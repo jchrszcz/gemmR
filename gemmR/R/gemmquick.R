@@ -173,7 +173,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     }
   }
   coefficients <- matrix(fit.out[,-1], ncol = p)
-  coefficients <- t(apply(matrix(coefficients, ncol = p), 1, function(x) x/sum(abs(x))))
+  # coefficients <- t(apply(matrix(coefficients, ncol = p), 1, function(x) x/sum(abs(x))))
   colnames(coefficients) <- colnames(input.data)[-1]
   coefficients[is.na(coefficients)] <- 0
 
