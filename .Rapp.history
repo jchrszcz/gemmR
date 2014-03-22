@@ -1,213 +1,3 @@
-summary(qes_dat$y)
-(1*99 + .5)/100
-nrow(scores)
-(1*82281 + .5)/82282
-a <- list(x = (1*82281 + .5)/82282)
-a$x
-a
-scores$new.out <- (scores$score * (nrow(scores) - 1) + .5)/nrow(scores)
-summary(scores$new.out)
-max(scores$new.out)
-N <- 100#
-temp_dat <- list(N = N),#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-temp_dat <- list(N = N,#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-str(temp_dat)
-library(data.table)#
-library(lme4)#
-library(arm)#
-library(rstan)#
-rm(list=ls())#
-#setwd("~/Documents/git/ACE/fitting")#
-load("~/Dropbox/tomject/oifpFits_20130131.RData")#
-#
-scores <- as.data.table(scores)#
-fcasts <- as.data.table(fcasts)#
-fits <- as.data.table(fits)#
-# Get forecast ids per subject#
-#
-idx <- unique(fcasts[,list(forecast_id,user_id)])#
-setkey(idx, forecast_id)#
-setkey(scores, forecast_id)#
-scores <- merge(scores,idx)#
-scores[, n_bins:=n_bins-min(scores$n_bins)]#
-scores$ifp_id <- factor(scores$ifp_id)#
-scores$user_id <- factor(scores$user_id)#
-scores$score <- scores$score/2#
-scores$fcast_type <- factor(scores$fcast_type)#
-scores$distribution <- factor(scores$distribution)#
-scores$forecast_id <- factor(scores$forecast_id)#
-scores$good_fit <- factor(scores$good_fit)#
-scores$ref <- 1 - scores$score#
-scores$new.out <- (scores$score * (nrow(scores) - 1) + .5)/nrow(scores)#
-#
-# Are there question types that matter (IFP properties)#
-# Given we fit, can we predict when the fit will be useful (forecast properties) #
-# Scale end effects#
-# BLUF: effect of fitting appears to be a function of distribution type, let us BDA, you're not gettign results next week#
-#
-# model changes#
-# Control for  Ss, not just forecast id#
-#
-# M1 <- lmer(score~fcast_type + #
-#                  (1 | forecast_id), scores)#
-# display(M1)#
-# M1 <- lmer(score~fcast_type *#
-#                  distribution + #
-#                  (1 | forecast_id) + #
-#                  (1 | good_fit) +#
-#                  (1 + distribution | ifp_id), scores)#
-# display(M1)#
-# fixef(M1)#
-# ranef(M1)$ifp_id#
-#
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-transformed parameters {#
-  vector[N] mu;#
-  vector[N] phi;#
-  for (i in 1:N) {#
-    mu[i] <- inv_logit(b0 + dot_product(X[i], b));#
-    phi[i] <- exp(-1 * (b0 + dot_product(X[i], b)));#
-  }#
-}#
-model {#
-  b0 ~ normal(0, 1);#
-  b ~ normal(0, 1);#
-  for (i in 1:N)#
-    y[i] ~ beta(phi[i] * mu[i], phi[i] * (1.0 - mu[i]));#
-}#
-"
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-temp_dat <- list(N = N,#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-N <- 100
-temp_dat <- list(N = N,#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-fit
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-library(data.table)#
-library(lme4)#
-library(arm)#
-library(rstan)#
-#setwd("~/Documents/git/ACE/fitting")#
-load("~/Dropbox/tomject/oifpFits_20130131.RData")#
-#
-scores <- as.data.table(scores)#
-fcasts <- as.data.table(fcasts)#
-fits <- as.data.table(fits)#
-# Get forecast ids per subject#
-#
-idx <- unique(fcasts[,list(forecast_id,user_id)])#
-setkey(idx, forecast_id)#
-setkey(scores, forecast_id)#
-scores <- merge(scores,idx)#
-scores[, n_bins:=n_bins-min(scores$n_bins)]#
-scores$ifp_id <- factor(scores$ifp_id)#
-scores$user_id <- factor(scores$user_id)#
-scores$score <- scores$score/2#
-scores$fcast_type <- factor(scores$fcast_type)#
-scores$distribution <- factor(scores$distribution)#
-scores$forecast_id <- factor(scores$forecast_id)#
-scores$good_fit <- factor(scores$good_fit)#
-scores$ref <- 1 - scores$score#
-scores$new.out <- (scores$score * (nrow(scores) - 1) + .5)/nrow(scores)#
-#
-# Are there question types that matter (IFP properties)#
-# Given we fit, can we predict when the fit will be useful (forecast properties) #
-# Scale end effects#
-# BLUF: effect of fitting appears to be a function of distribution type, let us BDA, you're not gettign results next week#
-#
-# model changes#
-# Control for  Ss, not just forecast id#
-#
-# M1 <- lmer(score~fcast_type + #
-#                  (1 | forecast_id), scores)#
-# display(M1)#
-# M1 <- lmer(score~fcast_type *#
-#                  distribution + #
-#                  (1 | forecast_id) + #
-#                  (1 | good_fit) +#
-#                  (1 + distribution | ifp_id), scores)#
-# display(M1)#
-# fixef(M1)#
-# ranef(M1)$ifp_id#
-#
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-transformed parameters {#
-  vector[N] mu;#
-  vector[N] phi;#
-  for (i in 1:N) {#
-    mu[i] <- inv_logit(b0 + dot_product(X[i], b));#
-    phi[i] <- exp(-1 * (b0 + dot_product(X[i], b)));#
-  }#
-}#
-model {#
-  b0 ~ normal(0, 1);#
-  b ~ normal(0, 1);#
-  for (i in 1:N)#
-    y[i] ~ beta(phi[i] * mu[i], phi[i] * (1.0 - mu[i]));#
-}#
-"#
-qes_dat <- list(N = length(scores$new.out),#
-  y = scores$new.out,#
-  P = 1,#
-  X = matrix(unclass(scores$fcast_type) - 1, ncol = 1)#
-)#
-temp_dat <- list(N = length(scores$new.out),#
-  y = rbeta(nrow(scores), 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(nrow(scores), 1, .5), ncol = 1)#
-)#
-N <- 100#
-temp_dat <- list(N = N,#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-fit
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-N <- 1000#
-temp_dat <- list(N = N,#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
 fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
 library(data.table)#
 library(lme4)#
@@ -2235,16 +2025,38 @@ remove.packages("gemmR")
 library(rcpp)
 library(Rcpp)
 ?Rcpp
-lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)#
-#
+remove.packages("gemmR")
+library(devtoosl)
+library(devtools)
+install_github("gemmR", "jchrszcz", subdir = "gemmR")
+library(gemmR)
+gemm
+?gemm
+data(mtcars)
+summary(mtcars)
+temp <- gemm(mpg ~ cyl + hp + wt, data = mtcars)
+temp
+summary(temp)
+str(temp)
+remove.packages("gemmR")
+library(devtools)
+?install_githu
+?install_github
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+data(mtcars)
+library(gemmR)
+temp <- gemm(mpg ~ cyl + hp + wt, data = mtcars)
+temp
+str(temp)
+temp
+gemmEst
+lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
 setwd("~/Dropbox/learnr/gemmR")
 Rcpp.package.skeleton(name = "gemmR", force = TRUE, code_files = c("R/gemmquick.R"), cpp_files = c("src/kt_gemmR.cpp","src/new_ga.cpp"), example_code = FALSE, attributes = FALSE)
-system("cp -r ~/Dropbox/learnr/gemmR/inst ~/Dropbox/learnr/gemmR/gemmR")#
-system("cp -r ~/Dropbox/learnr/gemmR/man ~/Dropbox/learnr/gemmR/gemmR")#
-system("cp ~/Dropbox/learnr/gemmR/DESCRIPTION ~/Dropbox/learnr/gemmR/gemmR")#
+system("cp -r ~/Dropbox/learnr/gemmR/inst ~/Dropbox/learnr/gemmR/gemmR")
+system("cp -r ~/Dropbox/learnr/gemmR/man ~/Dropbox/learnr/gemmR/gemmR")
+system("cp ~/Dropbox/learnr/gemmR/DESCRIPTION ~/Dropbox/learnr/gemmR/gemmR")
 system("rm -f ~/Dropbox/learnr/gemmR/gemmR/Read-and-delete-me")
 build("~/Dropbox/learnr/gemmR/gemmR")
-remove.packages("gemmR")
-install.packages("~/Dropbox/learnr/gemmR/gemmR_1.2.tar.gz", repo = NULL, type = "source")
-library(gemmR)
-gemmEst
+install("~/Dropbox/learnr/gemmR/gemmR")
+lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
