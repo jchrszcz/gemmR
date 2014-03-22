@@ -173,9 +173,19 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     }
   }
   coefficients <- matrix(fit.out[,-1], ncol = p)
-  # coefficients <- t(apply(matrix(coefficients, ncol = p), 1, function(x) x/sum(abs(x))))
   colnames(coefficients) <- colnames(input.data)[-1]
   coefficients[is.na(coefficients)] <- 0
+
+  # Scale coefficients to metric scale
+  y.hats <- matrix(input.data[,-1], ncol = p) %*% t(coefficients) 
+  scales <- apply(y.hats,2, function(x) {
+    tmp <- cbind(1,x)
+    y <- input.data[,1]
+    solve(crossprod(tmp))%*%crossprod(tmp,y)
+  })
+  scales <- t(scales)
+  coefficients <- cbind(intercept=scales[,1],scales[,2]*coefficients)
+
 
   best.chain <- switch(tolower(fit.metric),
                   bic = sort(fit.out[,1], index.return = TRUE)$ix,
@@ -183,8 +193,9 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
                   aic = sort(fit.out[,1], index.return = TRUE)$ix
                   )
 
-  best.coef <- matrix(fit.out[1, -1], ncol = p) 
-  fitted.values <- matrix(input.data[,-1], ncol = p) %*% matrix(best.coef, ncol = 1)
+  best.coef <- coefficients[best.chain,,drop=FALSE][1,]
+  fitted.values <- cbind(intercept=1,input.data[,-1]) %*% matrix(best.coef, ncol = 1)
+
   if (roe) {
   	roe.df <- data.frame(roe.mat)
     names(roe.df) <- c("fit.metric", "est.r", colnames(input.data)[-1])
