@@ -481,7 +481,7 @@ predict.gemm <- function(object, newdata = NULL, tie.struct = FALSE, ...) {
     Terms <- delete.response(tt)
     m <- model.frame(Terms, newdata, xlev = object$xlevels)
     X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
-    beta <- object$coefficients
+    beta <- object$coefficients[1,]
     out <- X %*% beta
   }
   correct <- 0
