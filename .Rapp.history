@@ -1,900 +1,3 @@
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-library(data.table)#
-library(lme4)#
-library(arm)#
-library(rstan)#
-#setwd("~/Documents/git/ACE/fitting")#
-load("~/Dropbox/tomject/oifpFits_20130131.RData")#
-#
-scores <- as.data.table(scores)#
-fcasts <- as.data.table(fcasts)#
-fits <- as.data.table(fits)#
-# Get forecast ids per subject#
-#
-idx <- unique(fcasts[,list(forecast_id,user_id)])#
-setkey(idx, forecast_id)#
-setkey(scores, forecast_id)#
-scores <- merge(scores,idx)#
-scores[, n_bins:=n_bins-min(scores$n_bins)]#
-scores$ifp_id <- factor(scores$ifp_id)#
-scores$user_id <- factor(scores$user_id)#
-scores$score <- scores$score/2#
-scores$fcast_type <- factor(scores$fcast_type)#
-scores$distribution <- factor(scores$distribution)#
-scores$forecast_id <- factor(scores$forecast_id)#
-scores$good_fit <- factor(scores$good_fit)#
-scores$ref <- 1 - scores$score#
-scores$new.out <- (scores$score * (nrow(scores) - 1) + .5)/nrow(scores)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-transformed data {#
-  vector[N] mu;#
-  vector[N] phi;#
-  for (i in 1:N) {#
-    mu[i] <- inv_logit(b0 + dot_product(X[i], b));#
-    phi[i] <- exp(-1 * (b0 + dot_product(X[i], b)));#
-  }#
-}#
-model {#
-  b0 ~ normal(0.0, 1000.0);#
-  b ~ normal(0.0, 1000.0);#
-  for (i in 1:N)#
-    y[i] ~ beta(phi[i] * mu[i], phi[i] * (1.0 - mu[i]));#
-}#
-"
-N <- 100#
-temp_dat <- list(N = N,#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-transformed data {#
-  vector[N] mu;#
-  vector[N] phi;#
-  for (i in 1:N) {#
-    mu[i] <- inv_logit(b0 + dot_product(X[i], b));#
-    phi[i] <- exp(-1 * (b0 + dot_product(X[i], b)));#
-  }#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-model {#
-  b0 ~ normal(0.0, 1000.0);#
-  b ~ normal(0.0, 1000.0);#
-  for (i in 1:N)#
-    y[i] ~ beta(phi[i] * mu[i], phi[i] * (1.0 - mu[i]));#
-}#
-"
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-?logit
-summary(logit(scores$score))
-summary(logit(scores$new.out))
-library(BEST)
-?BEST
-1000000
-0.000001
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  int<lower=1> K;#
-  vector[N] y;#
-  matrix[N,K] X;#
-}#
-parameters {#
-  real b0;#
-  vector[K] b;#
-  real<lower=0> sigma_y;#
-}#
-model {#
-  b0 ~ normal(0, 1);#
-  b ~ normal(0, 1);#
-  sigma_y ~ uniform(0.000001, 100)#
-  for (i in 1:N)#
-    y[i] ~ normal(b0 + dot_product(x[i], b), sigma_y);#
-}#
-"
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-transformed parameters {#
-  vector[N] mu;#
-  vector[N] phi;#
-}#
-model {#
-  real mu;#
-  real phi;#
-  b0 ~ normal(0.0, 1000.0);#
-  b ~ normal(0.0, 1000.0);#
-  for (i in 1:N)#
-    mu <- inv_logit(b0 + dot_product(X[i], b));#
-    phi <- exp(-1 * (b0 + dot_product(X[i], b)));#
-    y[i] ~ beta(phi * mu, phi * (1.0 - mu));#
-}#
-"
-N <- 10#
-temp_dat <- list(N = N,#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-model {#
-  real mu;#
-  real phi;#
-  b0 ~ normal(0.0, 1000.0);#
-  b ~ normal(0.0, 1000.0);#
-  for (i in 1:N)#
-    mu <- inv_logit(b0 + dot_product(X[i], b));#
-    phi <- exp(-1 * (b0 + dot_product(X[i], b)));#
-    y[i] ~ beta(phi * mu, phi * (1.0 - mu));#
-}#
-"
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-model {#
-  real mu;#
-  real phi;#
-  b0 ~ normal(0.0, 1000.0);#
-  b ~ normal(0.0, 1000.0);#
-  for (i in 1:N)#
-    mu <- inv_logit(b0 + dot_product(X[i], b[i]));#
-    phi <- exp(-1 * (b0 + dot_product(X[i], b[i])));#
-    y[i] ~ beta(phi * mu, phi * (1.0 - mu));#
-}#
-"
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-model {#
-  real mu;#
-  real phi;#
-  b0 ~ normal(0.0, 1000.0);#
-  b ~ normal(0.0, 1000.0);#
-  for (i in 1:N)#
-    mu <- inv_logit(b0 + dot_product(X[i], b));#
-    phi <- exp(-1 * (b0 + dot_product(X[i], b)));#
-    y[i] ~ beta(phi * mu, phi * (1.0 - mu));#
-}#
-"
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-model {#
-  real mu;#
-  real phi;#
-  b0 ~ normal(0.0, 1000.0);#
-  b ~ normal(0.0, 1000.0);#
-  for (i in 1:N){#
-    mu <- inv_logit(b0 + dot_product(X[i], b));#
-    phi <- exp(-1 * (b0 + dot_product(X[i], b)));#
-    y[i] ~ beta(phi * mu, phi * (1.0 - mu));#
-  }#
-}#
-"
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-fit
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-library(data.table)#
-library(lme4)#
-library(arm)#
-library(rstan)#
-#setwd("~/Documents/git/ACE/fitting")#
-load("~/Dropbox/tomject/oifpFits_20130131.RData")#
-#
-scores <- as.data.table(scores)#
-fcasts <- as.data.table(fcasts)#
-fits <- as.data.table(fits)#
-# Get forecast ids per subject#
-#
-idx <- unique(fcasts[,list(forecast_id,user_id)])#
-setkey(idx, forecast_id)#
-setkey(scores, forecast_id)#
-scores <- merge(scores,idx)#
-scores[, n_bins:=n_bins-min(scores$n_bins)]#
-scores$ifp_id <- factor(scores$ifp_id)#
-scores$user_id <- factor(scores$user_id)#
-scores$score <- scores$score/2#
-scores$fcast_type <- factor(scores$fcast_type)#
-scores$distribution <- factor(scores$distribution)#
-scores$forecast_id <- factor(scores$forecast_id)#
-scores$good_fit <- factor(scores$good_fit)#
-scores$ref <- 1 - scores$score#
-scores$new.out <- (scores$score * (nrow(scores) - 1) + .5)/nrow(scores)#
-#
-# Are there question types that matter (IFP properties)#
-# Given we fit, can we predict when the fit will be useful (forecast properties) #
-# Scale end effects#
-# BLUF: effect of fitting appears to be a function of distribution type, let us BDA, you're not gettign results next week#
-#
-# model changes#
-# Control for  Ss, not just forecast id#
-#
-# M1 <- lmer(score~fcast_type + #
-#                  (1 | forecast_id), scores)#
-# display(M1)#
-# M1 <- lmer(score~fcast_type *#
-#                  distribution + #
-#                  (1 | forecast_id) + #
-#                  (1 | good_fit) +#
-#                  (1 + distribution | ifp_id), scores)#
-# display(M1)#
-# fixef(M1)#
-# ranef(M1)$ifp_id#
-#
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  vector[N] y;#
-  int<lower=1> P;#
-  matrix[N,P] X;#
-}#
-parameters {#
-  real b0;#
-  vector[P] b;#
-}#
-model {#
-  real mu;#
-  real phi;#
-  b0 ~ normal(0.0, 1000.0);#
-  b ~ normal(0.0, 1000.0);#
-  for (i in 1:N){#
-    mu <- inv_logit(b0 + dot_product(X[i], b));#
-    phi <- exp(-1 * (b0 + dot_product(X[i], b)));#
-    y[i] ~ beta(phi * mu, phi * (1.0 - mu));#
-  }#
-}#
-"#
-#
-qes_dat <- list(N = length(scores$new.out),#
-  y = scores$new.out,#
-  P = 1,#
-  X = matrix(unclass(scores$fcast_type) - 1, ncol = 1)#
-)#
-temp_dat <- list(N = length(scores$new.out),#
-  y = rbeta(nrow(scores), 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(nrow(scores), 1, .5), ncol = 1)#
-)#
-N <- 10#
-temp_dat <- list(N = N,#
-  y = rbeta(N, 1, 2),#
-  P = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-fit
-library(BEST)
-?BEST
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  int<lower=1> K;#
-  vector[N] y;#
-  matrix[N,K] X;#
-}#
-parameters {#
-  real b0;#
-  vector[K] b;#
-  real<lower=0> sigma_y;#
-  real<lower=1> nu;#
-}#
-model {#
-  b0 ~ normal(0, 1);#
-  b ~ normal(0, 1);#
-  sigma_y ~ uniform(0.000001, 100);#
-  nu ~ exponential(1/29);#
-  for (i in 1:N)#
-    y[i] ~ student_t(nu + 1, b0 + dot_product(x[i], b), sigma_y);#
-}#
-"
-N <- 100#
-temp_dat <- list(N = 100,#
-  y = logit(rbeta(N, 1, 2)),#
-  K = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  int<lower=1> K;#
-  vector[N] y;#
-  matrix[N,K] X;#
-}#
-parameters {#
-  real b0;#
-  vector[K] b;#
-  real<lower=0> sigma_y;#
-  real<lower=1> nu;#
-}#
-model {#
-  b0 ~ normal(0.0, 1.0);#
-  b ~ normal(0.0, 1.0);#
-  sigma_y ~ uniform(0.000001, 100);#
-  nu ~ exponential(1.0/29.0);#
-  for (i in 1:N)#
-    y[i] ~ student_t(nu + 1, b0 + dot_product(x[i], b), sigma_y);#
-}#
-"
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  int<lower=1> K;#
-  vector[N] y;#
-  matrix[N,K] X;#
-}#
-parameters {#
-  real b0;#
-  vector[K] b;#
-  real<lower=0> sigma_y;#
-  real<lower=1> nu;#
-}#
-model {#
-  b0 ~ normal(0.0, 1.0);#
-  b ~ normal(0.0, 1.0);#
-  sigma_y ~ uniform(0.000001, 100);#
-  nu ~ exponential(1.0/29.0);#
-  for (i in 1:N)#
-    y[i] ~ student_t(nu + 1, b0 + dot_product(X[i], b), sigma_y);#
-}#
-"
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 1, iter = 10)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-library(data.table)#
-library(lme4)#
-library(arm)#
-library(rstan)#
-#setwd("~/Documents/git/ACE/fitting")#
-load("~/Dropbox/tomject/oifpFits_20130131.RData")#
-#
-scores <- as.data.table(scores)#
-fcasts <- as.data.table(fcasts)#
-fits <- as.data.table(fits)#
-# Get forecast ids per subject#
-#
-idx <- unique(fcasts[,list(forecast_id,user_id)])#
-setkey(idx, forecast_id)#
-setkey(scores, forecast_id)#
-scores <- merge(scores,idx)#
-scores[, n_bins:=n_bins-min(scores$n_bins)]#
-scores$ifp_id <- factor(scores$ifp_id)#
-scores$user_id <- factor(scores$user_id)#
-scores$score <- scores$score/2#
-scores$fcast_type <- factor(scores$fcast_type)#
-scores$distribution <- factor(scores$distribution)#
-scores$forecast_id <- factor(scores$forecast_id)#
-scores$good_fit <- factor(scores$good_fit)#
-scores$ref <- 1 - scores$score#
-scores$new.out <- (scores$score * (nrow(scores) - 1) + .5)/nrow(scores)
-qes_code <- "#
-data {#
-  int<lower=1> N;#
-  int<lower=1> K;#
-  vector[N] y;#
-  matrix[N,K] X;#
-}#
-parameters {#
-  real b0;#
-  vector[K] b;#
-  real<lower=0> sigma_y;#
-  real<lower=1> nu;#
-}#
-model {#
-  b0 ~ normal(0.0, 1.0);#
-  b ~ normal(0.0, 1.0);#
-  sigma_y ~ uniform(0.000001, 100);#
-  nu ~ exponential(1.0/29.0);#
-  for (i in 1:N)#
-    y[i] ~ student_t(nu + 1, b0 + dot_product(X[i], b), sigma_y);#
-}#
-"
-N <- 100#
-temp_dat <- list(N = 100,#
-  y = logit(rbeta(N, 1, 2)),#
-  K = 1,#
-  X = matrix(rbinom(N, 1, .5), ncol = 1)#
-)
-fit <- stan(model_code = qes_code, data = temp_dat, chains = 2, iter = 1000)
-lapply(c("ggplot2", "plyr", "reshape2", "data.table", "rstan", "lme4", "arm", "parallel"), require, character.only = TRUE)#
-#
-qes1 <- as.data.table(read.csv("~/Dropbox/tomject/all_fits4.csv"))#
-qes1 <- qes1[bad.data==0,]#
-qes1 <- qes1[,list(idx,#
-                  format,#
-                  width,#
-                  question,#
-                  distribution,#
-                  true.score,#
-                  z, q1, q2, q3, p1, p2, p3,#
-                  par.1,par.2,est.mean, est.var)]#
-qes1[,row.id := 1:nrow(qes1)]#
-qes1[, distribution:=as.character(distribution)]#
-setkey(qes1,question)#
-#
-### lme4 attempts#
-#
-qes.age <- melt(qes1["age"], measure.vars = c("q1", "q2", "q3"))#
-qes.age$idx <- factor(unclass(factor(qes.age$idx)))#
-#
-fit1 <- lmer(value ~ 1 + (1|idx), data = qes.age)#
-#
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] s0;#
-  real<lower=0> sigma_y;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  s0 ~ normal(0, 100);#
-  sigma_y ~ uniform(1, 1000);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + s0[idx[i]], sigma_y);#
-}#
-'#
-#
-fit1_dat <- list(y = qes.age$value,#
-    idx = unclass(qes.age$idx),#
-    N = length(qes.age$value),#
-    S = length(unique(qes.age$idx))#
-	)
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, inter = 4000)
-lapply(c("ggplot2", "plyr", "reshape2", "data.table", "rstan", "lme4", "arm", "parallel"), require, character.only = TRUE)#
-#
-qes1 <- as.data.table(read.csv("~/Dropbox/tomject/all_fits4.csv"))#
-qes1 <- qes1[bad.data==0,]#
-qes1 <- qes1[,list(idx,#
-                  format,#
-                  width,#
-                  question,#
-                  distribution,#
-                  true.score,#
-                  z, q1, q2, q3, p1, p2, p3,#
-                  par.1,par.2,est.mean, est.var)]#
-qes1[,row.id := 1:nrow(qes1)]#
-qes1[, distribution:=as.character(distribution)]#
-setkey(qes1,question)#
-#
-### lme4 attempts#
-#
-qes.age <- melt(qes1["age"], measure.vars = c("q1", "q2", "q3"))#
-qes.age$idx <- factor(unclass(factor(qes.age$idx)))#
-#
-fit1 <- lmer(value ~ 1 + (1|idx), data = qes.age)#
-#
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] s0;#
-  real<lower=0> sigma_y;#
-}#
-transformed parameters {#
-  vector[S] s;#
-  s <- s0 * 100;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  s0 ~ normal(0, 100);#
-  sigma_y ~ uniform(1, 1000);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + s[idx[i]], sigma_y);#
-}#
-'#
-#
-fit1_dat <- list(y = qes.age$value,#
-    idx = unclass(qes.age$idx),#
-    N = length(qes.age$value),#
-    S = length(unique(qes.age$idx))#
-	)#
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, inter = 4000)
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 4000)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] s0;#
-  real<lower=0> sigma_y;#
-}#
-transformed parameters {#
-  vector[S] s;#
-  s <- s0 * 100;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  s0 ~ normal(0, 1);#
-  sigma_y ~ uniform(1, 1000);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + s[idx[i]], sigma_y);#
-}#
-'#
-#
-fit1_dat <- list(y = qes.age$value,#
-    idx = unclass(qes.age$idx),#
-    N = length(qes.age$value),#
-    S = length(unique(qes.age$idx))#
-	)#
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 4000)
-ls()
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] s0;#
-  real<lower=0> sigma_y;#
-}#
-transformed parameters {#
-  vector[S] s;#
-  s <- s0 * 100;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  s0 ~ normal(0, 1);#
-  sigma_y ~ uniform(1, 100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + s[idx[i]], sigma_y);#
-}#
-'#
-#
-fit1_dat <- list(y = qes.age$value,#
-    idx = unclass(qes.age$idx),#
-    N = length(qes.age$value),#
-    S = length(unique(qes.age$idx))#
-	)#
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 2000)
-plot(fit1s)
-plot(fit1.s)
-print(fit1.s, pars = c("b0", "sigma_y"))
-?stan
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s[N];#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 100);#
-  s ~ uniform(1, 100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s[idx[i]]);#
-}#
-'#
-#
-fit1_dat <- list(y = qes.age$value,#
-    idx = unclass(qes.age$idx),#
-    N = length(qes.age$value),#
-    S = length(unique(qes.age$idx))#
-	)
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s[N];#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 10);#
-  s ~ uniform(1, 100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s[idx[i]]);#
-}#
-'#
-#
-fit1_dat <- list(y = qes.age$value,#
-    idx = unclass(qes.age$idx),#
-    N = length(qes.age$value),#
-    S = length(unique(qes.age$idx))#
-	)#
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s[S];#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  for (i in 1:S) {#
-      b ~ normal(0, 10);#
-      s ~ uniform(1, 100);#
-    }#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s[idx[i]]);#
-}#
-'#
-#
-fit1_dat <- list(y = qes.age$value,#
-    idx = unclass(qes.age$idx),#
-    N = length(qes.age$value),#
-    S = length(unique(qes.age$idx))#
-	)
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-qplot(rexp(1000))
-qplot(rexp(1000, 1/100))
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 10);#
-  s ~ exponential(1/100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s + 1);#
-}#
-'
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s;#
-}#
-transformed parameters {#
-  real<lower=1> s0;#
-  s0 <- s + 1;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 10);#
-  s ~ exponential(1/100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s0);#
-}#
-'
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s;#
-}#
-transformed parameters {#
-  real<lower=1> s0;#
-  s0 <- s + 1;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 10);#
-  s ~ exponential(100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s0);#
-}#
-'#
-#
-fit1_dat <- list(y = qes.age$value,#
-    idx = unclass(qes.age$idx),#
-    N = length(qes.age$value),#
-    S = length(unique(qes.age$idx))#
-	)#
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s[S];#
-}#
-transformed parameters {#
-  real<lower=1> s0[S];#
-  s0 <- s + 1;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 10);#
-  s ~ exponential(100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s0[idx[i]]);#
-}#
-'
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s[S];#
-}#
-transformed parameters {#
-  real<lower=1> s0[S];#
-  s0 <- s + 1.0;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 10);#
-  s ~ exponential(100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s0[idx[i]]);#
-}#
-'
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s[S];#
-}#
-transformed parameters {#
-  vecotr[S] s0;#
-  s0 <- s + 1.0;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 10);#
-  s ~ exponential(100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s0[idx[i]]);#
-}#
-'
-fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
-fit1_mod <- '#
-data{#
-  int<lower=1> N;#
-  int<lower=1> S;#
-  vector[N] y;#
-  int<lower=1> idx[N];#
-}#
-parameters {#
-  real b0;#
-  vector[S] b;#
-  real<lower=0> s[S];#
-}#
-transformed parameters {#
-  vector[S] s0;#
-  s0 <- s + 1.0;#
-}#
-model {#
-  b0 ~ normal(0, 100);#
-  b ~ normal(0, 10);#
-  s ~ exponential(100);#
-  for (i in 1:N)#
-  	y[i] ~ normal(b0 + b[idx[i]], s0[idx[i]]);#
-}#
-'
 fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
 fit1_mod <- '#
 data{#
@@ -2039,19 +1142,91 @@ temp
 summary(temp)
 str(temp)
 remove.packages("gemmR")
-library(devtools)
-?install_githu
-?install_github
-install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
-data(mtcars)
+install.packages("~/Dropbox/learnr/gemmR/gemmR_1.2.01.tar.gz", repo = NULL, type = "source")
 library(gemmR)
-temp <- gemm(mpg ~ cyl + hp + wt, data = mtcars)
-temp
+gemm
+gemm.formula
+data(mtcars)
+a <- gemm(mpg ~ cyl + wt, data = mtcars, n.chains = 2, n.gens = 3)
+a
+str(a)
+predict(a)
+str(predict(a))
+predict.gemm
+str(a)
+remove.packages("gemmR")
+library(gemmR)
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+library(gemmR)
+predict.gemm
+remove.packages("gemmR")
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+library(gemmR)
+predict.gemm
+data(mtcars)
+a <- gemm(mpg ~ cyl + hwy, data = mtcars)
+a <- gemm(mpg ~ cyl + wt, data = mtcars)
+temp <- mpg ~ cyl + wt
 str(temp)
+temp[1]
+temp[2]
+terms(temp)
+attr(terms(temp), "factors")
+attr(terms(temp), "variables")
+attr(terms(temp), "variables")[1]
+attr(terms(temp), "variables")[2]
+attr(terms(temp), "variables")[3]
+attr(terms(temp), "variables")[4]
+a <- 1:5
+names(a) <- "blue"
+a
+?vector
+a <- matrix(1:5, ncol =1, col.names = "blue")
+?matrix
+a <- matrix(1:5, ncol =1, d.names = "blue")
+a <- matrix(1:5, ncol =1, dim.names = "blue")
+a <- matrix(1:5, ncol =1, dim.names = c("blue", NULL))
+?matrix
+a <- matrix(1:5, ncol =1, dimnames = c("blue", NULL))
+a <- matrix(1:5, ncol =1, dimnames = list("blue", NULL))
+a <- matrix(1:5, ncol =1, dimnames = list("blue"))
+?matrix
+a <- matrix(1:5, ncol =1, dimnames = list(NULL, "blue"))
+a
+ls9
+ls()
 temp
-gemmEst
+a <- lm(temp, mtcars)
+summary(a)
+mf <- model.frame(temp, mtcars)
+mf
+x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
+y <- model.response(mf)
+x
+y
+y <- matrix(model.response(mf), ncol = 1, dimnames = list(NULL, names(mf)[1]))
+y
+cbind(y.x)
+cbind(y,x)
+me <- attributes(attributes(mf)$terms)$term.labels[attributes(attributes(mf)$terms)$order==1]
+me
+mm
+mf
+mm <- model.matrix(attr(mf, "terms"), data=mf)
+mm
+fmla <- as.formula(paste("y ~ ", paste(me, collapse= "*")))
+fmla
+names(mf)[1]
+fmla <- as.formula(paste(names(mf)[1], " ~ ", paste(me, collapse= "*")))
+fmla
+remove.packages("gemmR")
 lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
 setwd("~/Dropbox/learnr/gemmR")
+system("rm -rf ~/Dropbox/learnr/gemmR/gemmR")
 Rcpp.package.skeleton(name = "gemmR", force = TRUE, code_files = c("R/gemmquick.R"), cpp_files = c("src/kt_gemmR.cpp","src/new_ga.cpp"), example_code = FALSE, attributes = FALSE)
 system("cp -r ~/Dropbox/learnr/gemmR/inst ~/Dropbox/learnr/gemmR/gemmR")
 system("cp -r ~/Dropbox/learnr/gemmR/man ~/Dropbox/learnr/gemmR/gemmR")
@@ -2059,4 +1234,22 @@ system("cp ~/Dropbox/learnr/gemmR/DESCRIPTION ~/Dropbox/learnr/gemmR/gemmR")
 system("rm -f ~/Dropbox/learnr/gemmR/gemmR/Read-and-delete-me")
 build("~/Dropbox/learnr/gemmR/gemmR")
 install("~/Dropbox/learnr/gemmR/gemmR")
-lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
+source("/Users/jchrszcz/Dropbox/learnr/gemmR/README.Rmd")
+lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)#
+#
+setwd("~/Dropbox/learnr/gemmR")#
+#
+system("rm -rf ~/Dropbox/learnr/gemmR/gemmR")#
+#dev_mode()#
+Rcpp.package.skeleton(name = "gemmR", force = TRUE, code_files = c("R/gemmquick.R"), cpp_files = c("src/kt_gemmR.cpp","src/new_ga.cpp"), example_code = FALSE, attributes = FALSE)#
+#
+system("cp -r ~/Dropbox/learnr/gemmR/inst ~/Dropbox/learnr/gemmR/gemmR")#
+system("cp -r ~/Dropbox/learnr/gemmR/man ~/Dropbox/learnr/gemmR/gemmR")#
+system("cp ~/Dropbox/learnr/gemmR/DESCRIPTION ~/Dropbox/learnr/gemmR/gemmR")#
+system("rm -f ~/Dropbox/learnr/gemmR/gemmR/Read-and-delete-me")#
+#
+# move man folder, DESCRIPTION, and CITATION files#
+#
+build("~/Dropbox/learnr/gemmR/gemmR")
+gemm
+library(gemmR)

@@ -17,16 +17,16 @@ You can install `gemmR` by downloading the `.tar.gz` file in this repository, in
 
 ```{r,results='hide',eval=FALSE}
 # to install from .tar.gz
-install.packages("gemmR_1.2.tar.gz", repos = NULL, type = "source")
+install.packages("gemmR_1.2.01.tar.gz", repos = NULL, type = "source")
 
 # to install directly from github
 library(devtools)
-install_github("gemmR", "jchrszcz", subdir = "gemmR")
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
 ```
 
 `gemmR` requires `Rcpp`, which also means you'll need a C++ compiler. Clear and reliably-updated directions for installing and troubleshooting those things are maintained at [the STAN project page](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started#prerequisites).
 
-New Version 1.2 (3-22-14)
+New Version 1.2.01 (3-22-14)
 ------
 ### Changes
 * GeMM coefficients now metric scaled

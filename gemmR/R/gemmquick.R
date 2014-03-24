@@ -331,11 +331,11 @@ print.gemm <- function(x, ...) {
 gemm.formula <- function(formula, data=list(),...) {
   mf <- model.frame(formula=formula, data=data)
   x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
-  y <- model.response(mf)
+  y <- matrix(model.response(mf), ncol = 1, dimnames = list(NULL, names(mf)[1]))
   #main effect variables
   me <- attributes(attributes(mf)$terms)$term.labels[attributes(attributes(mf)$terms)$order==1]
   mm <- model.matrix(attr(mf, "terms"), data=mf)
-  fmla <- as.formula(paste("y ~ ", paste(me, collapse= "*")))
+  fmla <- as.formula(paste(names(mf)[1], " ~ ", paste(me, collapse= "*")))
 
   #names 
   names <- data.frame(var=names(mf)[-1])
@@ -474,31 +474,37 @@ convergencePlot <- function(beta, fit.metric, ...) {
 }
 
 predict.gemm <- function(object, newdata = NULL, tie.struct = FALSE, ...) {
-  if (tie.struct) {
-    correct <- 0
-    incorrect <- 0
-    cue.tie <- 0
-    crit.tie <- 0
-    c1 <- unlist(model.frame(object)[1], use.names = FALSE)
-    c2 <- c(fitted(object))
-    for (i in 1:(length(c1) - 1)) {
-      for (j in (i + 1):length(c1)) {
-        if (c1[i] == c1[j]) {
-          crit.tie <- crit.tie + 1
-        } else if (c2[i] == c2[j]) {
-          cue.tie <- cue.tie + 1
-        } else if (((c1[i] > c1[j]) & (c2[i] > c2[j])) | ((c1[i] < c1[j]) & (c2[i] < c2[j]))) {
-          correct <- correct + 1
-        } else {
-          incorrect <- incorrect + 1
-        }
+ if (is.null(newdata)) {
+    out <- fitted(object)
+  } else {
+    tt <- terms(object$formula)
+    Terms <- delete.response(tt)
+    m <- model.frame(Terms, newdata, xlev = object$xlevels)
+    X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
+    beta <- object$coefficients
+    out <- X %*% beta
+  }
+  correct <- 0
+  incorrect <- 0
+  cue.tie <- 0
+  crit.tie <- 0
+  c1 <- unlist(model.frame(object)[1], use.names = FALSE)
+  c2 <- c(fitted(object))
+  for (i in 1:(length(c1) - 1)) {
+    for (j in (i + 1):length(c1)) {
+      if (c1[i] == c1[j]) {
+        crit.tie <- crit.tie + 1
+      } else if (c2[i] == c2[j]) {
+        cue.tie <- cue.tie + 1
+      } else if (((c1[i] > c1[j]) & (c2[i] > c2[j])) | ((c1[i] < c1[j]) & (c2[i] < c2[j]))) {
+        correct <- correct + 1
+      } else {
+        incorrect <- incorrect + 1
       }
     }
-    y <- data.frame(correct, incorrect, cue.tie, crit.tie)
-  } else { 
-    y <- fitted(object)  
   }
-  return(y)
+  attr(out, "tie.struct") <- data.frame(correct, incorrect, cue.tie, crit.tie)
+  return(out)
 }
 
 summary.gemm <- function(x) {
