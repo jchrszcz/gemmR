@@ -205,7 +205,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
   }
   sim.results <- list(date = date(),
     call = match.call(),
-    coefficients = coefficients[best.chain,],
+    coefficients = coefficients[best.chain, , drop = FALSE],
     fitted.values = fitted.values,
     residuals = unlist(input.data[,1] - fitted.values),
     rank.residuals = (rank(input.data[,1]) -
@@ -219,6 +219,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
     est.aic = c(fit.out.aic)[best.chain],
     metric.betas = metricbeta,
     p.vals = p.vals,
+    rank = sum(best.coef != 0),
     model = data.frame(input.data),
     fit.metric = fit.metric)
   if (p.est < 1) {
