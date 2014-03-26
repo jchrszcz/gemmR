@@ -178,7 +178,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
 
   # Scale coefficients to metric scale
   y.hats <- matrix(input.data[,-1], ncol = p) %*% t(coefficients) 
-  scales <- t(apply(y.hats,2,function(x) coef(lm(y ~ x))))
+  scales <- t(apply(y.hats,2,function(x) coef(lm(input.data[,1] ~ x))))
   coefficients <- cbind(intercept=scales[,1],scales[,2]*coefficients)
 
 
