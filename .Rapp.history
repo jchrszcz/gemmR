@@ -1,935 +1,1251 @@
-reps <- lapply(sat.list, function(x) replicate(1, testFun(mod, dat2, x, FALSE), simplify = FALSE))
-reps
-reps <- lapply(sat.list, function(x) replicate(1, testFun(mod, dat2, x, TRUE), simplify = FALSE))
-reps
-gemmEst
-gemmFun <- function(mod, est, cross, sat) {#
-  if (sat) {#
-    temp <- gemm(mod, data = est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "tau") } else {#
-      temp <- gemm(mod, data = est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "bic")#
-    }#
-  return(testFit(temp, est, cross, TRUE))#
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  vector[S] b;#
+  real<lower=0> s[S];#
+}#
+transformed parameters {#
+  vector[S] s0;#
+  for (i in 1:S)#
+    s0 <- s + 1.0;#
+}#
+model {#
+  b0 ~ normal(0, 100);#
+  b ~ normal(0, 10);#
+  s ~ exponential(100);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b0 + b[idx[i]], s0[idx[i]]);#
+}#
+'#
+#
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)#
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  vector[S] b;#
+  vector[S] s;#
+}#
+transformed parameters {#
+  vector[S] s0;#
+  for (i in 1:S)#
+    s0 <- s + 1.0;#
+}#
+model {#
+  b0 ~ normal(0, 100);#
+  b ~ normal(0, 10);#
+  s ~ exponential(100);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b0 + b[idx[i]], s0[idx[i]]);#
+}#
+'#
+#
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)#
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  vector[S] b;#
+  vector[S] s;#
+}#
+model {#
+  b0 ~ normal(0, 100);#
+  b ~ normal(0, 10);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b0 + b[idx[i]], s[idx[i]]);#
+}#
+'
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+temp_mod <- '#
+parameters {#
+  real mu;#
+}#
+model {#
+  mu ~ pareto(1, 1);#
+}#
+'#
+#
+temp <- stan(model = temp_mod)
+temp <- stan(model_code = temp_mod)
+temp
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  vector[S] b;#
+  vector[S] s;#
+}#
+model {#
+  b0 ~ normal(0, 100);#
+  b ~ normal(0, 10);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b0 + b[idx[i]], s[idx[i]]);#
+}#
+'#
+#
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b0 ~ normal(0, 100);#
+  b ~ normal(0, 10);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b0 + b[idx[i]], s[idx[i]]);#
+}#
+'#
+#
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)#
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 1000, chains = 4)
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 2000, chains = 4)
+plot(fit1.s)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+transformed parameters {#
+  real b0;#
+  real s0;#
+  b0 <- median(b);#
+  s0 <- median(s);#
+}#
+model {#
+  b ~ normal(0, 100);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b0 + b[idx[i]], s[idx[i]]);#
+}#
+'
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10)
+class(fit1.s)
+?print.rstan
+?rstan
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b ~ normal(0, 100);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
 }
-reps <- lapply(sat.list, function(x) replicate(1, testFun(mod, dat2, x, TRUE), simplify = FALSE))
-gemmFun <- function(mod, est, cross, sat) {#
-  if (sat) {#
-    temp <- gemm(mod, data = est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "tau") } else {#
-      temp <- gemm(mod, data = est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "bic")#
-    }#
-  return(testFit(temp, est, cross, TRUE))#
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
 }#
-#
-testFun <- function(mod, x, sat, gemmit) {#
-  picker <- sample(1:nrow(x), nrow(x)/2, replace = FALSE)#
-  est <- x[picker,]#
-  cross <- x[-picker,]#
-  ols <- lm(mod, est)#
-  fits <- list(ols = ols,#
-    huber = rlm(mod, data = est, psi = psi.huber),#
-    bisquare = rlm(mod, data = est, psi = psi.bisquare),#
-    hampel = rlm(mod, data = est, psi = psi.hampel))#
-  out <- lapply(fits, function(x) testFit(x, est, cross, sat))#
-  crit <- names(ols$model)[1]#
-  out$ord.log <- polrFun(mod, est, cross, crit, sat)#
-  if (!sat)#
-    out$ols.bic <- obFun(ols, est, cross, crit)#
-  if (gemmit)#
-    out$gemm.lm <- gemmFun(mod, est, cross, sat)#
-  return(out)#
-}
-reps <- lapply(sat.list, function(x) replicate(1, testFun(mod, dat2, x, TRUE), simplify = FALSE))
-reps
-est
-x <- dat2
-picker <- sample(1:nrow(x), nrow(x)/2, replace = FALSE)
-est <- x[picker,]
-cross <- x[-picker,]
-gemm.lm <- gemmFun(mod, est, cross, sat)
-gemm.lm <- gemmFun(mod, est, cross, TRUE)
-gemm.lm
-a <- gemm(mod, est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "tau")
-a
-a <- lm(mod, est)
-coef(a)[1,]
-a$coefficients
-a$coefficients[1,]
-is.matrix(coef(a))
-testFit <- function(x, est, cross, sat) {#
-  if (is.matrix(coef(x)))#
-    x$coefficients <- x$coefficients[1,]#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}
-reps <- lapply(sat.list, function(x) replicate(1, testFun(mod, dat2, x, TRUE), simplify = FALSE))
-testFit <- function(x, est, cross, sat) {#
-  if (is.matrix(coef(x)))#
-    x$coefficients <- t(x$coefficients[1,])#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}
-reps <- lapply(sat.list, function(x) replicate(1, testFun(mod, dat2, x, TRUE), simplify = FALSE))
-reps
-reps <- lapply(sat.list, function(x) replicate(2, testFun(mod, dat2, x, TRUE), simplify = FALSE))
-reps <- lapply(sat.list, function(x) replicate(2, testFun(mod, dat2, x, TRUE), simplify = FALSE))
-ls()
-testFit <- function(x, est, cross, sat) {#
-  if (is.matrix(coef(x)))#
-    x$coefficients <- t(x$coefficients[1,])#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
+parameters {#
+  vector[S] b;#
+  real<lower=1> s[S];#
 }#
-#
-polrFun <- function(mod, est, cross, crit, sat) {#
-  temp <- polr(update(mod, factor(.) ~ .), data = est, Hess = TRUE)#
-  if (!sat)#
-    temp$coefficients <- ifelse(coef(summary(temp))[1:sum(attr(terms(mod), "order")),3] > 1.96, coef(temp), 0)#
-  k <- sum(coef(temp) != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  t.e <- cor(est[names(est) == crit], as.numeric(as.character(predict(temp))), method = "kendall")#
-  t.c <- cor(cross[names(cross) == crit], as.numeric(as.character(predict(temp, cross))), method = "kendall")#
-  r.e <- cor(est[names(est) == crit], as.numeric(as.character(predict(temp))))#
-  r.c <- cor(cross[names(cross) == crit], as.numeric(as.character(predict(temp, cross))))#
-  return(c(r.e, t.e, r.c, t.c, k, mikeBic(r.e, k, nrow(est)), bicTau(t.e, k, nrow(est))))#
+model {#
+  b ~ normal(0, 100);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
 }#
-#
-obFun <- function(ols, est, cross, crit) {#
-  temp <- bestglm(cbind(ols$model[,-1], ols$model[,1]))#
-  k <- length(coef(temp$BestModel)[-1])#
-  r <- cor(ols$model[,1], predict(temp$BestModel))#
-  tau <- cor(ols$model[,1], predict(temp$BestModel), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(ols$model)[1]], predict(temp$BestModel, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(ols$model)[1]], predict(temp$BestModel, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
+'
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
 }#
-#
-gemmFun <- function(mod, est, cross, sat) {#
-  if (sat) {#
-    temp <- gemm(mod, data = est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "tau") } else {#
-      temp <- gemm(mod, data = est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "bic")#
-    }#
-  return(testFit(temp, est, cross, TRUE))#
+parameters {#
+  real b0;#
+  vector[S] b;#
+  real<lower=1> s[S];#
 }#
-#
-testFun <- function(mod, x, sat, gemmit) {#
-  picker <- sample(1:nrow(x), nrow(x)/2, replace = FALSE)#
-  est <- x[picker,]#
-  cross <- x[-picker,]#
-  ols <- lm(mod, est)#
-  fits <- list(ols = ols,#
-    huber = rlm(mod, data = est, psi = psi.huber),#
-    bisquare = rlm(mod, data = est, psi = psi.bisquare),#
-    hampel = rlm(mod, data = est, psi = psi.hampel))#
-  out <- lapply(fits, function(x) testFit(x, est, cross, sat))#
-  crit <- names(ols$model)[1]#
-  out$ord.log <- polrFun(mod, est, cross, crit, sat)#
-  if (!sat)#
-    out$ols.bic <- obFun(ols, est, cross, crit)#
-  if (gemmit)#
-    out$gemm.lm <- gemmFun(mod, est, cross, sat)#
-  return(out)#
+model {#
+  b0 ~ normal(0, 100);#
+  b ~ normal(b0, 100);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
 }#
+'
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  vector[S] b;#
+  real<lower=1> s0;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b0 ~ normal(0, 100);#
+  sigma_b0 ~ uniform(1, 100);#
+  b ~ normal(b0, sigma_b0);#
+  s0 ~ uniform(1, 100);#
+  s ~ pareto(1, s0);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  vector[S] b;#
+  real<lower=1> sigma_b0;#
+  real<lower=1> s0;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b0 ~ normal(0, 100);#
+  sigma_b0 ~ uniform(1, 100);#
+  b ~ normal(b0, sigma_b0);#
+  s0 ~ uniform(1, 100);#
+  s ~ pareto(1, s0);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+rm(list = ls())
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b ~ normal(0, 100);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'#
 #
-mod <- atbmean ~ raceampdiff + pollampdiff + RaceIAT + poliatDmean + emsmean + imsmean + pamean + Rstroopeffect + ssrt#
-sat.list <- list(FALSE, TRUE)
-reps <- lapply(sat.list, function(x) replicate(1, testFun(mod, dat2, x, TRUE), simplify = FALSE))
-reps
-predict.lm
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)#
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+lapply(c("ggplot2", "plyr", "reshape2", "data.table", "rstan", "lme4", "arm", "parallel"), require, character.only = TRUE)#
+#
+qes1 <- as.data.table(read.csv("~/Dropbox/tomject/all_fits4.csv"))#
+qes1 <- qes1[bad.data==0,]#
+qes1 <- qes1[,list(idx,#
+                  format,#
+                  width,#
+                  question,#
+                  distribution,#
+                  true.score,#
+                  z, q1, q2, q3, p1, p2, p3,#
+                  par.1,par.2,est.mean, est.var)]#
+qes1[,row.id := 1:nrow(qes1)]#
+qes1[, distribution:=as.character(distribution)]#
+setkey(qes1,question)#
+#
+### means of means (age)#
+#
+qes.age <- melt(qes1["age"], measure.vars = c("q1", "q2", "q3"))#
+qes.age$idx <- factor(unclass(factor(qes.age$idx)))#
+#
+fit1 <- lmer(value ~ 1 + (1|idx), data = qes.age)#
+#
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b ~ normal(0, 100);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'#
+#
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+qes.unem <- melt(qes1["q4"], measure.vars = c("q1", "q2", "q3"))#
+qes.unem$idx <- factor(unclass(factor(qes.unem$idx)))#
+#
+fit2 <- lmer(value ~ 1 + (1|idx), data = qes.unem)#
+#
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b ~ normal(0, 100);#
+  s ~ pareto(1, 1);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.umen$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+?Pareto
+??Pareto
+library(VGAM)
+libraray(ggplot2)
+library(ggplot2)
+qplot(rpareto(1000, 1))
+qplot(rpareto(1000, 1, 1))
+install.package("geoR")
+install.packages("geoR")
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  real s0;#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b0 ~ runif(0, 100);#
+  b ~ normal(b0, 10);#
+  s0 ~ uniform(1, 100);#
+  s ~ inv_chi_sqare(s0);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  real s0;#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b0 ~ uniform(0, 100);#
+  b ~ normal(b0, 10);#
+  s0 ~ uniform(1, 100);#
+  s ~ inv_chi_sqare(s0);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  real s0;#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b0 ~ uniform(0, 100);#
+  b ~ normal(b0, 10);#
+  s0 ~ uniform(1, 100);#
+  s ~ inv_chi_square(s0);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'#
+#
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit1_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real b0;#
+  real<lower=1> s0;#
+  vector[S] b;#
+  real<lower=1> s[S];#
+}#
+model {#
+  b0 ~ uniform(0, 100);#
+  b ~ normal(b0, 10);#
+  s0 ~ uniform(1, 100);#
+  s ~ inv_chi_square(s0);#
+  for (i in 1:N)#
+  	y[i] ~ normal(b[idx[i]], s[idx[i]]);#
+}#
+'#
+#
+fit1_dat <- list(y = qes.age$value,#
+    idx = unclass(qes.age$idx),#
+    N = length(qes.age$value),#
+    S = length(unique(qes.age$idx))#
+	)#
+fit1.s <- stan(model_code = fit1_mod, data = fit1_dat, iter = 10, chains = 1)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real<lower=0,upper=1> phi[S];#
+  real<lower=0.1> lambda[S];#
+}#
+model {#
+  vector alpha[S];#
+  vector beta[S];#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda * phi;#
+  beta <- lambda * (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real<lower=0,upper=1> phi[S];#
+  real<lower=0.1> lambda[S];#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda * phi;#
+  beta <- lambda * (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda * phi;#
+  beta <- lambda * (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+str(fit2_dat)
+range(fit2_dat$y)
+fit2_dat$y[fit2_dat$y < 0] <- 0
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+phi <- rbeta(10000, 1, 1)
+lambda <- rpareto(10000, .1, 1.5)
+qplot(phi * lambda)
+summary(phi * lambda)
+summary((1 - phi) * lambda)
+alpha <- phi * lambda
+beta <- (1 - phi) * lambda
+a <- rbeta(10000, alpha, beta)
+qplot(a)
+summary(a)
+qplot(a)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+# hack#
+fit2_dat$y[fit2_dat$y < 0] <- 0#
+#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+set_cppo('debug')
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+# hack#
+fit2_dat$y[fit2_dat$y < 0] <- 0#
+#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+tapply(qes.unem$value, qes.unem$idx, mean)
+summary(tapply(qes.unem$value, qes.unem$idx, mean))
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+?stan
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1, init = 0)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector<lower=0>[S] alpha;#
+  vector<lower=0>[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1, init = 0)
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+is.na(qes.unem$y)
+sum(is.na(qes.unem$value))
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+# hack#
+fit2_dat$y[fit2_dat$y < 0] <- 0#
+#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+range(fit2_dat$y)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1.0 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+# hack#
+fit2_dat$y[fit2_dat$y < 0] <- 0#
+#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+?stan
+str(fit2_dat)
+qes1 <- as.data.table(read.csv("~/Dropbox/tomject/all_fits4.csv"))#
+qes1 <- qes1[bad.data==0,]#
+qes1 <- qes1[,list(idx,#
+                  format,#
+                  width,#
+                  question,#
+                  distribution,#
+                  true.score,#
+                  z, q1, q2, q3, p1, p2, p3,#
+                  par.1,par.2,est.mean, est.var)]#
+qes1[,row.id := 1:nrow(qes1)]#
+qes1[, distribution:=as.character(distribution)]#
+setkey(qes1,question)
+qes.age <- melt(qes1["age"], measure.vars = c("q1", "q2", "q3"))#
+qes.age$idx <- factor(unclass(factor(qes.age$idx)))
+qes.unem <- melt(qes1["q4"], measure.vars = c("q1", "q2", "q3"))
+qes.unem$idx <- factor(unclass(factor(qes.unem$idx)))
+fit2 <- lmer(value ~ 1 + (1|idx), data = qes.unem)
+summary(fit2)
+sd(fit2_dat$y)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1.0 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+# hack#
+fit2_dat$y[fit2_dat$y < 0] <- 0
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+str(fit2_dat)
+fit2_dat$idx
+str(fit2_dat)
+378*3
+rbeta(1,0,1)
+rbeta(1,1,0)
+rbeta(1,1,0.5)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0.001,upper=0.999>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ uniform(.001, .999);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1.0 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'#
+#
+fit2_dat <- list(y = qes.unem$value,#
+    idx = unclass(qes.unem$idx),#
+    N = length(qes.unem$value),#
+    S = length(unique(qes.unem$idx))#
+	)#
+# hack#
+fit2_dat$y[fit2_dat$y < 0] <- 0#
+#
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  phi <- if_else(step(1.0 - phi), phi, 0.99999);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1.0 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  for (i in 1:N)#
+    phi <- if_else(step(1.0 - phi), phi, 0.99999);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1.0 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  for (i in 1:N)#
+    phi[i] <- if_else(step(1.0 - phi[i]), phi[i], 0.99999);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1.0 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=0.1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  for (i in 1:S)#
+    phi[i] <- if_else(step(phi[i]), phi[i], 0.00001);#
+  lambda ~ pareto(0.1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1.0 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+qplot(rpareto(100000, .1, 1.5))
+fit2_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=0,upper=1>[S] phi;#
+  vector<lower=1>[S] lambda;#
+}#
+model {#
+  vector[S] alpha;#
+  vector[S] beta;#
+  phi ~ beta(1,1);#
+  lambda ~ pareto(1,1.5);#
+  alpha <- lambda .* phi;#
+  beta <- lambda .* (1.0 - phi);#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2.s <- stan(model_code = fit2_mod, data = fit2_dat, iter = 10, chains = 1)
+temp_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=1,upper=100>[S] alpha;#
+  vector<lower=1,upper=100>[S] beta;#
+}#
+model {#
+#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha[idx[i]], beta[idx[i]]);#
+}#
+'
+fit2_dat$y[fit2_dat$y < 0] <- 0
+temp.s <- stan(model_code = temp_mod, data = fit2_dat, iter = 10, chains = 1)
+temp_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  vector<lower=1,upper=100> alpha;#
+  vector<lower=1,upper=100> beta;#
+}#
+model {#
+#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha, beta);#
+}#
+'
+temp.s <- stan(model_code = temp_mod, data = fit2_dat, iter = 10, chains = 1)
+temp_mod <- '#
+data{#
+  int<lower=1> N;#
+  int<lower=1> S;#
+  vector[N] y;#
+  int<lower=1> idx[N];#
+}#
+parameters {#
+  real<lower=1,upper=100> alpha;#
+  real<lower=1,upper=100> beta;#
+}#
+model {#
+#
+  for (i in 1:N)#
+    y[i] ~ beta(alpha, beta);#
+}#
+'
+temp.s <- stan(model_code = temp_mod, data = fit2_dat, iter = 10, chains = 1)
+temp_mod <- '#
+parameters {#
+  real<lower=1,upper=100> alpha;#
+  real<lower=1,upper=100> beta;#
+  real mu;#
+}#
+model {#
+  mu ~ beta(alpha, beta);#
+}#
+'
+temp.s <- stan(model_code = temp_mod)
+lapply(c("ggplot2", "plyr", "reshape2", "data.table", "rstan", "lme4", "arm", "parallel"), require, character.only = TRUE)
+temp_mod <- '#
+parameters {#
+  real mu;#
+}#
+model {#
+  mu ~ beta(1, 1);#
+}#
+'
+temp.s <- stan(model_code = temp_mod)
+temp_mod <- '#
+parameters {#
+  real mu;#
+}#
+model {#
+  mu ~ beta(10.0, 5.0);#
+}#
+'
+temp.s <- stan(model_code = temp_mod)
+remove.packages("gemmR")
+library(rcpp)
+library(Rcpp)
+?Rcpp
+remove.packages("gemmR")
+library(devtoosl)
+library(devtools)
+install_github("gemmR", "jchrszcz", subdir = "gemmR")
+library(gemmR)
+gemm
+?gemm
 data(mtcars)
-a <- lm(mpg ~ cyl + mt, data = mtcars)
-a <- lm(mpg ~ cyl + wt, data = mtcars)
-a$rank
-summary(a)
-lm
-lm
-lm.fit
-lm.fit
-x1 <- rnorm(100)
-x2 <- x1
-y <- x1 + rnorm(100)
-summary(lm(y ~ x1 + x2))
-summary(lm(x1 ~ x2 + y))
-x3 <- rep(1, 100)
-a <- lm(x1 ~ x2 + y)
-a$rank
-a <- lm(y ~ x1 + x2)
-a$rank
-b <- data.frame(y, x1, x2)
-summary(b)
-a <- lm(y ~ x1 + x2, data = b)
-summary(a)
-model.matrix(a)
-rank(a)
-a$rank
-str(a)
-terms(a)
-rm(list = ls())
-lapply(c("MASS", "plyr", "reshape2", "ggplot2", "bestglm", "Hmisc", "gemmR"), require, character.only = TRUE)#
-#
-dat1 <- read.csv("Henry 2009.csv")#
-dat1$murder1000 <- dat1$murderrate * 1000#
-dat1$f.murderrate <- ordered(dat1$murderrate)#
-dat1$s.gini <- scale(dat1$gini_usethis)#
-dat1$s.pasture <- scale(dat1$percent_pasture)#
-dat1$s.gnp <- scale(dat1$GNPpercapita)#
-dat1$log.mr <- log(dat1$murderrate) + abs(min(log(dat1$murderrate)))#
-dat1$sqrt.mr <- sqrt(dat1$murderrate)#
-dat1$sqrt.gini <- sqrt(dat1$gini_usethis)#
-dat1$log.gini <- log(dat1$gini_usethis)#
-dat1$sqrt.gnp <- sqrt(dat1$GNPpercapita)#
-dat1$log.gnp <- log(dat1$GNPpercapita)#
-dat1$sqrt.pasture <- sqrt(dat1$percent_pastures)#
-dat1$log.pasture <- log(dat1$percent_pastures)#
-#
-dat2 <- read.csv("IATDataSiegel.csv")#
-dat2 <- as.data.frame(scale(dat2))#
-dat2$f.atbmean <- factor(dat2$atbmean)
-summary(dat1)
-summary(dat2)
-fig1.dat <- melt(dat2[names(dat2) %in% c("atbmean", "pollampdiff", "RaceIAT", "poliatDmean", "raceampdiff", "imsmean", "emsmean", "pamean", "Rstroopeffect", "ssrt")])
-fig1.dat <- melt(dat2[names(dat2) %in% c("atbmean", "pollampdiff", "RaceIAT", "poliatDmean", "raceampdiff", "imsmean", "emsmean", "pamean", "Rstroopeffect", "ssrt")], id.vars = "atbmean")
-head(fig1.dat)
-levels(fig1.dat$variable)
-levels(fig1.dat) <- c("Political AMP", "Race IAT", "Political IAT", "Race AMP", "Internal MCP", "External MCP", "Political Attitude", "Stroop", "Stop Signal")
-?melt.data.frame
-names(fig1.dat)[1] <- "Attitude Towards Blacks"
-fig1.dat <- melt(dat2[names(dat2) %in% c("atbmean", "pollampdiff", "RaceIAT", "poliatDmean", "raceampdiff", "imsmean", "emsmean", "pamean", "Rstroopeffect", "ssrt")], id.vars = "atbmean")#
-levels(fig1.dat) <- c("Political AMP", "Race IAT", "Political IAT", "Race AMP", "Internal MCP", "External MCP", "Political Attitude", "Stroop", "Stop Signal")
-fig1 <- ggplot(fig1.dat, aes(x = value, y = atbmean)) + geom_point() + facet_wrap(~ variable) + ylab("Attitude Towards Blacks")
-fig1
-fig1.dat <- melt(dat2[names(dat2) %in% c("atbmean", "pollampdiff", "RaceIAT", "poliatDmean", "raceampdiff", "imsmean", "emsmean", "pamean", "Rstroopeffect", "ssrt")], id.vars = "atbmean")#
-levels(fig1.dat) <- c("Political AMP", "Race IAT", "Political IAT", "Race AMP", "Internal MCP", "External MCP", "Political Attitude", "Stroop", "Stop Signal")#
-fig1 <- ggplot(fig1.dat, aes(x = value, y = atbmean)) + geom_point() + facet_wrap(~ variable) + ylab("Attitude Towards Blacks")
-fig1
-summary(fig1.dat)
-levels(fit1.dat$variable)
-levels(fig1.dat$variable) <- c("Political AMP", "Race IAT", "Political IAT", "Race AMP", "Internal MCP", "External MCP", "Political Attitude", "Stroop", "Stop Signal")
-fig1 <- ggplot(fig1.dat, aes(x = value, y = atbmean)) + geom_point() + facet_wrap(~ variable) + ylab("Attitude Towards Blacks")
-fig1
-fig1 <- ggplot(fig1.dat, aes(x = value, y = atbmean)) + geom_point() + facet_wrap(~ variable) + ylab("Attitude Towards Blacks") + xlab("")
-fig1
-fig2.dat <- melt(dat2[names(dat2) %in% c("atbmean", "pollampdiff", "RaceIAT", "poliatDmean", "raceampdiff", "imsmean", "emsmean", "pamean", "Rstroopeffect", "ssrt")])
-levels(fig2.dat$variable) <- c("Attitude Towards Blacks", "Political AMP", "Race IAT", "Political IAT", "Race AMP", "Internal MCP", "External MCP", "Political Attitude", "Stroop", "Stop Signal")
-fig2 <- ggplot(fig2.dat, aes(x = value)) + geom_histogram()
-fig2
-fig2 <- ggplot(fig2.dat, aes(x = value)) + geom_histogram() + facet_wrap(~variable)
-fig2
-??dffit
-summary(dat2)
-tabFun1 <- function(mod, dat, fits) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  out <- list(ols = lm(mod, dat),#
-    ols.bic = bestglm(mod, dat)$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 2, n.gens = 4))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  if (fits)#
-    return(lapply(out, olsFit)#
-  return(out)#
-}
-tabFun1 <- function(mod, dat, fits) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  out <- list(ols = lm(mod, dat),#
-    ols.bic = bestglm(mod, dat)$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 2, n.gens = 4))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  if (fits)#
-    return(lapply(out, olsFit))#
-  return(out)#
-}
-race.mod <- atbmean ~ raceampdiff + pollampdiff + RaceIAT + poliatDmean + emsmean + imsmean + pamean + Rstroopeffect + ssrt
-tabFun1(race.mod, dat2)
-tabFun1 <- function(mod, dat, fits) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  ols <- lm(mod, dat)#
-  out <- list(ols = ols,#
-    ols.bic = bestglm(cbind(ols$model[,-1], ols$model[,1,drop=FALSE]))$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 2, n.gens = 4))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  if (fits)#
-    return(lapply(out, olsFit))#
-  return(out)#
-}#
-#
-race.mod <- atbmean ~ raceampdiff + pollampdiff + RaceIAT + poliatDmean + emsmean + imsmean + pamean + Rstroopeffect + ssrt#
-#
-tabFun1(race.mod, dat2)
-tabFun1(race.mod, dat2, FALSE)
-tabFun1(race.mod, dat2, TRUE)
-mikeBic <- function(r, k, n) {#
-  return(n * log(1 - r^2) + k * log(n))#
-}#
-#
-bicTau <- function(tau, k, n) {#
-  rp <- sin(pi/2 * tau * (n - k - 1)/n)#
-  return(n * log(1 - rp^2) + k * log(n))#
-}#
-#
-olsFit <- function(x) {#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}#
-#
-olsCross <- function(x, est, cross, sat) {#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}
-tabFun1(race.mod, dat2, TRUE)
-tabFun1 <- function(mod, dat, fits) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  ols <- lm(mod, dat)#
-  out <- list(ols = ols,#
-    ols.bic = bestglm(cbind(ols$model[,-1], ols$model[,1,drop=FALSE]))$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 2, n.gens = 4))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  if (fits)#
-    return(lapply(out, function(x) olsFit(x, TRUE)))#
-  return(out)#
-}
-olsFit <- function(x, sat) {#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}
-tabFun1(race.mod, dat2, TRUE)
-olsFit <- function(x, sat) {#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(x$model) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}
-tabFun1(race.mod, dat2, TRUE)
-olsFit <- function(x, sat) {#
-  if (!sat | fits)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(x$model) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}
-tabFun1(race.mod, dat2, TRUE)
-olsFit <- function(x, sat, fits) {#
-  if (!sat | fits)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(x$model) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}
-tabFun1(race.mod, dat2, TRUE)
-tabFun1 <- function(mod, dat, fits) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  ols <- lm(mod, dat)#
-  out <- list(ols = ols,#
-    ols.bic = bestglm(cbind(ols$model[,-1], ols$model[,1,drop=FALSE]))$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 2, n.gens = 4))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  if (fits)#
-    return(lapply(out, function(x) olsFit(x, TRUE, TRUE)))#
-  return(out)#
-}
-tabFun1(race.mod, dat2, TRUE)
-tabFun1(race.mod, dat2, TRUE)
-a <- gemm(mod, dat2, n.chains = 1, n.gens = 2)
-a <- gemm(race.mod, dat2, n.chains = 1, n.gens = 2)
-a
-class(a)
-olsFit <- function(x, sat, fits) {#
-  if ((!sat | fits) & class(x) != "gemm")#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(x$model) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}
-str(a)
-a$coefficients
-coef(a)
-str(coef(a))
-tabFun1 <- function(mod, dat, fits) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  ols <- lm(mod, dat)#
-  out <- list(ols = ols,#
-    ols.bic = bestglm(cbind(ols$model[,-1], ols$model[,1,drop=FALSE]))$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 1, n.gens = 10))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  if (fits)#
-    return(lapply(out, function(x) olsFit(x, TRUE, TRUE)))#
-  return(out)#
-}
-olsFit <- function(x, sat, fits) {#
-  if ((!sat | fits) & class(x) != "gemm")#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(x$model) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}
-tabFun1(race.mod, dat2, TRUE)
-olsFit <- function(x, sat, fits) {#
-  if ((!sat | fits) & class(x)[1] != "gemm")#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(x$model) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}
-tabFun1(race.mod, dat2, TRUE)
-tab1 <- tabFun1(race.mod, dat2, TRUE)
-tab
-tab1
-lapply(tab1, function(x) olsFit(x, TRUE, TRUE))
-tabFun1 <- function(mod, dat, fits) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  ols <- lm(mod, dat)#
-  out <- list(ols = ols,#
-    ols.bic = bestglm(cbind(ols$model[,-1], ols$model[,1,drop=FALSE]))$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 1, n.gens = 10))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  return(out)#
-}
-tabFun1 <- function(mod, dat) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  ols <- lm(mod, dat)#
-  out <- list(ols = ols,#
-    ols.bic = bestglm(cbind(ols$model[,-1], ols$model[,1,drop=FALSE]))$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 1, n.gens = 10))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  return(out)#
-}
-tab1 <- tabFun1(race.mod, dat2)
-tab1
-lapply(tab1, function(x) olsFit(x, TRUE, TRUE))
-tab2 <- lapply(tab1, coef)
-tab2
-dat2$full <- 1
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[dat2[names(dat2) == x,]]))
-tab1 <- lapply(list("full"), function(x) tabFun1(race.mod, dat2[dat2[names(dat2) == x,]]))
-tab1 <- lapply(list(full = "full"), function(x) tabFun1(race.mod, dat2[dat2[names(dat2) == x,]]))
-list(full = "full")
-lapply(list(full = "full"), print)
-lapply(list("full"), print)
-lapply(list("full", "reduced"), print)
-lapply(list(full = "full", reduce = "reduce"), print)
-tab1 <- apply(c("full"), function(x) tabFun1(race.mod, dat2[dat2[names(dat2) == x,]]))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[dat2[names(dat2) == x,]]))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[dat2[names(dat2) == x[1],]]))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[dat2[names(dat2) == x[[1]],]]))
-lapply(c("full"), print)
-lapply(c("full"), display)
-lapply(c("full", "reduce"), print)
-temp <- lapply(c("full", "reduce"), print)
+summary(mtcars)
+temp <- gemm(mpg ~ cyl + hp + wt, data = mtcars)
 temp
-temp <- lapply(c("full", "reduce"), function(x) paste0(x, "mod"))
-temp
-summary(dat2)
-unlist(temp)
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[dat2[names(dat2) == unlist(x),]]))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[names(dat2) == x,]]))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[names(dat2) == x,]))
-tab1
-rm(list = ls())
-lapply(c("MASS", "plyr", "reshape2", "ggplot2", "bestglm", "Hmisc", "gemmR"), require, character.only = TRUE)#
-#
-dat1 <- read.csv("Henry 2009.csv")#
-dat1$f.murderrate <- ordered(dat1$murderrate)#
-dat1$s.gini <- scale(dat1$gini_usethis)#
-dat1$s.pasture <- scale(dat1$percent_pasture)#
-dat1$s.gnp <- scale(dat1$GNPpercapita)#
-dat1$log.mr <- log(dat1$murderrate) + abs(min(log(dat1$murderrate)))#
-dat1$sqrt.mr <- sqrt(dat1$murderrate)#
-dat1$sqrt.gini <- sqrt(dat1$gini_usethis)#
-dat1$log.gini <- log(dat1$gini_usethis)#
-dat1$sqrt.gnp <- sqrt(dat1$GNPpercapita)#
-dat1$log.gnp <- log(dat1$GNPpercapita)#
-dat1$sqrt.pasture <- sqrt(dat1$percent_pastures)#
-dat1$log.pasture <- log(dat1$percent_pastures)#
-#
-dat2 <- read.csv("IATDataSiegel.csv")#
-dat2 <- as.data.frame(scale(dat2))#
-dat2$f.atbmean <- factor(dat2$atbmean)#
-dat2$full <- 1#
-#
-# helper functions#
-#
-mikeBic <- function(r, k, n) {#
-  return(n * log(1 - r^2) + k * log(n))#
-}#
-#
-bicTau <- function(tau, k, n) {#
-  rp <- sin(pi/2 * tau * (n - k - 1)/n)#
-  return(n * log(1 - rp^2) + k * log(n))#
-}#
-#
-olsFit <- function(x, sat, fits) {#
-  if ((!sat | fits) & class(x)[1] != "gemm")#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(x$model) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}#
-#
-olsCross <- function(x, est, cross, sat) {#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}#
-#
-### tables#
-# table 1 (full race data)#
-# columns : bictau, bic, tau, R, k#
-# rows: ols NHST, robust, OLS bic, gemm#
-# full data, univariate outliers, cook's D, DFFITS, (not for robust)#
-#
-tabFun1 <- function(mod, dat) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  ols <- lm(mod, dat)#
-  out <- list(ols = ols,#
-    ols.bic = bestglm(cbind(ols$model[,-1], ols$model[,1,drop=FALSE]))$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 1, n.gens = 10))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  return(out)#
-}#
-#
-race.mod <- atbmean ~ raceampdiff + pollampdiff + RaceIAT + poliatDmean + emsmean + imsmean + pamean + Rstroopeffect + ssrt#
-#
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[names(dat2) == x,]))
-debug(tabFun1)
-lapply(c("MASS", "plyr", "reshape2", "ggplot2", "bestglm", "Hmisc", "gemmR"), require, character.only = TRUE)#
-#
-dat1 <- read.csv("Henry 2009.csv")#
-dat1$f.murderrate <- ordered(dat1$murderrate)#
-dat1$s.gini <- scale(dat1$gini_usethis)#
-dat1$s.pasture <- scale(dat1$percent_pasture)#
-dat1$s.gnp <- scale(dat1$GNPpercapita)#
-dat1$log.mr <- log(dat1$murderrate) + abs(min(log(dat1$murderrate)))#
-dat1$sqrt.mr <- sqrt(dat1$murderrate)#
-dat1$sqrt.gini <- sqrt(dat1$gini_usethis)#
-dat1$log.gini <- log(dat1$gini_usethis)#
-dat1$sqrt.gnp <- sqrt(dat1$GNPpercapita)#
-dat1$log.gnp <- log(dat1$GNPpercapita)#
-dat1$sqrt.pasture <- sqrt(dat1$percent_pastures)#
-dat1$log.pasture <- log(dat1$percent_pastures)#
-#
-dat2 <- read.csv("IATDataSiegel.csv")#
-dat2 <- as.data.frame(scale(dat2))#
-dat2$f.atbmean <- factor(dat2$atbmean)#
-dat2$full <- 1#
-#
-# helper functions#
-#
-mikeBic <- function(r, k, n) {#
-  return(n * log(1 - r^2) + k * log(n))#
-}#
-#
-bicTau <- function(tau, k, n) {#
-  rp <- sin(pi/2 * tau * (n - k - 1)/n)#
-  return(n * log(1 - rp^2) + k * log(n))#
-}#
-#
-olsFit <- function(x, sat, fits) {#
-  if ((!sat | fits) & class(x)[1] != "gemm")#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  bic <- nrow(x$model) * log(1 - r^2) + k * log(nrow(x$model))#
-  bicT <- bicTau(tau, k, nrow(x$model))#
-  return(c(r, tau, k, bic, bicT))#
-}#
-#
-olsCross <- function(x, est, cross, sat) {#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}#
-#
-### tables#
-# table 1 (full race data)#
-# columns : bictau, bic, tau, R, k#
-# rows: ols NHST, robust, OLS bic, gemm#
-# full data, univariate outliers, cook's D, DFFITS, (not for robust)#
-#
-tabFun1 <- function(mod, dat) {#
-  if (sum(is.na(dat)) == 0)#
-    robust <- TRUE #
-  ols <- lm(mod, dat)#
-  out <- list(ols = ols,#
-    ols.bic = bestglm(cbind(ols$model[,-1], ols$model[,1,drop=FALSE]))$BestModel,#
-    gemm.bic = gemm(mod, dat, n.chains = 1, n.gens = 10))#
-  if (robust) {#
-    out$huber <- rlm(mod, dat, psi = psi.huber)#
-    out$bisquare <- rlm(mod, dat, psi = psi.bisquare)#
-    out$hampel <- rlm(mod, dat, psi = psi.hampel)#
-  }#
-  return(out)#
-}#
-#
-race.mod <- atbmean ~ raceampdiff + pollampdiff + RaceIAT + poliatDmean + emsmean + imsmean + pamean + Rstroopeffect + ssrt#
-#
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[names(dat2) == x,]))
-debug(tabFun1)
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, dat2[names(dat2) == x,]))
-summary(dat)
-dat2 <- read.csv("IATDataSiegel.csv")#
-dat2 <- as.data.frame(scale(dat2))#
-dat2$f.atbmean <- factor(dat2$atbmean)
-?model.matrix
-head(model.matrix(mod, dat2))
-head(model.matrix(race.mod, dat2))
-race.mod
-head(model(race.mod, dat2))
-?model.matrix
-head(model.frame(race.mod, dat2))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, model.frame(dat2[names(dat2) == x,])))
-Q
-undebug(tabFun1)
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, model.frame(dat2[names(dat2) == x,])))
-dat2 <- read.csv("IATDataSiegel.csv")#
-dat2 <- as.data.frame(scale(dat2))#
-dat2$f.atbmean <- factor(dat2$atbmean)#
-dat2$full <- 1
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, model.frame(dat2[names(dat2) == x,])))
-x <- "full"
-head(model.frame(dat2[names(dat2) == x,]))
-names(dat2) == x
-head(model.frame(dat2[dat2[names(dat2) == x],]))
-head(dat2[names(dat2) == x])
-str(dat2[names(dat2) == x])
-dat2[dat2[names(dat2) == x],]
-head(model.frame(dat2[as.vector(dat2[names(dat2) == x]),]))
-head(dat2[names(dat2) == x])
-c(dat2[names(dat2) == x])
-c(dat2[names(dat2) == x])[1]
-c(dat2[names(dat2) == x])[[1]]
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, model.frame(dat2[dat2[names(dat2) == x][[1]],])))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, model.frame(subset(dat2, x))))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, model.frame(subset(dat2, dat2[names(dat2) == x]))))
-tab1 <- lapply(c("full"), function(x) tabFun1(race.mod, model.frame(subset(dat2, dat2[names(dat2) == x] == TRUE))))
-tab1
-tab2 <- lapply(tab1, coef)
-tab2
-lapply(tab1, function(x) olsFit(x, TRUE, TRUE))
-tab1
-str(tab1)
-lapply(lapply(tab1, function(x) olsFit(x, TRUE, TRUE)))
-lapply(tab1, funtion(y) lapply(y, function(x) olsFit(x, TRUE, TRUE)))
-lapply(tab1[1], function(x) olsFit(x, TRUE, TRUE))
-lapply(tab1[[1]], function(x) olsFit(x, TRUE, TRUE))
-class(tab1)
-class(tab2)
-mod(tab1)
-mode(tab1)
-lapply(tab1, function(y) lapply(y, function(x) olsFit(x, TRUE, TRUE)))
-tab2 <- lapply(tab1, function(y) lapply(y, coef))
-tab2
-?sample
-tabFun1(race.mod, dat2[sample(1:nrow(dat2), nrow(dat2)/2, replace = FALSE),])
-testFit <- function(x, est, cross, sat) {#
-  if (!sat)#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}#
-#
-polrFun <- function(mod, est, cross, crit, sat) {#
-  temp <- polr(update(mod, factor(.) ~ .), data = est, Hess = TRUE)#
-  if (!sat)#
-    temp$coefficients <- ifelse(coef(summary(temp))[1:sum(attr(terms(mod), "order")),3] > 1.96, coef(temp), 0)#
-  k <- sum(coef(temp) != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  t.e <- cor(est[names(est) == crit], as.numeric(as.character(predict(temp))), method = "kendall")#
-  t.c <- cor(cross[names(cross) == crit], as.numeric(as.character(predict(temp, cross))), method = "kendall")#
-  r.e <- cor(est[names(est) == crit], as.numeric(as.character(predict(temp))))#
-  r.c <- cor(cross[names(cross) == crit], as.numeric(as.character(predict(temp, cross))))#
-  return(c(r.e, t.e, r.c, t.c, k, mikeBic(r.e, k, nrow(est)), bicTau(t.e, k, nrow(est))))#
-}#
-#
-obFun <- function(ols, est, cross, crit) {#
-  temp <- bestglm(cbind(ols$model[,-1], ols$model[,1]))#
-  k <- length(coef(temp$BestModel)[-1])#
-  r <- cor(ols$model[,1], predict(temp$BestModel))#
-  tau <- cor(ols$model[,1], predict(temp$BestModel), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(ols$model)[1]], predict(temp$BestModel, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(ols$model)[1]], predict(temp$BestModel, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}#
-#
-gemmFun <- function(mod, est, cross, sat) {#
-  if (sat) {#
-    temp <- gemm(mod, data = est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "tau") } else {#
-      temp <- gemm(mod, data = est, n.chains = 2, n.gens = 4, parallel = TRUE, fit.metric = "bic")#
-    }#
-  return(testFit(temp, est, cross, TRUE))#
-}#
-#
-testFun <- function(mod, x, sat) {#
-  picker <- sample(1:nrow(x), nrow(x)/2, replace = FALSE)#
-  est <- x[picker,]#
-  cross <- x[-picker,]#
-  ols <- lm(mod, est)#
-  fits <- list(ols = ols,#
-    huber = rlm(mod, data = est, psi = psi.huber),#
-    bisquare = rlm(mod, data = est, psi = psi.bisquare),#
-    hampel = rlm(mod, data = est, psi = psi.hampel))#
-  out <- lapply(fits, function(x) testFit(x, est, cross, sat))#
-  crit <- names(ols$model)[1]#
-  out$ord.log <- polrFun(mod, est, cross, crit, sat)#
-  if (!sat)#
-    out$ols.bic <- obFun(ols, est, cross, crit)#
-  return(out)#
-}
-reps <- lapply(sat.list, function(x) replicate(1, testFun(race.mod, dat2, x), simplify = FALSE))
-sat.list <- list(FALSE, TRUE)
-reps <- lapply(sat.list, function(x) replicate(1, testFun(race.mod, dat2, x), simplify = FALSE))
-reps
-testFun <- function(mod, x, sat) {#
-  picker <- sample(1:nrow(x), nrow(x)/2, replace = FALSE)#
-  est <- x[picker,]#
-  cross <- x[-picker,]#
-  ols <- lm(mod, est)#
-  fits <- list(ols = ols,#
-    huber = rlm(mod, data = est, psi = psi.huber),#
-    bisquare = rlm(mod, data = est, psi = psi.bisquare),#
-    hampel = rlm(mod, data = est, psi = psi.hampel))#
-  if (sat) {#
-    out$gemm.mod <- gemm(mod, est, n.chains = 1, fit.metric = "tau")#
-  } else {#
-    out$gemm.mod <- gemm(mod, est, n.chains = 1, fit.metric = "bic")#
-  }#
-  out <- lapply(fits, function(x) testFit(x, est, cross, sat))#
-  crit <- names(ols$model)[1]#
-  out$ord.log <- polrFun(mod, est, cross, crit, sat)#
-  if (!sat)#
-    out$ols.bic <- obFun(ols, est, cross, crit)#
-  return(out)#
-}
-reps <- lapply(sat.list, function(x) replicate(1, testFun(race.mod, dat2, x), simplify = FALSE))
-testFun <- function(mod, x, sat) {#
-  picker <- sample(1:nrow(x), nrow(x)/2, replace = FALSE)#
-  est <- x[picker,]#
-  cross <- x[-picker,]#
-  ols <- lm(mod, est)#
-  fits <- list(ols = ols,#
-    huber = rlm(mod, data = est, psi = psi.huber),#
-    bisquare = rlm(mod, data = est, psi = psi.bisquare),#
-    hampel = rlm(mod, data = est, psi = psi.hampel))#
-  if (sat) {#
-    fits$gemm.mod <- gemm(mod, est, n.chains = 1, fit.metric = "tau")#
-  } else {#
-    fits$gemm.mod <- gemm(mod, est, n.chains = 1, fit.metric = "bic")#
-  }#
-  out <- lapply(fits, function(x) testFit(x, est, cross, sat))#
-  crit <- names(ols$model)[1]#
-  out$ord.log <- polrFun(mod, est, cross, crit, sat)#
-  if (!sat)#
-    out$ols.bic <- obFun(ols, est, cross, crit)#
-  return(out)#
-}
-reps <- lapply(sat.list, function(x) replicate(1, testFun(race.mod, dat2, x), simplify = FALSE))
-testFit <- function(x, est, cross, sat) {#
-  if (!sat | class(x)[1] != "gemm")#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}
-reps <- lapply(sat.list, function(x) replicate(1, testFun(race.mod, dat2, x), simplify = FALSE))
-debug(testFun)
-reps <- lapply(sat.list, function(x) replicate(1, testFun(race.mod, dat2, x), simplify = FALSE))
-fits
-undebug(testFun)
-debug(testFit)
-reps <- lapply(sat.list, function(x) replicate(1, testFun(race.mod, dat2, x), simplify = FALSE))
-Q
-testFit <- function(x, est, cross, sat) {#
-  if (!sat & class(x)[1] != "gemm")#
-    x$coefficients <- ifelse(abs(coefficients(summary(x))[,3]) > 1.96, x$coefficients, 0)#
-  k <- sum(coef(x)[-1] != 0)#
-  if (k == 0)#
-    return(rep(NA, 7))#
-  r <- cor(x$model[,1], predict(x))#
-  tau <- cor(x$model[,1], predict(x), method = "kendall")#
-  cross.r <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross))#
-  cross.tau <- cor(cross[,names(cross) == names(x$model)[1]], predict(x, cross), method = "kendall")#
-  bic <- nrow(est) * log(1 - r^2) + k * log(nrow(est))#
-  bicT <- bicTau(tau, k, nrow(est))#
-  return(c(r, tau, cross.r, cross.tau, k, bic, bicT))#
-}
-reps <- lapply(sat.list, function(x) replicate(1, testFun(race.mod, dat2, x), simplify = FALSE))
-a <- matrix(1:9, ncol = 3)
+summary(temp)
+str(temp)
+remove.packages("gemmR")
+install.packages("~/Dropbox/learnr/gemmR/gemmR_1.2.01.tar.gz", repo = NULL, type = "source")
+library(gemmR)
+gemm
+gemm.formula
+data(mtcars)
+a <- gemm(mpg ~ cyl + wt, data = mtcars, n.chains = 2, n.gens = 3)
 a
-a[,1]
-a[,1, drop = FALSE]
+str(a)
+predict(a)
+str(predict(a))
+predict.gemm
+str(a)
+remove.packages("gemmR")
+library(gemmR)
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+library(gemmR)
+predict.gemm
+remove.packages("gemmR")
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
+install_github("gemmR", "jchrszcz", subdir = "gemmR", ref = "norming")
+library(gemmR)
+predict.gemm
+data(mtcars)
+a <- gemm(mpg ~ cyl + hwy, data = mtcars)
+a <- gemm(mpg ~ cyl + wt, data = mtcars)
+temp <- mpg ~ cyl + wt
+str(temp)
+temp[1]
+temp[2]
+terms(temp)
+attr(terms(temp), "factors")
+attr(terms(temp), "variables")
+attr(terms(temp), "variables")[1]
+attr(terms(temp), "variables")[2]
+attr(terms(temp), "variables")[3]
+attr(terms(temp), "variables")[4]
+a <- 1:5
+names(a) <- "blue"
+a
+?vector
+a <- matrix(1:5, ncol =1, col.names = "blue")
+?matrix
+a <- matrix(1:5, ncol =1, d.names = "blue")
+a <- matrix(1:5, ncol =1, dim.names = "blue")
+a <- matrix(1:5, ncol =1, dim.names = c("blue", NULL))
+?matrix
+a <- matrix(1:5, ncol =1, dimnames = c("blue", NULL))
+a <- matrix(1:5, ncol =1, dimnames = list("blue", NULL))
+a <- matrix(1:5, ncol =1, dimnames = list("blue"))
+?matrix
+a <- matrix(1:5, ncol =1, dimnames = list(NULL, "blue"))
+a
+ls9
+ls()
+temp
+a <- lm(temp, mtcars)
+summary(a)
+mf <- model.frame(temp, mtcars)
+mf
+x <- model.matrix(attr(mf, "terms"), data=mf)[,-1]
+y <- model.response(mf)
+x
+y
+y <- matrix(model.response(mf), ncol = 1, dimnames = list(NULL, names(mf)[1]))
+y
+cbind(y.x)
+cbind(y,x)
+me <- attributes(attributes(mf)$terms)$term.labels[attributes(attributes(mf)$terms)$order==1]
+me
+mm
+mf
+mm <- model.matrix(attr(mf, "terms"), data=mf)
+mm
+fmla <- as.formula(paste("y ~ ", paste(me, collapse= "*")))
+fmla
+names(mf)[1]
+fmla <- as.formula(paste(names(mf)[1], " ~ ", paste(me, collapse= "*")))
+fmla
 lapply(c("Rcpp","roxygen2","devtools"), require, character.only = TRUE)
 setwd("~/Dropbox/learnr/gemmR")
+system("rm -rf ~/Dropbox/learnr/gemmR/gemmR")
+Rcpp.package.skeleton(name = "gemmR", force = TRUE, code_files = c("R/gemmquick.R"), cpp_files = c("src/kt_gemmR.cpp","src/new_ga.cpp"), example_code = FALSE, attributes = FALSE)
+system("cp -r ~/Dropbox/learnr/gemmR/inst ~/Dropbox/learnr/gemmR/gemmR")
+system("cp -r ~/Dropbox/learnr/gemmR/man ~/Dropbox/learnr/gemmR/gemmR")
+system("cp ~/Dropbox/learnr/gemmR/DESCRIPTION ~/Dropbox/learnr/gemmR/gemmR")
+system("rm -f ~/Dropbox/learnr/gemmR/gemmR/Read-and-delete-me")
+build("~/Dropbox/learnr/gemmR/gemmR")
+install("~/Dropbox/learnr/gemmR/gemmR")
+library(gemmR)#
+n <- 20#
+x1 <- rnorm(100)#
+x2 <- rnorm(100)#
+x3 <- rep(-2:2, each = 20)#
+x4 <- rep(0:1, times = 50)#
+x5 <- x1#
+y <- as.vector(scale(x1 + x3 + rnorm(100)))#
+df <- data.frame(y, x1, x2, x3 = factor(x3), x4 = factor(x4), x5)#
+#df <- df[sample(1:nrow(df), n, replace = FALSE),]#
+#
+system.time(a <- gemm(y ~ x1 * x3, data = df, n.chains = 4, n.gens = 2, parallel = TRUE))
+gemmEst
+a
+system.time(a <- gemm(y ~ x1 * x3 + x5, data = df, n.chains = 4, n.gens = 2, parallel = TRUE))
+a
