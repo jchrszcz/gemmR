@@ -184,7 +184,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000, p.est = 1,
 
   best.chain <- switch(tolower(fit.metric),
                   bic = sort(fit.out[,1], index.return = TRUE)$ix,
-                  tau = sort(fit.out[,1], index.return = TRUE, decreasing = TRUE)$ix,
+                  tau = sort(fit.out[,1], index.return = TRUE)$ix,
                   aic = sort(fit.out[,1], index.return = TRUE)$ix
                   )
 
