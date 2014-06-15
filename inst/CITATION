@@ -5,7 +5,7 @@ citEntry(entry = "Manual",
     as.person("Michael Dougherty")),
   title = "gemmR: General Monotone Model in R",
   year = "2013",
-  note = "R package version 1.0",
+  note = "R package version 1.2",
   url = "https://github.com/jchrszcz/gemmR",
   textVersion = paste("Chrabaszcz, J. S., Tidwell, J.,  and Dougherty, M. R. (2013).", "gemmR: General Monotone Model in R.", " Package version 1.0. https://github.com/jchrszcz/gemmR")
 )
