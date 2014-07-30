@@ -62,16 +62,16 @@
   
   \item{rank.residuals}{rank response minus rank criterion.}
   
-  \item{est.bic}{vector of Bayesian Information Criteria for estimation sample
+  \item{bic}{vector of Bayesian Information Criteria for estimation sample
   of each chain.}
   
-  \item{est.aic}{vector of Aikaike Information Criteria for estimation sample
+  \item{aic}{vector of Aikaike Information Criteria for estimation sample
   of each chain.}
   
-  \item{est.r}{vector of Pearson's \code{r} values for estimation sample of
+  \item{r}{vector of Pearson's \code{r} values for estimation sample of
   each chain.}
   
-  \item{est.tau}{vector of Kendall's \code{tau} for estimation sample of each
+  \item{tau}{vector of Kendall's \code{tau} for estimation sample of each
   chain.}
   
   \item{metric.betas}{regression weights derived using \code{\link{lm}}.}

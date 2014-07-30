@@ -2,7 +2,7 @@
 \alias{gemmEst}
 \title{Fit General Monotone Models.}
 \usage{
-  gemmEst(input.data, output = "gemmr", n.beta = 8000, p.est = 1, n.chains = n.chains,
+  gemmEst(input.data, output = "gemmr", n.beta = 8000, n.chains = n.chains,
   n.gens = 10, save.results = FALSE, k.pen = k.pen, seed.metric = TRUE,
   check.convergence = FALSE, roe = FALSE, fit.metric = "bic",
   correction = "knp", oclo = TRUE, isTauB = TRUE)
@@ -18,10 +18,6 @@
 
   \item{n.beta}{number of beta vectors to generate per
   generation.}
-
-  \item{p.est}{proportion of data used to estimate the model.
-  Values less than 1 will cause \code{gemm} to produce
-  cross-validation estimates.}
 
   \item{n.chains}{number of times the fitting process
   will be repeated.}
@@ -83,16 +79,16 @@
   
   \item{rank.residuals}{rank response minus rank criterion.}
   
-  \item{est.bic}{vector of Bayesian Information Criteria for estimation sample
+  \item{bic}{vector of Bayesian Information Criteria for estimation sample
   of each chain.}
   
-  \item{est.r}{vector of Pearson's \code{r} values for estimation sample of
+  \item{r}{vector of Pearson's \code{r} values for estimation sample of
   each chain.}
   
-  \item{est.tau}{vector of Kendall's \code{tau} for estimation sample of each
+  \item{tau}{vector of Kendall's \code{tau} for estimation sample of each
   chain.}
 
-  \item{est.tau.par}{vector containing the correction, incorrect, criterion
+  \item{tau.par}{vector containing the correction, incorrect, criterion
   ties, predictor ties, and both between the weighted cues and outcome used
   for model fit.}
   
