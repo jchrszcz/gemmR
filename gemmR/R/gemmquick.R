@@ -86,7 +86,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000,
         k.cor <- kCorFact(k.pen, betas)
         k.cor <- matrix(k.cor, ncol = 1)
       } 
-      fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, correction)
+      fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, correction, isTauB)
 
       # Depends on which tau is used isTauB_
       if(isTauB) {

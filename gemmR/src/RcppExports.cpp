@@ -55,8 +55,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // gemmFitRcpp
-NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool correction);
-RcppExport SEXP gemmR_gemmFitRcpp(SEXP nSEXP, SEXP betasSEXP, SEXP dataSEXP, SEXP pSEXP, SEXP kCorSEXP, SEXP correctionSEXP) {
+NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data, int p, int kCor, bool correction, bool isTauB);
+RcppExport SEXP gemmR_gemmFitRcpp(SEXP nSEXP, SEXP betasSEXP, SEXP dataSEXP, SEXP pSEXP, SEXP kCorSEXP, SEXP correctionSEXP, SEXP isTauBSEXP) {
 BEGIN_RCPP
     SEXP __sexp_result;
     {
@@ -67,7 +67,8 @@ BEGIN_RCPP
         Rcpp::traits::input_parameter< int >::type p(pSEXP );
         Rcpp::traits::input_parameter< int >::type kCor(kCorSEXP );
         Rcpp::traits::input_parameter< bool >::type correction(correctionSEXP );
-        NumericVector __result = gemmFitRcpp(n, betas, data, p, kCor, correction);
+        Rcpp::traits::input_parameter< bool >::type isTauB(isTauBSEXP );
+        NumericVector __result = gemmFitRcpp(n, betas, data, p, kCor, correction, isTauB);
         PROTECT(__sexp_result = Rcpp::wrap(__result));
     }
     UNPROTECT(1);
@@ -75,8 +76,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // gemmFitRcppI
-List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, CharacterVector correction);
-RcppExport SEXP gemmR_gemmFitRcppI(SEXP nSEXP, SEXP betasSEXP, SEXP dataSEXP, SEXP pSEXP, SEXP kCorSEXP, SEXP correctionSEXP) {
+List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, CharacterVector correction, bool isTauB);
+RcppExport SEXP gemmR_gemmFitRcppI(SEXP nSEXP, SEXP betasSEXP, SEXP dataSEXP, SEXP pSEXP, SEXP kCorSEXP, SEXP correctionSEXP, SEXP isTauBSEXP) {
 BEGIN_RCPP
     SEXP __sexp_result;
     {
@@ -87,7 +88,8 @@ BEGIN_RCPP
         Rcpp::traits::input_parameter< int >::type p(pSEXP );
         Rcpp::traits::input_parameter< NumericVector >::type kCor(kCorSEXP );
         Rcpp::traits::input_parameter< CharacterVector >::type correction(correctionSEXP );
-        List __result = gemmFitRcppI(n, betas, data, p, kCor, correction);
+        Rcpp::traits::input_parameter< bool >::type isTauB(isTauBSEXP );
+        List __result = gemmFitRcppI(n, betas, data, p, kCor, correction, isTauB);
         PROTECT(__sexp_result = Rcpp::wrap(__result));
     }
     UNPROTECT(1);

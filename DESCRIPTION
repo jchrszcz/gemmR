@@ -11,6 +11,7 @@ Depends:
 Suggests:
     doMC (>= 1.3.1)
 LinkingTo: Rcpp, doMC
+BugReports: https://github.com/jchrszcz/gemmR/issues
 Collate:
     'gemmquick.R'
     'RcppExports.R'

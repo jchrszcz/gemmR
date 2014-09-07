@@ -331,7 +331,7 @@ return sxy/(sqrt(sxx*syy)+tiny);
 
 // [[Rcpp::export]]
 NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data,
-                          int p, int kCor, bool correction) {
+                          int p, int kCor, bool correction, bool isTauB) {
   double r, tauVal;
   TauStruct tau;
 
@@ -348,8 +348,11 @@ if (sum(betas == 0) == p) {
 
   double knp, bic, bicr, aic, aicr; // = sin( (PIE/2) * tau * ((n-kCor-1)/n));
   
-  tauVal = tau.b;
-
+  if(isTauB) {
+    tauVal = tau.b;
+  } else{
+    tauVal = tau.a;
+  }
 
   if(correction) {
     knp = sin(PIE/2*tauVal*(n-p-1)/n);
@@ -371,7 +374,7 @@ if (sum(betas == 0) == p) {
 
 
 // [[Rcpp::export]]
-List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, CharacterVector correction) {
+List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, CharacterVector correction, bool isTauB) {
 
   NumericVector fit;
   NumericVector fitR(betas.nrow()), fitTauA(betas.nrow()), fitTauB(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow()), fitAIC(betas.nrow()), fitAICr(betas.nrow());
@@ -389,7 +392,7 @@ List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, Numeric
 
 
 for (int i=0; i < betas.nrow(); i++) {
-  fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), corType);
+  fit = gemmFitRcpp(n, betas(i,_), data2, p, kCor(i), corType, isTauB);
 
     fitBIC(i) = fit[1];
     fitBICr(i) = fit[2];

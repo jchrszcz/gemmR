@@ -1,3 +1,0 @@
-useDynLib(gemmR)
-exportPattern("^[[:alpha:]]+")
-importFrom(Rcpp, evalCpp)

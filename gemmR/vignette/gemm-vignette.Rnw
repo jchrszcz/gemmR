@@ -1,0 +1,47 @@
+\documentclass{article}
+
+
+\usepackage{natbib}
+
+\title{Using gemmR}
+
+\author{Jeffrey S. Chrabaszcz and Joe W. Tidwell}
+
+\begin{document}
+
+\maketitle
+
+\section*{Motivation}
+
+Often in the social sciences, we ask locational questions:
+
+\begin{itemize}
+  \item Do people who train on certain computer tasks have \emph{higher} cognitive ability? \citep{tidwell2014counts}
+  \item Are there \emph{more} murders per capita in more honor-focused cultures? \citep{dougherty2014deceptive}
+  \item Does the native language \emph{change} acquisition of definite articles in a second language? \citep{chrabaszcz2014role}
+\end{itemize}
+
+These questions make no mention of the specific distance between relative groups and instead focus on the order of outcome magnitudes.
+While the statistics applied to these questions are usually variants of the general linear model, there is no reason to impose the assumption of linearity on the reality underlying these tests.
+One alternative is to apply the general monotone model (\texttt{GeMM}) as proposed by \citet{dougherty2012robust}.
+
+\texttt{GeMM} uses a search and scale procedure to: first, find the optimal relative weights for a set of predictors and, second, scale these weights to minimize the order-constrained squared error.
+This first, computationally-intensive step is accomplished by using a genetic algorithm to maximize Kendall's $\tau$ between an observed outcome and a weighted set of predictors.
+Use of $\tau$ in this case assures relative weights that maximally reflect the monotone relationship between the outcome and model predictions.
+We then regress the original outcome onto the relative-weighted model predictions to compute an intercept and scaling factor that minimizes squared error conditioned on this ordinal constraint.
+
+\section*{Fitting a \texttt{gemm} model}
+
+We implement \texttt{GeMM} with the \texttt{gemmR} package, which uses \texttt{Rcpp} to speed up repeated calculation of Kendall's $\tau$ for use in the genetic search process.
+As \texttt{GeMM} serves as a functional replacement for the linear model, a similar syntax is used to fit a \texttt{GeMM} model.
+
+
+\section*{Helper functions}
+
+The \texttt{gemmR} package includes a number of S3 methods and a few novel functions to help extract information from \texttt{gemm} objects.
+
+
+\bibliographystyle{plain}
+\bibliography{gemm-vignette}
+
+\end{document}

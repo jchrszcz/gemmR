@@ -1,0 +1,46 @@
+This is BibTeX, Version 0.99d (TeX Live 2013)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: gemm-vignette.aux
+The style file: plain.bst
+Database file #1: gemm-vignette.bib
+You've used 4 entries,
+            2118 wiz_defined-function locations,
+            523 strings with 4908 characters,
+and the built_in function-call counts, 1366 in all, are:
+= -- 130
+> -- 82
+< -- 0
++ -- 34
+- -- 28
+* -- 110
+:= -- 247
+add.period$ -- 12
+call.type$ -- 4
+change.case$ -- 26
+chr.to.int$ -- 0
+cite$ -- 4
+duplicate$ -- 39
+empty$ -- 89
+format.name$ -- 28
+if$ -- 264
+int.to.chr$ -- 0
+int.to.str$ -- 4
+missing$ -- 3
+newline$ -- 23
+num.names$ -- 8
+pop$ -- 19
+preamble$ -- 1
+purify$ -- 22
+quote$ -- 0
+skip$ -- 27
+stack$ -- 0
+substring$ -- 81
+swap$ -- 3
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 16
+warning$ -- 0
+while$ -- 13
+width$ -- 5
+write$ -- 44
