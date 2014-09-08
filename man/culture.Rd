@@ -18,7 +18,7 @@
     \item {gnp}{Numeric vector of gross national products in US dollars.}
   }
 }
-\Source{
+\source{
   \enumerate{
     \item Dougherty, M.R., Thomas, R.P., Brown, R.P., Chrabaszcz, J.S., and Tidwell, J.W. (2014). An introduction to the general monotone model with application to two problematic datasets. Sociological Methods.
     \item Brown, R. P., & Osterman, L. L. (2012). Culture of Honor, Violence. The Oxford handbook of evolutionary perspectives on violence, homicide, and war, 218.
