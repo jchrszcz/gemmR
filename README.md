@@ -18,30 +18,29 @@ You can install `gemmR` by downloading the `.tar.gz` file in this repository, in
 
 ```r
 # to install from .tar.gz
-install.packages("gemmR_1.2.02.tar.gz", repos = NULL, type = "source")
+install.packages("gemmR_1.3.01.tar.gz", repos = NULL, type = "source")
 
 # to install directly from github
 library(devtools)
 install_github("gemmR", "jchrszcz", subdir = "gemmR")
 ```
 
-
 `gemmR` requires `Rcpp`, which also means you'll need a C++ compiler. Clear and reliably-updated directions for installing and troubleshooting those things are maintained at [the STAN project page](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started#prerequisites).
 
-New Version 1.2.02 (3-22-14)
+New Version 1.3.01 (9-02-14)
 ------
 
-* Rebuilt for R 3.1.0
-* Fixed tau ordering, now corresponds to coefficients and other fits
-
-TODO (12-28-13)
-------
-* Remove redundance for tau.a/tau.b
-* Add tau.a/tau.b for cross-validation
-* Enable plot.gemm even when check.convergence==FALSE
+* Added documentation and test data
+* Fixed BIC calculation to rely on specified tau (a or b)
+* removed p.est argument
 
 Bug Notes
 -----
+
+7-2-14
+
+* Rebuilt for R 3.1.0
+* Fixed tau ordering, now corresponds to coefficients and other fits
 
 3-22-14
 

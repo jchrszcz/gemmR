@@ -5,7 +5,7 @@
   gemmEst(input.data, output = "gemmr", n.beta = 8000, n.chains = n.chains,
   n.gens = 10, save.results = FALSE, k.pen = k.pen, seed.metric = TRUE,
   check.convergence = FALSE, roe = FALSE, fit.metric = "bic",
-  correction = "knp", oclo = TRUE, isTauB = TRUE)
+  correction = "knp", oclo = TRUE, isTauB = FALSE)
 }
 \arguments{
   \item{input.data}{must be data frame, first column is
