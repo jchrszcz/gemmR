@@ -16,5 +16,5 @@
 }
 \description{
   This is a better-scaling implementation of Kendall's tau than is used by
-  \code{\link{cor.test, method = "kendall"}}.
+  \code{\link{cor.test}}.
 }

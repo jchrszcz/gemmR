@@ -17,7 +17,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000,
                     k.pen = k.pen, seed.metric = TRUE, 
                     check.convergence = FALSE, roe = FALSE, 
                     fit.metric = fit.metric, correction = "knp", 
-                    oclo=TRUE, isTauB = TRUE) {
+                    oclo=TRUE, isTauB = FALSE) {
   # Select fitting function
   getFitMetric <- switch(tolower(fit.metric),
                       bic = function(fitStats) {return(fitStats$bic)},
@@ -83,7 +83,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000,
       betas <- t(as.matrix(betas))
       k.cor <- rep(1, times = nrow(betas))
       if (!is.null(dim(k.pen))) {
-        k.cor <- kCorFact(k.pen, betas)
+        k.cor <- apply(betas, 1, function(x) sum(as.matrix(k.pen)))
         k.cor <- matrix(k.cor, ncol = 1)
       } 
       fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, correction, isTauB)
@@ -208,10 +208,6 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000,
 }
 
 ##### Package functions #####
-
-kCorFact <- function(k.pen, beta.vecs) {  
-  return(apply(beta.vecs,1, function(x) sum(as.matrix(k.pen)%*%x!=0)))
-}
 
 gemm <- function(x, ...) UseMethod("gemm")
 
@@ -418,7 +414,7 @@ convergencePlot <- function(beta, fit.metric, ...) {
     lty=linetype, title="Chains")
 }
 
-predict.gemm <- function(object, newdata = NULL, tie.struct = FALSE, ...) {
+predict.gemm <- function(object, newdata = NULL, ..., tie.struct = FALSE) {
  if (is.null(newdata)) {
     out <- fitted(object)
   } else {
@@ -452,8 +448,8 @@ predict.gemm <- function(object, newdata = NULL, tie.struct = FALSE, ...) {
   return(out)
 }
 
-summary.gemm <- function(x) {
-  y <- x
+summary.gemm <- function(object, ...) {
+  y <- object
   y$logLik <- logLik(y)
   y$AIC <- AIC(y)
   y$r.squared <- y$r[1]^2
@@ -468,7 +464,7 @@ print.summary.gemm <- function(x, ...) {
 
 logLik.gemm <- function(object, ...) {
   res <- object$residuals
-  p <- sum(object$best.coef != 0)
+  p <- sum(coefficients(object)[1,] != 0)
   N <- length(res)
   w <- rep.int(1, N)
   N0 <- N
@@ -480,10 +476,10 @@ logLik.gemm <- function(object, ...) {
   val
 }
 
-deviance.gemm <- function(object) {
+deviance.gemm <- function(object, ...) {
   return(sum(weighted.residuals(object)^2))
 }
 
-nobs.gemm <- function(object) {
+nobs.gemm <- function(object, ...) {
   return(nrow(residuals(object)))
 }

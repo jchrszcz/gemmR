@@ -10,6 +10,8 @@
   
   \item{fit.metric}{selected metric for a given model, specified when
   \code{\link{gemm}} is run.}
+
+  \item{...}{Additional arguments to be passed to lower level plotting functions.}
 }
 \description{
   This function plots convergence for gemm objects that

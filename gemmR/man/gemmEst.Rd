@@ -4,7 +4,7 @@
 \usage{
   gemmEst(input.data, output = "gemmr", n.beta = 8000, n.chains = n.chains,
   n.gens = 10, save.results = FALSE, k.pen = k.pen, seed.metric = TRUE,
-  check.convergence = FALSE, roe = FALSE, fit.metric = "bic",
+  check.convergence = FALSE, roe = FALSE, fit.metric = fit.metric,
   correction = "knp", oclo = TRUE, isTauB = FALSE)
 }
 \arguments{
@@ -41,8 +41,7 @@
   \item{roe}{logical value to determine whether region of
   equivalence data are retained.}
   
-  \item{fit.metric}{value used to order models. Currently options: "\code{bic}",
-  "\code{aic}", "\code{tau}".}
+  \item{fit.metric}{value used to order models.}
   
   \item{correction}{placeholder for correction transformations on the fit
   statistic, (r or tau).}

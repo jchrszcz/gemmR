@@ -5,24 +5,8 @@ tauTest <- function(arr1, arr2, length) {
     .Call('gemmR_tauTest', PACKAGE = 'gemmR', arr1, arr2, length)
 }
 
-fitValues <- function(betas, data) {
-    .Call('gemmR_fitValues', PACKAGE = 'gemmR', betas, data)
-}
-
-corRcpp <- function(x, y) {
-    .Call('gemmR_corRcpp', PACKAGE = 'gemmR', x, y)
-}
-
-gemmFitRcpp <- function(n, betas, data, p, kCor, correction, isTauB) {
-    .Call('gemmR_gemmFitRcpp', PACKAGE = 'gemmR', n, betas, data, p, kCor, correction, isTauB)
-}
-
 gemmFitRcppI <- function(n, betas, data, p, kCor, correction, isTauB) {
     .Call('gemmR_gemmFitRcppI', PACKAGE = 'gemmR', n, betas, data, p, kCor, correction, isTauB)
-}
-
-sortIt <- function(x) {
-    .Call('gemmR_sortIt', PACKAGE = 'gemmR', x)
 }
 
 genAlg <- function(metricbeta, nbeta, nsuperelites, p, gens, bestmodels, seedmetric) {

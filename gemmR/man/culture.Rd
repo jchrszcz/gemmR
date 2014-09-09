@@ -10,12 +10,12 @@
 \format{
   An object of class \code{data.frame} containing the following columns:
 
-  \enumerate{
-    \item {country}{A factor vector containing the country names correspond to each row of observations.}
-    \item {murder.rate}{Numeric vector  giving murder rate as expected annual murders per 10,000 people.}
-    \item {pasture}{Numeric vector giving the percentage of geographic area used as pasture.}
-    \item {gini}{Numeric vector of Gini coefficients, a measure of income disparity.}
-    \item {gnp}{Numeric vector of gross national products in US dollars.}
+  \describe{
+    \item{country}{A factor vector containing the country names correspond to each row of observations.}
+    \item{murder.rate}{Numeric vector  giving murder rate as expected annual murders per 10,000 people.}
+    \item{pasture}{Numeric vector giving the percentage of geographic area used as pasture.}
+    \item{gini}{Numeric vector of Gini coefficients, a measure of income disparity.}
+    \item{gnp}{Numeric vector of gross national products in US dollars.}
   }
 }
 \source{

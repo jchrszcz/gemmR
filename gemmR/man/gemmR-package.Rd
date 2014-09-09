@@ -19,8 +19,8 @@
   \tabular{ll}{
     Package: \tab gemmR\cr
     Type: \tab Package\cr
-    Version: \tab 1.3\cr
-    Date: \tab 2014-07-30\cr
+    Version: \tab 1.3.01\cr
+    Date: \tab 2014-09-08\cr
     License: \tab GPL-3\cr
   }
 }

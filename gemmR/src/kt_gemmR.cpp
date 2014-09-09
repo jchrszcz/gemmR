@@ -294,7 +294,6 @@ List tauTest(NumericVector arr1, NumericVector arr2, int length) {
 
 }
 
-// [[Rcpp::export]]
 NumericVector fitValues (NumericVector betas, NumericMatrix data) {
   NumericVector values(data.nrow());
   for (int i = 0; i < data.nrow(); i++) {
@@ -305,7 +304,6 @@ NumericVector fitValues (NumericVector betas, NumericMatrix data) {
   return(values);
 }
 
-// [[Rcpp::export]]
 double corRcpp(NumericVector x, const NumericVector y)
 {
     size_t n = x.size();
@@ -329,7 +327,6 @@ return sxy/(sqrt(sxx*syy)+tiny);
 }
 
 
-// [[Rcpp::export]]
 NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data,
                           int p, int kCor, bool correction, bool isTauB) {
   double r, tauVal;
@@ -433,7 +430,6 @@ NumericMatrix stl_sort_matrix(NumericMatrix x) {
 }
 
 
-// [[Rcpp::export]]
 NumericMatrix sortIt(NumericMatrix x) {
   return stl_sort_matrix(x);
 }

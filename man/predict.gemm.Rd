@@ -2,12 +2,14 @@
 \alias{predict.gemm}
 \title{Predict method for general monotone models.}
 \usage{
-\method{gemm}{predict}(object, newdata = NULL, tie.struct = FALSE, ...)
+\method{predict}{gemm}(object, newdata = NULL, \dots, tie.struct = FALSE)
 }
 \arguments{
   \item{object}{an object of the class "\code{\link{gemm}}".}
   
-  \item{newdata}{optional data frame, currently not functional.}
+  \item{newdata}{optional list of new data.}
+
+  \item{\dots}{further arguments passed to or from other methods.}
   
   \item{tie.struct}{option to return corrects, incorrects, and ties based on
   fitted values.}
@@ -30,7 +32,7 @@
 }
 \examples{
   data(mtcars)
-  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
+  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars)
   predict(gemm.model, tie.struct = TRUE)
 }
 \keyword{

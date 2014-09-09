@@ -5,11 +5,15 @@
 \alias{print.gemm}
 \alias{plot.gemm}
 \alias{summary.gemm}
+\alias{print.summary.gemm}
+\alias{nobs.gemm}
+\alias{deviance.gemm}
+\alias{logLik.gemm}
 \title{Fit General Monotone Models.}
 \usage{
 \method{gemm}{formula}(formula, data=list(), ...)
 
-\method{gemm}{default}(x, k.pen, parallel = FALSE, n.chains = 4, ...)
+\method{gemm}{default}(x, k.pen, parallel = FALSE, n.chains = 4, fit.metric = "bic", ...)
 }
 \arguments{
   \item{formula}{an object of the class \code{\link{formula}}.}
@@ -23,11 +27,14 @@
   any interaction terms. Calculated by \code{\link{gemm.formula}} or defaults to
   no special interaction weighting.}
   
-  \item{parallel}{boolean flag to run chains in parallel over available cores
-  using \code{\link{doMC}}}
+  \item{parallel}{boolean flag to run chains in parallel over available cores.}
   
   \item{n.chains}{number or replications of the sampling process, used to
   assess various starting conditions}
+
+  \item{fit.metric}{Value to optimize with genetic algorithm. Currently accepts ``bic'', ``aic'', and ``tau''.}
+
+  \item{...}{Additional arguments to be passed to lower level fitting functions (see below).}
 }
 \description{
   \code{gemm} is used to fit general monotone models. By default, the function
@@ -113,10 +120,12 @@
   circumstances when formula input and interaction terms are not needed.
 }
 \examples{
-  data(mtcars)
-  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
-  print(gemm.model)
-  plot(gemm.model)
+  \dontrun{
+    data(culture)
+    gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
+    print(gemm.model)
+    plot(gemm.model)
+  }
 }
 \references{
   Dougherty, M. R., & Thomas, R. P. (2012). Robust decision making in a

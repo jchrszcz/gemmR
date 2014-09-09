@@ -2,7 +2,7 @@
 \alias{gemmFitRcppI}
 \title{gemmFitRcppI}
 \usage{
-  gemmFitRcppI(n, betas, data, p, kCor, getR, correction)
+  gemmFitRcppI(n, betas, data, p, kCor, correction, isTauB)
 }
 \arguments{
   \item{n}{integer, number of observations in dataset.}
@@ -16,12 +16,11 @@
 
   \item{kCor}{numeric vector, penalty term for given vector of weights. Will
   always equal number of non-zero weights unless interactions are included.}
-
-  \item{getR}{boolean, whether or not to return Pearson's \code{r}. Deprecated,
-  slated for removal.}
   
   \item{correction}{character string, names correction to \code{tau} for BIC
   calculation. Currently set as "\code{knp}".}
+
+  \item{isTauB}{boolean to set BIC computation based on tau-a or tau-b.}
 }
 \value{
   \item{fit}{list of named vectors for BICtau, BICr, tau, and r.}
