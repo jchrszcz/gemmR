@@ -1,7 +1,6 @@
 *.Rproj.user
 *.Rproj
 *.Rhistory
-*.RData
 *.csv
 *.history
 validation_testing.R
