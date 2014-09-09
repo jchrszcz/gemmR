@@ -83,7 +83,7 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000,
       betas <- t(as.matrix(betas))
       k.cor <- rep(1, times = nrow(betas))
       if (!is.null(dim(k.pen))) {
-        k.cor <- apply(betas, 1, function(x) sum(as.matrix(k.pen)))
+        k.cor <- apply(betas, 1, function(x) sum(as.matrix(x != 0)))
         k.cor <- matrix(k.cor, ncol = 1)
       } 
       fitStats <- gemmFitRcppI(n, betas, data, p, k.cor, correction, isTauB)
