@@ -231,7 +231,11 @@ gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, fit.metric = 
         aic = fit.name <- "aic",
         tau = fit.name <- "tau"
         )
-    chain.order <- order(sapply(gemm.list[1:n.chains], function(x) get(fit.name,x)))
+    if (fit.name == "tau") {
+      chain.order <- order(sapply(gemm.list[1:n.chains], function(x) get(fit.name,x)), decreasing = TRUE)
+    } else {
+      chain.order <- order(sapply(gemm.list[1:n.chains], function(x) get(fit.name,x)))
+    }
     gemm.ordered <- gemm.list[rank(chain.order)]
     # Select Best Chain
     best.chain <- gemm.ordered[[1]]
@@ -243,6 +247,11 @@ gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, fit.metric = 
     best.chain$tau.b <-  sapply(gemm.ordered,function(x) x$tau.b)
     best.chain$tau.par <-  t(sapply(gemm.ordered,function(x) x$tau.par))
     best.chain$aic <-  sapply(gemm.ordered,function(x) x$aic)
+    if (attr(gemm.ordered[[1]], "converge.check")) {
+      best.chain$converge.fit.metric <- sapply(gemm.ordered,function(x) x$converge.fit.metric)
+      best.chain$converge.beta <- sapply(gemm.ordered,function(x) x$converge.beta)
+      best.chain$converge.r <- sapply(gemm.ordered,function(x) x$converge.r)
+    }
     return(best.chain)
   }
 }
@@ -375,7 +384,7 @@ gemm.formula <- function(formula, data=list(),...) {
 
 plot.gemm <- function(x, ...) {
   par(mfrow = c(1,3))
-  if (!is.null(attr(x, "converge.check"))) {
+  if (attr(x, "converge.check")) {
     par(mfrow = c(2,2))
     convergencePlot(x$converge.fit.metric,x$fit.metric)
   }
