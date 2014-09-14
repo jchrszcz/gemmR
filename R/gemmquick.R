@@ -434,26 +434,8 @@ predict.gemm <- function(object, newdata = NULL, ..., tie.struct = FALSE) {
     beta <- object$coefficients[1,]
     out <- X %*% beta
   }
-  correct <- 0
-  incorrect <- 0
-  cue.tie <- 0
-  crit.tie <- 0
-  c1 <- unlist(model.frame(object)[1], use.names = FALSE)
-  c2 <- c(fitted(object))
-  for (i in 1:(length(c1) - 1)) {
-    for (j in (i + 1):length(c1)) {
-      if (c1[i] == c1[j]) {
-        crit.tie <- crit.tie + 1
-      } else if (c2[i] == c2[j]) {
-        cue.tie <- cue.tie + 1
-      } else if (((c1[i] > c1[j]) & (c2[i] > c2[j])) | ((c1[i] < c1[j]) & (c2[i] < c2[j]))) {
-        correct <- correct + 1
-      } else {
-        incorrect <- incorrect + 1
-      }
-    }
-  }
-  attr(out, "tie.struct") <- data.frame(correct, incorrect, cue.tie, crit.tie)
+  out <- as.vector(out)
+  attr(out, "tie.struct") <- data.frame(tauTest(unlist(model.frame(object)[1], use.names = FALSE), fitted(object), length(fitted(object))))
   return(out)
 }
 
