@@ -17,7 +17,7 @@ You can install `gemmR` by downloading the `.tar.gz` file in this repository, in
 
 ```{r,results='hide',eval=FALSE}
 # to install from .tar.gz
-install.packages("gemmR_1.3.01.tar.gz", repos = NULL, type = "source")
+install.packages("gemmR_1.3-2.tar.gz", repos = NULL, type = "source")
 
 # to install directly from github
 library(devtools)

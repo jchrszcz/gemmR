@@ -353,16 +353,16 @@ if (sum(betas == 0) == p) {
 
   if(correction) {
     knp = sin(PIE/2*tauVal*(n-p-1)/n);
-    bic = n * log(1.0 - pow(knp,2)) + kCor * log(n);
-    bicr = n * log(1.0 - pow(r,2)) + kCor * log(n);
-    aic = n * log(1.0 - pow(knp,2)) + 2*kCor;
-    aicr = n * log(1.0 - pow(r,2)) + 2*kCor;
+    bic = n * log(1 - pow(knp,2)) + kCor * log(n);
+    bicr = n * log(1 - pow(r,2)) + kCor * log(n);
+    aic = n * log(1 - pow(knp,2)) + 2*kCor;
+    aicr = n * log(1 - pow(r,2)) + 2*kCor;
   } else {
     knp = sin(PIE/2*tauVal*(n-p-1)/n);
-    bic = n * log(1.0 - pow(knp,2)) + p * log(n);
-    bicr = n * log(1.0 - pow(r,2)) + p * log(n);    
-    aic = n * log(1.0 - pow(knp,2)) + 2*p;
-    aicr = n * log(1.0 - pow(r,2)) + 2*p;    
+    bic = n * log(1 - pow(knp,2)) + p * log(n);
+    bicr = n * log(1 - pow(r,2)) + p * log(n);    
+    aic = n * log(1 - pow(knp,2)) + 2*p;
+    aicr = n * log(1 - pow(r,2)) + 2*p;    
   }
   
   return Rcpp::NumericVector::create(r,bic,bicr,knp,aic,aicr,tau.a,tau.b,tau.n0,tau.n1,tau.n2,tau.n3,tau.dis,tau.con);

@@ -131,7 +131,8 @@
 }
 \examples{
   data(mtcars)
-  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
+  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars,
+    check.convergence = TRUE, n.chains = 3, n.gens = 3, n.beta = 200)
   print(gemm.model)
   plot(gemm.model)
 }

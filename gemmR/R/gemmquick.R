@@ -217,8 +217,6 @@ gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, fit.metric = 
     class(est) <- "gemm"
     est
   } else {
-    require(foreach)
-    require(doMC)
     registerDoMC()
     gemm.list <- foreach(i = 1:n.chains) %dopar% {
       gemmEst(input.data = x, k.pen = k.pen, n.chains = 1, fit.metric=fit.metric,...)

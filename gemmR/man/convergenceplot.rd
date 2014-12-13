@@ -23,6 +23,6 @@
 \examples{
   data(mtcars)
   gemm.model <- gemm(mpg ~ disp + hp, data = mtcars, check.convergence = TRUE,
-    seed.metric = FALSE)
+    seed.metric = FALSE, n.chains = 3, n.gens = 3, n.beta = 200)
   with(gemm.model, convergencePlot(converge.fit.metric, fit.metric))
 }

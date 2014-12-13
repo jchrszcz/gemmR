@@ -1,7 +1,7 @@
 Package: gemmR
 Type: Package
 Title: General Monotone Model
-Version: 1.3-2
+Version: 1.3.01
 Date: 2014-09-08
 Authors@R: c(person("Jeffrey", "Chrabaszcz", role = c("aut", "cre"), email = "jchrabaszcz@gmail.com"), person("Joe", "Tidwell", role = "aut"), person("Michael", "Dougherty", role = c("aut")))
 LazyData: yes
@@ -12,6 +12,9 @@ Suggests: knitr
 LinkingTo: Rcpp
 VignetteBuilder: knitr
 BugReports: https://github.com/jchrszcz/gemmR/issues
-Collate:
-    'gemmquick.R'
-    'RcppExports.R'
+Collate: 'gemmquick.R' 'RcppExports.R'
+Packaged: 2014-12-12 22:08:23 UTC; jchrszcz
+Author: Jeffrey Chrabaszcz [aut, cre],
+  Joe Tidwell [aut],
+  Michael Dougherty [aut]
+Maintainer: Jeffrey Chrabaszcz <jchrabaszcz@gmail.com>
