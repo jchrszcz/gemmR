@@ -1,0 +1,20 @@
+citHeader("To cite the gemmR package in publications use:")
+citEntry(entry = "Manual",
+  author = personList(as.person("Jeffrey Chrabaszcz"),
+    as.person("Joe Tidwell"),
+    as.person("Michael Dougherty")),
+  title = "gemmR: General Monotone Model in R",
+  year = "2013",
+  note = "R package version 1.3",
+  url = "https://github.com/jchrszcz/gemmR",
+  textVersion = paste("Chrabaszcz, J. S., Tidwell, J.,  and Dougherty, M. R. (2014).", "gemmR: General Monotone Model in R.", " Package version 1.3. https://github.com/jchrszcz/gemmR")
+)
+citEntry(entry = "Article", 
+  author = personList(as.person("Michael R. Dougherty"), as.person("Rick P. Thomas")),
+  title = "Robust decision making in a nonlinear world",
+  journal = "Psychological Review",
+  year = 2012,
+  volume = 119, number = 2, pages = "321--344",
+  url = "http://www.bsos.umd.edu/psyc/dougherty/pdf%20articles/DoughertyThomas2012Rev.pdf", 
+  textVersion = paste("Dougherty, M. R. and Thomas, R. P. (2012).", "Robust decision making in a nonlinear world.", "Psychological Review 119(2):321--344.")
+)
