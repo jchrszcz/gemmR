@@ -5,7 +5,7 @@
   gemmFitRcppI(n, betas, data, p, kCor, correction, isTauB)
 }
 \arguments{
-  \item{n}{integer, number of observations in dataset.}
+  \item{n}{double, number of observations in dataset.}
 
   \item{betas}{numeric matrix of random weights.}
 
