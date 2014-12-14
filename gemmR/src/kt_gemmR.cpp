@@ -327,8 +327,8 @@ return sxy/(sqrt(sxx*syy)+tiny);
 }
 
 
-NumericVector gemmFitRcpp(int n, NumericVector betas, NumericMatrix data,
-                          int p, int kCor, bool correction, bool isTauB) {
+NumericVector gemmFitRcpp(double n, NumericVector betas, NumericMatrix data,
+                          double p, double kCor, bool correction, bool isTauB) {
   double r, tauVal;
   TauStruct tau;
 
@@ -352,17 +352,17 @@ if (sum(betas == 0) == p) {
   }
 
   if(correction) {
-    knp = sin(PIE/2*tauVal*(n-p-1)/n);
-    bic = n * log(1 - pow(knp,2)) + kCor * log(n);
-    bicr = n * log(1 - pow(r,2)) + kCor * log(n);
-    aic = n * log(1 - pow(knp,2)) + 2*kCor;
-    aicr = n * log(1 - pow(r,2)) + 2*kCor;
+    knp = sin(PIE/2.0*tauVal*(n-p-1.0)/n);
+    bic = n * log(1.0 - pow(knp,2.0)) + kCor * log(n);
+    bicr = n * log(1.0 - pow(r,2.0)) + kCor * log(n);
+    aic = n * log(1.0 - pow(knp,2.0)) + 2.0*kCor;
+    aicr = n * log(1.0 - pow(r,2.0)) + 2.0*kCor;
   } else {
-    knp = sin(PIE/2*tauVal*(n-p-1)/n);
-    bic = n * log(1 - pow(knp,2)) + p * log(n);
-    bicr = n * log(1 - pow(r,2)) + p * log(n);    
-    aic = n * log(1 - pow(knp,2)) + 2*p;
-    aicr = n * log(1 - pow(r,2)) + 2*p;    
+    knp = sin(PIE/2.0*tauVal*(n-p-1.0)/n);
+    bic = n * log(1.0 - pow(knp,2.0)) + p * log(n);
+    bicr = n * log(1.0 - pow(r,2.0)) + p * log(n);    
+    aic = n * log(1.0 - pow(knp,2.0)) + 2.0*p;
+    aicr = n * log(1.0 - pow(r,2.0)) + 2.0*p;    
   }
   
   return Rcpp::NumericVector::create(r,bic,bicr,knp,aic,aicr,tau.a,tau.b,tau.n0,tau.n1,tau.n2,tau.n3,tau.dis,tau.con);
@@ -371,7 +371,7 @@ if (sum(betas == 0) == p) {
 
 
 // [[Rcpp::export]]
-List gemmFitRcppI(int n, NumericMatrix betas, NumericMatrix data, int p, NumericVector kCor, CharacterVector correction, bool isTauB) {
+List gemmFitRcppI(double n, NumericMatrix betas, NumericMatrix data, double p, NumericVector kCor, CharacterVector correction, bool isTauB) {
 
   NumericVector fit;
   NumericVector fitR(betas.nrow()), fitTauA(betas.nrow()), fitTauB(betas.nrow()), fitBIC(betas.nrow()), fitBICr(betas.nrow()), fitAIC(betas.nrow()), fitAICr(betas.nrow());

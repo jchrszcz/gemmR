@@ -5,14 +5,14 @@
   gemmFitRcppI(n, betas, data, p, kCor, correction, isTauB)
 }
 \arguments{
-  \item{n}{integer, number of observations in dataset.}
+  \item{n}{double, number of observations in dataset.}
 
   \item{betas}{numeric matrix of random weights.}
 
   \item{data}{numeric matrix, dataset constructed based on original
   \code{\link{gemm.formula}} call. First column is criterion variable.}
 
-  \item{p}{integer, number of potential predictors in data.}
+  \item{p}{double, number of potential predictors in data.}
 
   \item{kCor}{numeric vector, penalty term for given vector of weights. Will
   always equal number of non-zero weights unless interactions are included.}

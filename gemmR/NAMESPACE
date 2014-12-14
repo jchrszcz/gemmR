@@ -1,5 +1,3 @@
 useDynLib(gemmR)
 exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
-importFrom("foreach", foreach, "%dopar%")
-importFrom("doMC", registerDoMC)

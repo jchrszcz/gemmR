@@ -211,47 +211,10 @@ gemmEst <- function(input.data, output = "gemmr", n.beta = 8000,
 
 gemm <- function(x, ...) UseMethod("gemm")
 
-gemm.default <- function(x, k.pen, parallel = FALSE, n.chains = 4, fit.metric = "bic",...) {
-  if(!(parallel)) {
-    est <- gemmEst(input.data = x, k.pen = k.pen, n.chains = n.chains, fit.metric=fit.metric,...)
-    class(est) <- "gemm"
-    est
-  } else {
-    registerDoMC()
-    gemm.list <- foreach(i = 1:n.chains) %dopar% {
-      gemmEst(input.data = x, k.pen = k.pen, n.chains = 1, fit.metric=fit.metric,...)
-    }
-    # Make everything gemm objects
-    lapply(gemm.list, "class<-", "gemm")
-    # Order Chains
-    switch(tolower(fit.metric),
-        bic = fit.name <- "bic",
-        aic = fit.name <- "aic",
-        tau = fit.name <- "tau"
-        )
-    if (fit.name == "tau") {
-      chain.order <- order(sapply(gemm.list[1:n.chains], function(x) get(fit.name,x)), decreasing = TRUE)
-    } else {
-      chain.order <- order(sapply(gemm.list[1:n.chains], function(x) get(fit.name,x)))
-    }
-    gemm.ordered <- gemm.list[rank(chain.order)]
-    # Select Best Chain
-    best.chain <- gemm.ordered[[1]]
-    best.chain$coefficients <-  do.call(rbind,lapply(gemm.ordered[1:n.chains],coefficients))
-    best.chain$bic <-  sapply(gemm.ordered,function(x) x$bic)
-    best.chain$r <-  sapply(gemm.ordered,function(x) x$r)
-    best.chain$tau <-  sapply(gemm.ordered,function(x) x$tau)
-    best.chain$tau.a <-  sapply(gemm.ordered,function(x) x$tau.a)
-    best.chain$tau.b <-  sapply(gemm.ordered,function(x) x$tau.b)
-    best.chain$tau.par <-  t(sapply(gemm.ordered,function(x) x$tau.par))
-    best.chain$aic <-  sapply(gemm.ordered,function(x) x$aic)
-    if (attr(gemm.ordered[[1]], "converge.check")) {
-      best.chain$converge.fit.metric <- sapply(gemm.ordered,function(x) x$converge.fit.metric)
-      best.chain$converge.beta <- sapply(gemm.ordered,function(x) x$converge.beta)
-      best.chain$converge.r <- sapply(gemm.ordered,function(x) x$converge.r)
-    }
-    return(best.chain)
-  }
+gemm.default <- function(x, k.pen, n.chains = 4, fit.metric = "bic",...) {
+  est <- gemmEst(input.data = x, k.pen = k.pen, n.chains = n.chains, fit.metric=fit.metric,...)
+  class(est) <- "gemm"
+  est
 }
 
 print.gemm <- function(x, ...) {

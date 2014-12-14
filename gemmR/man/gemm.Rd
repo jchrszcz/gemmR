@@ -13,7 +13,7 @@
 \usage{
 \method{gemm}{formula}(formula, data=list(), ...)
 
-\method{gemm}{default}(x, k.pen, parallel = FALSE, n.chains = 4, fit.metric = "bic", ...)
+\method{gemm}{default}(x, k.pen, n.chains = 4, fit.metric = "bic", ...)
 }
 \arguments{
   \item{formula}{an object of the class \code{\link{formula}}.}
@@ -26,9 +26,7 @@
   \item{k.pen}{vector of integers giving penalty equivalent to main effects for
   any interaction terms. Calculated by \code{\link{gemm.formula}} or defaults to
   no special interaction weighting.}
-  
-  \item{parallel}{boolean flag to run chains in parallel over available cores.}
-  
+
   \item{n.chains}{number or replications of the sampling process, used to
   assess various starting conditions}
 
