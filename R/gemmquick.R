@@ -384,7 +384,7 @@ convergencePlot <- function(beta, fit.metric, ...) {
     lty=linetype, title="Chains")
 }
 
-predict.gemm <- function(object, newdata = NULL, ..., tie.struct = FALSE) {
+predict.gemm <- function(object, newdata = NULL, tie.struct = FALSE, ...) {
  if (is.null(newdata)) {
     out <- fitted(object)
   } else {

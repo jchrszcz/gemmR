@@ -2,20 +2,20 @@
 \alias{predict.gemm}
 \title{Predict method for general monotone models.}
 \usage{
-\method{predict}{gemm}(object, newdata = NULL, \dots, tie.struct = FALSE)
+\method{predict}{gemm}(object, newdata = NULL, tie.struct = FALSE, ...)
 }
 \arguments{
-  \item{object}{an object of the class "\code{\link{gemm}}".}
+  \item{object}{an object of the class \code{\link{gemm}}.}
   
-  \item{newdata}{optional list of new data.}
+  \item{newdata}{optional data frame, currently not functional.}
 
-  \item{\dots}{further arguments passed to or from other methods.}
-  
   \item{tie.struct}{option to return corrects, incorrects, and ties based on
   fitted values.}
+
+  \item{...}{other arguments to internal functions.}
 }
 \description{
-  \code{predict.gemm} is used to get fitted values from "\code{gemm}" objects.
+  \code{predict.gemm} is used to get fitted values from \code{gemm} ojects.
   Can also be used to get correct, incorrect, and ties for all paired
   comparisons of cases in model.
 }
@@ -25,14 +25,14 @@
 \value{
   Output depends on \code{tie.struct} argument. Output is either:
   
-  \item{y}{matrix of fitted values or a data.frame of correct, incorrect, and tied pairs..}
+  \item{y}{matrix of fitted values or a data.frame of correct, incorrect, and tied pairs.}
 }
 \seealso{
   \code{\link{gemm}}
 }
 \examples{
   data(mtcars)
-  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, n.chains = 3, n.gens = 3, n.beta = 200)
+  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
   predict(gemm.model, tie.struct = TRUE)
 }
 \keyword{
