@@ -435,3 +435,39 @@ deviance.gemm <- function(object, ...) {
 nobs.gemm <- function(object, ...) {
   return(nrow(residuals(object)))
 }
+
+list2gemm <- function(gemm.list) {
+  fit.metric <- gemm.list[[1]]$fit.metric
+  n.chains <- length(gemm.list)
+
+  switch(tolower(fit.metric),
+    bic = fit.name <- "bic",
+    aic = fit.name <- "aic",
+    tau = fit.name <- "tau"
+  )
+
+  if (fit.name == "tau") {
+     chain.order <- order(sapply(gemm.list[1:n.chains], function(x) get(fit.name,x)), decreasing = TRUE)
+  } else {
+    chain.order <- order(sapply(gemm.list[1:n.chains], function(x) get(fit.name,x)))
+  }
+
+  gemm.ordered <- gemm.list[rank(chain.order)]
+
+  # Select Best Chain
+  best.chain <- gemm.ordered[[1]]
+  best.chain$coefficients <-  do.call(rbind,lapply(gemm.ordered[1:n.chains],coefficients))
+  best.chain$bic <-  sapply(gemm.ordered,function(x) x$bic)
+  best.chain$r <-  sapply(gemm.ordered,function(x) x$r)
+  best.chain$tau <-  sapply(gemm.ordered,function(x) x$tau)
+  best.chain$tau.a <-  sapply(gemm.ordered,function(x) x$tau.a)
+  best.chain$tau.b <-  sapply(gemm.ordered,function(x) x$tau.b)
+  best.chain$tau.par <-  t(sapply(gemm.ordered,function(x) x$tau.par))
+  best.chain$aic <-  sapply(gemm.ordered,function(x) x$aic)
+  if (attr(gemm.ordered[[1]], "converge.check")) {
+    best.chain$converge.fit.metric <- sapply(gemm.ordered,function(x) x$converge.fit.metric)
+    best.chain$converge.beta <- sapply(gemm.ordered,function(x) x$converge.beta)
+    best.chain$converge.r <- sapply(gemm.ordered,function(x) x$converge.r)
+  }
+  return(best.chain)
+}
