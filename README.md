@@ -18,7 +18,7 @@ You can install `gemmR` by downloading the `.tar.gz` file in this repository, in
 
 ```r
 # to install from .tar.gz
-install.packages("gemmR_1.3.01.tar.gz", repos = NULL, type = "source")
+install.packages("gemmR_1.3-3.tar.gz", repos = NULL, type = "source")
 
 # to install directly from github
 library(devtools)
@@ -27,44 +27,30 @@ install_github("jchrszcz/gemmR", subdir = "gemmR")
 
 `gemmR` requires `Rcpp`, which also means you'll need a C++ compiler. Clear and reliably-updated directions for installing and troubleshooting those things are maintained at [the STAN project page](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started#prerequisites).
 
-New Version 1.3.01 (9-02-14)
+Parallel Usage
 ------
 
-* Added documentation and test data
-* Fixed BIC calculation to rely on specified tau (a or b)
-* removed p.est argument
+To make `gemmR` more consistent with other R packages, we've removed the `parallel` argument.
+Instead, we've added a helper function to take the output of a parallelization process (which might differ based on your preference and OS) and produce a `gemm` object.
+Here's an example, if you're using windows you might need to replace `doMC` with `doSnow` and `%dopar%` with `%do%`:
 
-Bug Notes
------
 
-7-2-14
+```r
+library(doMC)
+registerDoMC()
+fit <- foreach (i = 1:3) %dopar% {
+      gemm(mpg ~ disp + cyl, data = mtcars, n.chains = 1, n.gens = 3, n.beta = 200)
+    }
+gemm.model <- list2gemm(fit)
+```
 
-* Rebuilt for R 3.1.0
-* Fixed tau ordering, now corresponds to coefficients and other fits
+New Version 1.3.03 (5-04-15)
+------
 
-3-22-14
-
-* GeMM coefficients now metric scaled
-* updated for Rcpp 0.11
-* removed sum-to-1 norming for coefficients
-* added least-squares scaling for predict()
-
-12-8-13
-
-* ```cross.val.tau``` and ```cross.val.tau``` were flipped when performing cross-validation and using ```parallel=TRUE```.
-* When ```n.gens``` was 2 or less, wasn't returning optimized values.
-* Many misc minor fixes and optimization improvements.
-11-18-13
-
-* fixed check so NA values in `lin.mod` returns a warning and sets `seed.metric` to FALSE.
-* `roe` functioning again
-* `p.est` now returns cross-validation fits correctly, disables `roe` if enabled.
-
-11-8-13
-
-*  On 07/22/2013, we implemented a bugfix that allows the code to be compiled on Windows and Mac OS X.
-*  Predictor names that are entirely contained within other predictor names can cause problems with the `gemm.formula` function.
-* `roe` argument in `gemmEst` is not currently functioning.
+* removed several dependencies (doMC)
+* updated documentation
+* CRAN-ready except for problems on the Solaris C compiler
+* added list2gemm function
 
 
 Licensing
