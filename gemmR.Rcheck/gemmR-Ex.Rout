@@ -1,0 +1,196 @@
+
+R Under development (unstable) (2015-08-14 r69078) -- "Unsuffered Consequences"
+Copyright (C) 2015 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "gemmR"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('gemmR')
+Loading required package: Rcpp
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("convergenceplot")
+> ### * convergenceplot
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: convergencePlot
+> ### Title: convergencePlot function for visualizing genetic algorithm in
+> ###   gemmR
+> ### Aliases: convergencePlot
+> 
+> ### ** Examples
+> 
+>   data(mtcars)
+>   gemm.model <- gemm(mpg ~ disp + hp, data = mtcars, check.convergence = TRUE,
++     seed.metric = FALSE, n.chains = 3, n.gens = 3, n.beta = 200)
+>   with(gemm.model, convergencePlot(converge.fit.metric, fit.metric))
+> 
+> 
+> 
+> cleanEx()
+> nameEx("gemm")
+> ### * gemm
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: gemm
+> ### Title: Fit General Monotone Models.
+> ### Aliases: gemm gemm.default gemm.formula print.gemm plot.gemm
+> ###   summary.gemm print.summary.gemm nobs.gemm deviance.gemm logLik.gemm
+> ### Keywords: ordinal, regression
+> 
+> ### ** Examples
+> 
+>   ## Not run: 
+> ##D     data(culture)
+> ##D     gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
+> ##D     print(gemm.model)
+> ##D     plot(gemm.model)
+> ##D   
+> ## End(Not run)
+> 
+> 
+> 
+> cleanEx()
+> nameEx("gemmEst")
+> ### * gemmEst
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: gemmEst
+> ### Title: Fit General Monotone Models.
+> ### Aliases: gemmEst
+> ### Keywords: ordinal, regression
+> 
+> ### ** Examples
+> 
+>   data(mtcars)
+>   gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars,
++     check.convergence = TRUE, n.chains = 3, n.gens = 3, n.beta = 200)
+>   print(gemm.model)
+Call:
+gemm.formula(formula = mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE, 
+    n.chains = 3, n.gens = 3, n.beta = 200)
+
+Coefficients:
+     intercept        disp cyl
+[1,]  29.59985 -0.04121512   0
+[2,]  29.59985 -0.04121512   0
+[3,]  29.59985 -0.04121512   0
+
+bic
+[1] -44.57109 -44.57109 -44.57109
+>   plot(gemm.model)
+> 
+> 
+> 
+> cleanEx()
+> nameEx("genAlg")
+> ### * genAlg
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: genAlg
+> ### Title: genAlg
+> ### Aliases: genAlg
+> 
+> ### ** Examples
+> 
+>   p <- 4
+>   gen.alg <- genAlg(matrix(rnorm(p), nrow = p), 5, 2, p, 1, matrix(1), TRUE)
+> 
+> 
+> 
+> cleanEx()
+> nameEx("list2gemm")
+> ### * list2gemm
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: list2gemm
+> ### Title: Collapse a uniform list of 'gemm' objects.
+> ### Aliases: list2gemm
+> ### Keywords: ordinal, regression
+> 
+> ### ** Examples
+> 
+>   library(gemmR)
+>   data(mtcars)
+>   fit <- list()
+>   for (i in 1:3) {
++       fit[[i]] <- gemm(mpg ~ disp + cyl, data = mtcars, n.chains = 1, n.gens = 3, n.beta = 200)
++   }
+>   gemm.model <- list2gemm(fit)
+>   summary(gemm.model)
+Call:
+gemm.formula(formula = mpg ~ disp + cyl, data = mtcars, n.chains = 1, 
+    n.gens = 3, n.beta = 200)
+
+Coefficients:
+            intercept        disp cyl
+(Intercept)  29.59985 -0.04121512   0
+(Intercept)  29.59985 -0.04121512   0
+(Intercept)  29.59985 -0.04121512   0
+
+bic
+[1] -44.57109 -44.57109 -44.57109
+> 
+> 
+> 
+> cleanEx()
+> nameEx("predict.gemm")
+> ### * predict.gemm
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: predict.gemm
+> ### Title: Predict method for general monotone models.
+> ### Aliases: predict.gemm
+> ### Keywords: ordinal, regression
+> 
+> ### ** Examples
+> 
+>   data(mtcars)
+>   gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE, n.beta = 200)
+>   predict(gemm.model, tie.struct = TRUE)
+ [1] 23.00544 23.00544 25.14862 18.96635 14.76241 20.32645 14.76241 23.55360
+ [9] 23.79677 22.69220 22.69220 18.23272 18.23272 18.23272 10.14632 10.64090
+[17] 11.46520 26.35622 26.47987 26.66946 24.64992 16.49345 17.07046 15.17456
+[25] 13.11381 26.34386 24.64168 25.68030 15.13335 23.62366 17.19410 24.61283
+attr(,"tie.struct")
+      tau.a     tau.b n.pairs n.ties.1 n.ties.2 n.ties.both n.dis n.con
+1 0.7580645 0.7681311     496        7        6           1    54   430
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  1.321 0.021 1.38 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

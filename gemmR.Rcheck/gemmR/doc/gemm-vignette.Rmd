@@ -1,0 +1,93 @@
+---
+title: "Using gemmR"
+author: "Jeffrey S. Chrabaszcz & Joe W. Tidwell"
+date: "`r Sys.Date()`"
+bibliography: gemm-vignette.bibtex
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{User Manual}
+output: knitr:::html_vignette
+---
+
+# Motivation
+
+In the social sciences, we often ask locational questions, such as:
+
+* Do people who train on certain computer tasks have *higher* cognitive ability? [@tidwell2014counts]
+* Are there *more* murders per capita in more honor-focused cultures? [@dougherty2014deceptive]
+* Does the native language *change* acquisition of definite articles in a second language? [@chrabaszcz2014role]
+
+These questions make no mention of the specific distance between relative groups and instead focus on the order of outcome magnitudes.
+While the statistics applied to these questions are usually variants of the general linear model, there is no reason to impose the assumption of linearity on the reality underlying these tests.
+One alternative is to apply the general monotone model (`GeMM`) as proposed by @dougherty2012robust.
+
+`GeMM` uses a search and scale procedure to find the optimal relative weights for a set of predictors and scale these weights to minimize the order-constrained squared error.
+This first, computationally-intensive step is accomplished by using a genetic algorithm to optimize some fit criterion (e.g., Kendall's $\tau$) between an observed outcome and a weighted set of predictors.
+Use of $\tau$ in this case assures relative weights that maximally reflect the monotone relationship between the outcome and model predictions.
+Other fit criteria penalize for complexity, but are based on transformations of $\tau$.
+We then regress the original outcome onto the relative-weighted model predictions to compute an intercept and scaling factor that minimizes squared error conditioned on this ordinal constraint.
+
+# Fitting a GeMM model
+
+We implement `GeMM` with the `gemmR` package, which uses `Rcpp` to speed up repeated calculation of Kendall's $\tau$ for use in the genetic search process.
+As `GeMM` serves as a functional replacement for the linear model, a similar syntax is used to fit a `GeMM` model.
+
+```{r setup,message=FALSE,tidy=TRUE}
+library(gemmR)
+data(culture)
+mod <- gemm(murder.rate ~ pasture + gini + gnp, data = culture, n.chains = 3, n.gens = 10, n.beta = 200, check.convergence = TRUE)
+```
+
+This produces a `gemm` object, which is modeled after the `lm` object.
+
+\section*{Helper functions}
+
+The `gemmR` package includes a number of S3 methods and a few novel functions to help extract information from `gemm` objects.
+
+## Summary
+
+`summary` displays some helpful information about the fitted `gemm` object.
+
+```{r}
+summary(mod)
+```
+
+`GeMM` is a stochastic process, so multiple replications are advisable to ensure stability of parameter estimates.
+`gemm` runs four replications by default, all of which are displayed by descending value on the fit criterion.
+
+Below the four chains are the corresponding values of the optimized fit criterion.
+While all fit criteria are calculated and contained in the `gemm` object, only the criterion used for selection is displayed with `summary`.
+
+## Diagnostics
+
+Though no method exists for verifying that results of a random search process on empirical data, one quick way to check the suitability of a solution is to demonstrate convergent results across starting conditions.
+A quick way to check genetic algorithm performance for a given dataset is to plot the best criterion value across generations and chains.
+
+```{r plotting,tidy=TRUE}
+plot(mod)
+```
+
+## Predict
+
+The `predict` function for `gemm` serves two roles.
+The first is to generate model predictions based on the best chain of a given model.
+`predict` will also generate the counts of concordances, disconcordances, outcome ties and predictor ties for a given model.
+
+```{r}
+yhat <- predict(mod, tie.struct = TRUE)
+head(yhat)
+attr(yhat, "tie.struct")
+```
+
+## A note on information criteria in `gemmR`
+
+The information criteria calculated by `gemmR` are based on ordinal statistics and cannot be directly compared with likelihood-based criteria.
+`gemmR` includes a number of methods so that traditional information criteria can be easily extracted for comparison with other models.
+
+```{r}
+logLik(mod)
+AIC(mod)
+BIC(mod)
+```
+
+# References

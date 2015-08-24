@@ -40,13 +40,11 @@
   A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License along with
-  gemmR.  If not, see \url{<http://www.gnu.org/licenses/>}.
+  gemmR.  If not, see \url{http://www.gnu.org/licenses/}.
 }
 \references{
   Dougherty, M. R., & Thomas, R. P. (2012). Robust decision making in a
   nonlinear world. \emph{Psychological Review}, 119(2), 321.
-  \url{http://www.bsos.umd.edu/psyc/dougherty/pdf\%20articles/
-  DoughertyThomas2012Rev.pdf}
 }
 \keyword{
   package

@@ -32,7 +32,7 @@
 }
 \examples{
   data(mtcars)
-  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE)
+  gemm.model <- gemm(mpg ~ disp + cyl, data = mtcars, check.convergence = TRUE, n.beta = 200)
   predict(gemm.model, tie.struct = TRUE)
 }
 \keyword{
