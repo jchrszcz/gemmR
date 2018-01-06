@@ -13,16 +13,12 @@ The resulting `gemm` object is an S3 class object. We're working on increasing u
 Installation
 -----
 
-You can install `gemmR` by downloading the `.tar.gz` file in this repository, including it in your working directory, and running either:
+We recommend installing with `devtools`:
 
 
 ```r
-# to install from .tar.gz
-install.packages("gemmR_1.3-3.tar.gz", repos = NULL, type = "source")
-
-# to install directly from github
 library(devtools)
-install_github("jchrszcz/gemmR", subdir = "gemmR")
+install_github("jchrszcz/gemmR")
 ```
 
 `gemmR` requires `Rcpp`, which also means you'll need a C++ compiler. Clear and reliably-updated directions for installing and troubleshooting those things are maintained at [the STAN project page](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started#prerequisites).
