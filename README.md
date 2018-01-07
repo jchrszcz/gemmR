@@ -42,13 +42,11 @@ fit <- foreach (i = 1:3) %dopar% {
 gemm.model <- list2gemm(fit)
 ```
 
-New Version 1.3.03 (5-04-15)
+New Version 1.3.03 (1-07-18)
 ------
 
-* removed several dependencies (doMC)
-* updated documentation
-* CRAN-ready except for problems on the Solaris C compiler
-* added list2gemm function
+* gave up on CRAN
+* added C++11 flag to allow for compilation on Windows
 
 
 Licensing
