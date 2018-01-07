@@ -7,7 +7,8 @@ Authors@R: c(person("Jeffrey", "Chrabaszcz", role = c("aut", "cre"), email = "jc
 LazyData: yes
 Description: An R-language implementation of the General Monotone Model proposed by Michael Dougherty and Rick Thomas. It is a procedure for estimating weights for a set of independent predictors that minimize the rank-order inversions between the model predictions and some outcome.
 License: GPL-3
-Depends: Rcpp(>= 0.11)
+Depends: Rcpp(>= 0.12)
+SystemRequirements: C++11
 Suggests: knitr
 LinkingTo: Rcpp
 VignetteBuilder: knitr
