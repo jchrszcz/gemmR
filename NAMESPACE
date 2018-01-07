@@ -1,3 +1,9 @@
-useDynLib(gemmR)
+useDynLib(gemmR, .registration=TRUE)
 exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
+importFrom("grDevices", "rainbow")
+importFrom("graphics", "legend", "lines", "par", "plot", "title")
+importFrom("stats", "AIC", "as.formula", "coef", "coefficients",
+         "delete.response", "fitted", "fitted.values", "lm",
+         "logLik", "model.frame", "model.matrix", "model.response",
+         "nobs", "residuals", "runif", "terms", "weighted.residuals")
